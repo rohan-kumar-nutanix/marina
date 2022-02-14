@@ -1,0 +1,33 @@
+syntax = "proto2";
+
+package protos.marina;
+
+option go_package = "protos/marina";
+
+import "protos/marina/marina_types.proto";
+
+//-----------------------------------------------------------------------------
+
+message CatalogItemGetArg {
+  // List of catalog item types to use as a filter.
+  repeated CatalogItemInfo.CatalogItemType catalog_item_type_list = 1;
+
+  // List of catalog item query details.
+  repeated CatalogItemId catalog_item_id_list = 2;
+
+  // Get only latest version of the catalog item
+  optional bool latest = 3 [ default = false ];
+}
+
+message CatalogItemGetRet {
+  // List of catalog item objects.
+  repeated CatalogItemInfo catalog_item_list = 1;
+}
+
+//-----------------------------------------------------------------------------
+
+service Marina {
+
+  rpc CatalogItemGet(CatalogItemGetArg)
+    returns (CatalogItemGetRet);
+}
