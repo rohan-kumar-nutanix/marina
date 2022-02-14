@@ -1,0 +1,154 @@
+syntax = "proto2";
+
+package protos.marina;
+
+option go_package = "protos/marina";
+
+import "google/protobuf/descriptor.proto";
+
+/* // TODO: ENG-379475 Remove 'major' field .
+extend google.protobuf.FieldOptions {
+  optional bool major = 50002;
+} */
+
+message CatalogItemInfo {
+  // Catalog item UUID.
+  optional bytes uuid = 1;
+
+  // Catalog item name.
+  optional string name = 2;
+
+  // Annotation describing the catalog item.
+  optional string annotation = 3;
+
+  // Add the item type for which spec needs to be created on PC during
+  // migration in gflag catalog_create_spec_item_type_list.
+  enum CatalogItemType {
+    // Acropolis image.
+    kImage = 1;
+    // Acropolis VM snapshot.
+    kAcropolisVmSnapshot = 2;
+    // VM snapshot (cerebro).
+    kVmSnapshot = 3;
+    // File store item
+    kFile = 4;
+    // LCM module.
+    kLCM = 5;
+    // OVA package.
+    kOVA = 6;
+    // VM Template.
+    kVmTemplate = 7;
+  }
+
+  // Catalog item type.
+  optional CatalogItemType item_type = 4;
+
+  // Catalog item version.
+  optional int64 version = 5;
+
+  // Number of copies of the catalog item to maintain. Note that these copies
+  // are spread across availability zones/clusters.
+  optional int32 number_of_copies = 6;
+
+  // Opaque blob that can be used by the consuming service to deploy an entity
+  // from a catalog item.
+  optional bytes opaque = 7;
+
+  // List of source groups. Each group defines the set of physical bits that
+  // need to be grouped together. Catalog service uses this to figure out how
+  // to replicate data across availability zones and clusters.
+  repeated SourceGroup source_group_list = 8;
+
+  // The global UUID groups together versions of the same catalog item. A
+  // version of a catalog item can be uniquely identified by 'uuid' or by
+  // ('global_uuid', 'logical_timestamp'). In addition, this field is used to
+  // group together catalog items that exist on other clusters.
+  optional bytes global_catalog_item_uuid = 9;
+
+  // Human readable version for CatalogItem
+  optional CatalogVersion catalog_version = 10;
+
+  message CatalogItemLocation {
+    // Cluster UUID.
+    optional bytes cluster_uuid = 1;
+
+    // Availability zone logical id.
+    optional string availability_zone_logical_id = 2;
+  }
+  // List of locations where the catalog item (metadata) is currently exists.
+  // For catalog items with multiple source groups the location of each source
+  // group could be different from the catalog item location. This field is
+  // strictly maintained by the Catalog and is not exposed via any  mutating
+  // API call. Note this field is also different from other attributes on a
+  // catalog item in that it can be updated without changing the version of a
+  // catalog item. Also, this field should only be set from Xi portal or PC and
+  // not on PE.
+  repeated CatalogItemLocation location_list = 11;
+
+  // Holds uuid of cluster that is allowed to perform CUD operations
+  // on this catalog item. For catalog items on PE that are not migrated
+  // to PC, this will be the PE uuid. For catalog items on PE that are
+  // migrated to PC, this will be the PC uuid.
+  optional bytes owner_cluster_uuid = 12;
+
+  // Source catalog item from which this catalog item was created from.
+  // In case of copying catalog items between a pair of PCs we use this
+  // field to avoid creating multiple copies of the same catalog item of
+  // same version on destination PC. Once the copie'd catalog item gets
+  // updated, we erase this field. Since at that point the copied catalog
+  // item has divereged and creating another copy of same catalog item
+  // again is valid.
+  optional CatalogItemId source_catalog_item_id = 13;
+
+  // VM template version info.
+  // optional VmTemplateVersionInfo vm_template_version_info = 14;
+}
+
+//-----------------------------------------------------------------------------
+
+message CatalogItemId {
+  // global catalog item UUIDs to lookup
+  optional bytes global_catalog_item_uuid = 1;
+
+  // version of the catalog item to lookup
+  optional int64 version = 2;
+}
+
+//-----------------------------------------------------------------------------
+
+message CatalogVersion {
+  // Name of the product/version of the catalog item.
+  optional string product_name = 1;
+
+  // Version string of the catalog item.
+  optional string product_version = 2;
+}
+
+//-----------------------------------------------------------------------------
+
+message SourceGroup {
+  // SourceGroup UUID
+  optional bytes uuid = 1;
+
+  // List of UUIDs pointing at the clusters where this source group must
+  // reside.
+  repeated bytes cluster_uuid_list = 2;
+
+  // List of logical IDs pointing at the availability zones where this source
+  // group must reside.
+  repeated string availability_zone_logical_id_list = 3;
+
+  // List of sources.
+  repeated Source source_list = 4;
+}
+
+message Source {
+  // UUID pointing at a child catalog item.
+  optional bytes catalog_item_uuid = 1;
+
+  // UUID pointing at a file within the file repository.
+  optional bytes file_uuid = 2;
+
+  // UUID pointing at a cerebro snapshot.
+  optional bytes snapshot_uuid = 3;
+}
