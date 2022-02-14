@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: marina
+  labels:
+    app: marina
+spec:
+  selector:
+    matchLabels:
+      app: marina
+  replicas: 1 # tells deployment to run 1 pods matching the template
+  template:
+    metadata:
+      labels:
+        app: marina
+    spec:
+      containers:
+      - name: marina
+        image: msp-registry.catalog.cluster.local:5001/marina-cms:v1
+        ports:
+        - name: grpc
+          containerPort: 9200
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: marina
+  annotations:
+    service.msp.ntnx.io/lb: pc-external
+  labels:
+    app: marina
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 9200
+    name: grpc
+    protocol: TCP
+    targetPort: 9200
+  selector:
+    app: marina
