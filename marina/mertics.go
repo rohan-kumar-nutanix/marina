@@ -32,7 +32,7 @@ type Metrics struct {
 	addLock    sync.Mutex
 }
 
-func Init(prometheusPort int) *Metrics {
+func InitPrometheus(prometheusPort int) *Metrics {
 	if prometheusPort <= 0 {
 		glog.Errorf("PrometheusPort is not specified, so listener is not started!!")
 	} else {

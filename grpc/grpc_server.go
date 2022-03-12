@@ -43,17 +43,28 @@ type ServerImpl struct {
 // The connections are secured by mTLS. Errors are fatal.
 func NewServer(port uint64) (server Server) {
 	var serverOpts []grpc.ServerOption
+	var unaryInterceptors []grpc.UnaryServerInterceptor
+	var streamInterceptors []grpc.StreamServerInterceptor
 	s := &ServerImpl{port: port}
 	// TODO: Enable support for mTLS based on usecase.
 
 	// Enabling tracing OpenTelemetry.
 	unaryTracer, streamTracer := tracer.GrpcServerTraceOptions()
-	log.Infof("Tracer opts : %v %v", unaryTracer, streamTracer)
 
+	unaryInterceptors = append(unaryInterceptors, grpc_prometheus.UnaryServerInterceptor)
+	streamInterceptors = append(streamInterceptors, grpc_prometheus.StreamServerInterceptor)
+	if unaryTracer != nil {
+		log.Infof("Appending Unary Tracer opts : %v", unaryTracer)
+		unaryInterceptors = append(unaryInterceptors, unaryTracer)
+	}
+	if streamTracer != nil {
+		log.Infof("Appending Stream Tracer opts : %v", streamTracer)
+		streamInterceptors = append(streamInterceptors, streamTracer)
+	}
 	// Enabling grpc Sever with Prometheus and OpenTelemetry.
 	serverParams := []grpc.ServerOption{
-		grpc_middleware.WithUnaryServerChain(grpc_prometheus.UnaryServerInterceptor, unaryTracer),
-		grpc_middleware.WithStreamServerChain(grpc_prometheus.StreamServerInterceptor, streamTracer),
+		grpc_middleware.WithUnaryServerChain(unaryInterceptors...),
+		grpc_middleware.WithStreamServerChain(streamInterceptors...),
 	}
 
 	log.Infof("Server opts %v", serverOpts)
