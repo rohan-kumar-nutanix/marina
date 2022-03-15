@@ -54,8 +54,9 @@ type IdfClient struct {
 
 func NewIdfClient() *IdfClient {
 	insightsSvc := insights_interface.NewInsightsServiceInterface(
-		util.HostAddr, // TODO check if we use PC FQDN instead of IP.
+		util.HostAddr,
 		uint16(*insights_interface.InsightsPort))
+
 	insightsSvc.SetRequestTimeout(util.IdfRpcTimeOut)
 	idfClient := IdfClient{IdfSvc: insightsSvc}
 	return &idfClient

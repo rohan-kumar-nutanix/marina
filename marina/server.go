@@ -43,12 +43,6 @@ func runRPCServer() {
 	defer waitGroup.Done()
 
 	// TODO: Handle gRPC server restart.
-	/* 	if svcConfig.rpcServer != nil {
-		restartRPCServer(isLeader)
-		mutex.Unlock()
-		return
-	} */
-
 	// Start the Prometheus handler.
 	log.Infof("Starting Prometheus handler.")
 	InitPrometheus(int(*common.PrometheusPort))

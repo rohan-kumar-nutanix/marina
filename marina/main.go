@@ -10,7 +10,6 @@ package main
 
 import (
 	"os"
-
 	log "k8s.io/klog/v2"
 )
 
@@ -21,7 +20,6 @@ func main() {
 	if traceProvider != nil {
 		defer traceProvider.Shutdown(nil)
 	}
-
 	runRPCServer()
 	log.SetOutput(os.Stdout)
 	waitGroup.Wait()

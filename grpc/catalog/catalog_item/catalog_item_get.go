@@ -100,6 +100,7 @@ func GetCatalogItems(ctx context.Context, arg *marina_pb.CatalogItemGetArg) (*ma
 	idfQueryArg := &insights_interface.GetEntitiesWithMetricsArg{Query: query}
 	idfResponse, err := idf.NewIdfClient().Query(ctx, idfQueryArg)
 
+
 	if err != nil {
 		log.Errorf("IDF query failed because of error - %s\n", err)
 		errMsg := fmt.Sprintf("Error while fetching CatalogItems list: %v", err)

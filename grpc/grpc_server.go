@@ -45,6 +45,7 @@ func NewServer(port uint64) (server Server) {
 	var serverOpts []grpc.ServerOption
 	var unaryInterceptors []grpc.UnaryServerInterceptor
 	var streamInterceptors []grpc.StreamServerInterceptor
+
 	s := &ServerImpl{port: port}
 	// TODO: Enable support for mTLS based on usecase.
 
@@ -65,6 +66,7 @@ func NewServer(port uint64) (server Server) {
 	serverParams := []grpc.ServerOption{
 		grpc_middleware.WithUnaryServerChain(unaryInterceptors...),
 		grpc_middleware.WithStreamServerChain(streamInterceptors...),
+
 	}
 
 	log.Infof("Server opts %v", serverOpts)

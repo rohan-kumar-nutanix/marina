@@ -16,7 +16,7 @@ const (
 	ZkHostPort         = 9876
 	ZkTimeOut          = 10
 	IdfRpcTimeOut      = 10
-	CatalogServiceName = "nutanix.catalog.CatalogRpcService" // "nutanix.catalog.CatalogPcRpcService"
+	CatalogServiceName = "nutanix.catalog.CatalogRpcService"
 	PcFQDN             = "pcip"
 )
 
