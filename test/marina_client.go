@@ -26,7 +26,7 @@ func init() {
 func marinaClient(port uint) (*grpc.ClientConn, marina.MarinaClient) {
 	//address := fmt.Sprintf("127.0.0.1:%d", port)
 	// address := fmt.Sprintf("10.37.161.66:%d", port)
-	pc_ip := "localhost" // "10.96.16.100" // "0.0.0.0" //"10.33.33.78"
+	pc_ip := "localhost" //"10.96.16.100" // "0.0.0.0" //"10.33.33.78"
 	port = 9200
 	address := fmt.Sprintf("%s:%d", pc_ip, port)
 	fmt.Println("Connecting to GRPC server at ", address)
@@ -80,8 +80,7 @@ func GetAllCatalogItems(client marina.MarinaClient, ctx context.Context) {
 }
 
 func GetCatalogItemsById(client marina.MarinaClient, ctx context.Context, uuids []string) {
-	guuidList := []string{"ae08ab22-08ac-4da4-9c5f-f4d3d8e2f6a4", "d9d3a431-8dbc-483f-9ce3-b3ce23be84a7",
-		"e29784c7-8b45-46d2-8137-a45d6143e00e"}
+	guuidList := []string{"5bad7353-1986-4f59-921a-3770134a3613", "c7a748c1-6fba-4888-bd48-91c4ac3ca86f"}
 	/* guuid1, _ := uuid4.StringToUuid4("e04a5278-f9ed-41cb-8601-89ab60c7f75f")
 	item1 := &marina.CatalogItemId{
 		GlobalCatalogItemUuid: guuid1.RawBytes(),
@@ -107,8 +106,8 @@ func GetCatalogItemsById(client marina.MarinaClient, ctx context.Context, uuids 
 	itemTypes = append(itemTypes, *marina.CatalogItemInfo_kVmTemplate.Enum())
 
 	arg := &marina.CatalogItemGetArg{
-		CatalogItemIdList:   items,
-		CatalogItemTypeList: itemTypes,
+		CatalogItemIdList: items,
+		//CatalogItemTypeList: itemTypes,
 	}
 	// response, err := client.CatalogItemGet(ctx, &marina.CatalogItemGetArg{})
 	fmt.Println("Fetching CatalogItems by UUIDs")
@@ -132,9 +131,7 @@ func GetCatalogItemsById(client marina.MarinaClient, ctx context.Context, uuids 
 
 }
 
-
-func main1() {
-
+func main() {
 	// TODO: Consider moving these to init().
 	var grpcServerPort uint
 	grpcServerPort = 9200 //32391 //9200 //30188 //9200

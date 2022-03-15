@@ -25,8 +25,6 @@ import (
 	log "k8s.io/klog/v2"
 )
 
-var idfClient = idf.NewIdfClient()
-
 func validateCatalogItemGetArg(arg *marina_pb.CatalogItemGetArg) marinaError.MarinaErrorInterface {
 	for _, catalogItemId := range arg.CatalogItemIdList {
 		if err := common.ValidateUUID(catalogItemId.GlobalCatalogItemUuid, "GlobalCatalogItem"); err != nil {
@@ -98,9 +96,10 @@ func GetCatalogItems(ctx context.Context, arg *marina_pb.CatalogItemGetArg) (*ma
 			idf.CatalogItemAttributes...,
 		).FROM(idf.CatalogDB).Proto()
 	}
-
+	// var idfClient = idf.NewIdfClient()
 	idfQueryArg := &insights_interface.GetEntitiesWithMetricsArg{Query: query}
-	idfResponse, err := idfClient.Query(ctx, idfQueryArg)
+	idfResponse, err := idf.NewIdfClient().Query(ctx, idfQueryArg)
+
 
 	if err != nil {
 		log.Errorf("IDF query failed because of error - %s\n", err)

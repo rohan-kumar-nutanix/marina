@@ -6,6 +6,7 @@
  *
  * Author: Rajesh Battala <rajesh.battala@nutanix.com>
  *
+ * Marina Error and Interface Types
  */
 
 package error
@@ -49,6 +50,7 @@ var (
 	ErrNotSupported             = err("NOT_SUPPORTED", 19)
 	ErrCasError                 = err("CAS_ERROR", 20)
 	ErrInternal                 = err("INTERNAL", 21)
+	ErrMarinaInternal           = err("INTERNAL", 21)
 	ErrUnimplemented            = err("UNIMPLEMENTED", 31)
 )
 
@@ -154,7 +156,8 @@ type InternalError struct {
 	operation string
 }
 
-func ErrMarinaInternalError(operation string) *InternalError {
+
+func ErrInternalError(operation string) *InternalError {
 	return &InternalError{
 		MarinaError: err("Operation Timeout Error", 21),
 		operation:   operation,
@@ -167,6 +170,30 @@ func (e *InternalError) SetCauseAndLog(err error) MarinaErrorInterface {
 }
 
 func (e *InternalError) SetCause(err error) MarinaErrorInterface {
+	e.MarinaError = e.MarinaError.SetCause(err)
+	return e
+}
+
+
+// Internal error.
+type MarinaInternalError struct {
+	*MarinaError
+	operation string
+}
+
+func ErrMarinaInternalError(operation string) *InternalError {
+	return &InternalError{
+		MarinaError: err("Operation Timeout Error", 21),
+		operation:   operation,
+	}
+}
+
+func (e *MarinaInternalError) SetCauseAndLog(err error) MarinaErrorInterface {
+	e.MarinaError = e.MarinaError.SetCauseAndLog(err)
+	return e
+}
+
+func (e *MarinaInternalError) SetCause(err error) MarinaErrorInterface {
 	e.MarinaError = e.MarinaError.SetCause(err)
 	return e
 }
