@@ -1,4 +1,4 @@
-FROM docker.dyn.ntnxdpro.com/ntnx-general-docker/golang:1.15 as build
+FROM docker.dyn.ntnxdpro.com/ntnx-general-docker/golang:1.17 as build
 
 LABEL maintainer="acropolis-catalog@nutanix.com"
 
