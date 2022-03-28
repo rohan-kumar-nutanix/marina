@@ -16,10 +16,10 @@ import (
 	"strconv"
 	"sync"
 
-	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
-	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
-	services "github.com/nutanix-core/content-management-marina/grpc/services"
-	marina_pb "github.com/nutanix-core/content-management-marina/protos/marina"
+	grpcmiddleware "github.com/grpc-ecosystem/go-grpc-middleware"
+	grpcprometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
+	"github.com/nutanix-core/content-management-marina/grpc/services"
+	marinapb "github.com/nutanix-core/content-management-marina/protos/marina"
 	"github.com/nutanix-core/ntnx-api-utils-go/tracer"
 
 	"google.golang.org/grpc"
@@ -52,8 +52,8 @@ func NewServer(port uint64) (server Server) {
 	// Enabling tracing OpenTelemetry.
 	unaryTracer, streamTracer := tracer.GrpcServerTraceOptions()
 
-	unaryInterceptors = append(unaryInterceptors, grpc_prometheus.UnaryServerInterceptor)
-	streamInterceptors = append(streamInterceptors, grpc_prometheus.StreamServerInterceptor)
+	unaryInterceptors = append(unaryInterceptors, grpcprometheus.UnaryServerInterceptor)
+	streamInterceptors = append(streamInterceptors, grpcprometheus.StreamServerInterceptor)
 	if unaryTracer != nil {
 		log.Infof("Appending Unary Tracer opts : %v", unaryTracer)
 		unaryInterceptors = append(unaryInterceptors, unaryTracer)
@@ -64,15 +64,14 @@ func NewServer(port uint64) (server Server) {
 	}
 	// Enabling grpc Sever with Prometheus and OpenTelemetry.
 	serverParams := []grpc.ServerOption{
-		grpc_middleware.WithUnaryServerChain(unaryInterceptors...),
-		grpc_middleware.WithStreamServerChain(streamInterceptors...),
-
+		grpcmiddleware.WithUnaryServerChain(unaryInterceptors...),
+		grpcmiddleware.WithStreamServerChain(streamInterceptors...),
 	}
 
 	log.Infof("Server opts %v", serverOpts)
 	s.gserver = grpc.NewServer(serverParams...)
 	s.registerServices(s.gserver)
-	grpc_prometheus.Register(s.gserver)
+	grpcprometheus.Register(s.gserver)
 
 	return s
 }
@@ -81,7 +80,7 @@ func NewServer(port uint64) (server Server) {
 // registered with the server before it is started.
 func (server *ServerImpl) registerServices(s *grpc.Server) {
 	log.Info("Registering services...")
-	marina_pb.RegisterMarinaServer(server.gserver, &services.MarinaServer{})
+	marinapb.RegisterMarinaServer(server.gserver, &services.MarinaServer{})
 }
 
 // Start listening and serve. Errors are fatal (todo).

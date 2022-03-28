@@ -16,16 +16,16 @@ import (
 	"github.com/nutanix-core/acs-aos-go/insights/insights_interface"
 	. "github.com/nutanix-core/acs-aos-go/insights/insights_interface/query"
 	"github.com/nutanix-core/acs-aos-go/nutanix/util-go/uuid4"
-	common "github.com/nutanix-core/content-management-marina/common"
+	"github.com/nutanix-core/content-management-marina/common"
 	marinaError "github.com/nutanix-core/content-management-marina/error"
-	marina_pb "github.com/nutanix-core/content-management-marina/protos/marina"
+	marinaPB "github.com/nutanix-core/content-management-marina/protos/marina"
 	util "github.com/nutanix-core/content-management-marina/util"
 	"github.com/nutanix-core/content-management-marina/util/idf"
 	"github.com/nutanix-core/ntnx-api-utils-go/tracer"
 	log "k8s.io/klog/v2"
 )
 
-func validateCatalogItemGetArg(arg *marina_pb.CatalogItemGetArg) marinaError.MarinaErrorInterface {
+func validateCatalogItemGetArg(arg *marinaPB.CatalogItemGetArg) marinaError.MarinaErrorInterface {
 	for _, catalogItemId := range arg.CatalogItemIdList {
 		if err := common.ValidateUUID(catalogItemId.GlobalCatalogItemUuid, "GlobalCatalogItem"); err != nil {
 			return err
@@ -34,7 +34,7 @@ func validateCatalogItemGetArg(arg *marina_pb.CatalogItemGetArg) marinaError.Mar
 	return nil
 }
 
-func GetCatalogItems(ctx context.Context, arg *marina_pb.CatalogItemGetArg) (*marina_pb.CatalogItemGetRet, error) {
+func GetCatalogItems(ctx context.Context, arg *marinaPB.CatalogItemGetArg) (*marinaPB.CatalogItemGetRet, error) {
 	// TODO: Add Tracer support.
 	// TODO: Add Authz support.
 	// TODO: leverage channel and go routine for fetching results.
@@ -42,7 +42,7 @@ func GetCatalogItems(ctx context.Context, arg *marina_pb.CatalogItemGetArg) (*ma
 	span, ctx := tracer.StartSpan(ctx, "GetCatalogItems")
 	defer span.Finish()
 
-	ret := &marina_pb.CatalogItemGetRet{}
+	ret := &marinaPB.CatalogItemGetRet{}
 	if err := validateCatalogItemGetArg(arg); err != nil {
 		log.Error("Error occured : ", err)
 		return nil, util.NewGrpcStatusUtil().BuildGrpcError(err)
@@ -100,17 +100,16 @@ func GetCatalogItems(ctx context.Context, arg *marina_pb.CatalogItemGetArg) (*ma
 	idfQueryArg := &insights_interface.GetEntitiesWithMetricsArg{Query: query}
 	idfResponse, err := idf.NewIdfClient().Query(ctx, idfQueryArg)
 
-
 	if err != nil {
 		log.Errorf("IDF query failed because of error - %s\n", err)
 		errMsg := fmt.Sprintf("Error while fetching CatalogItems list: %v", err)
 		return nil, marinaError.ErrInternal.SetCause(errors.New(errMsg))
 	}
-	var catalogItems []*marina_pb.CatalogItemInfo
+	var catalogItems []*marinaPB.CatalogItemInfo
 
 	for _, entityWithMetric := range idfResponse {
 		log.Infof("Entity ID: %v", entityWithMetric.EntityGuid.GetEntityId())
-		c_item := &marina_pb.CatalogItemInfo{}
+		cItem := &marinaPB.CatalogItemInfo{}
 		for _, metricData := range entityWithMetric.MetricDataList {
 
 			if len(metricData.ValueList) == 0 {
@@ -120,23 +119,23 @@ func GetCatalogItems(ctx context.Context, arg *marina_pb.CatalogItemGetArg) (*ma
 
 			switch *metricData.Name {
 			case idf.GlobalCatalogItemUuid:
-				c_item.GlobalCatalogItemUuid = []byte(metricData.ValueList[0].Value.GetStrValue())
+				cItem.GlobalCatalogItemUuid = []byte(metricData.ValueList[0].Value.GetStrValue())
 			case idf.CatalogItemUuid:
-				c_item.Uuid = []byte(metricData.ValueList[0].Value.GetStrValue())
+				cItem.Uuid = []byte(metricData.ValueList[0].Value.GetStrValue())
 			case idf.CatalogVersion:
 				version := metricData.ValueList[0].Value.GetInt64Value()
-				c_item.Version = &version
+				cItem.Version = &version
 			case idf.CatalogName:
 				name := metricData.ValueList[0].Value.GetStrValue()
-				c_item.Name = &name
+				cItem.Name = &name
 			case idf.Annotation:
 				annotation := metricData.ValueList[0].Value.GetStrValue()
-				c_item.Name = &annotation
+				cItem.Name = &annotation
 			case idf.CatalogItemType:
-				c_item.ItemType = util.GetCatalogItemTypeEnum(*metricData.Name)
+				cItem.ItemType = util.GetCatalogItemTypeEnum(*metricData.Name)
 			}
 		}
-		catalogItems = append(catalogItems, c_item)
+		catalogItems = append(catalogItems, cItem)
 	}
 	ret.CatalogItemList = catalogItems
 	return ret, nil

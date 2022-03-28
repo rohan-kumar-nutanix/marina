@@ -40,7 +40,7 @@ func testVmTemplates() {
 		fmt.Println("-----------------------------------------------------------------------------------------------------")
 		for _, t := range vmTemplatesGetRet.TemplateDetailsList {
 			//uuid4.ToUuid4(t.TemplateInfo.TemplateUuid).UuidToString()
-			fmt.Println(*t.TemplateInfo.Name, len(t.VersionInfoList))
+			//fmt.Println(*t.TemplateInfo.Name, len(t.VersionInfoList))
 			fmt.Println("***Template Object ***: ", t)
 			time.Sleep(1 * time.Second)
 		}
@@ -94,7 +94,7 @@ func catalogItemsGetWithSendMsg() {
 		fmt.Println("G_UUID                                   Name           		Type              Version")
 		fmt.Println("-----------------------------------------------------------------------------------------------------")
 		for _, item := range cItemGetRet.CatalogItemList {
-			fmt.Println("'%v': %v\n", item)
+			fmt.Println("%v\n", item)
 			//fmt.Println(uuid4.ToUuid4(item.GlobalCatalogItemUuid).UuidToString(), *item.Name, "\t", *item.ItemType, "\t", *item.Version)
 		}
 	}
@@ -113,14 +113,14 @@ func catalogItemsGet() {
 		fmt.Println("G_UUID                                   Name            Type              Version")
 		fmt.Println("-----------------------------------------------------------------------------------------------------")
 		for _, item := range cItemGetRet.CatalogItemList {
-			fmt.Println("'%v': ", item)
+			fmt.Println(item)
 			//fmt.Println(uuid4.ToUuid4(item.GlobalCatalogItemUuid).UuidToString(), *item.Name, "\t", *item.ItemType, "\t", *item.Version)
 		}
 	}
 
 }
 
-func catalogItemsCreate(name, desc , imageUrl *string, ) {
+/*func catalogItemsCreate(name, desc , imageUrl *string, ) {
 	arg := &catalogIfc.CatalogItemCreateArg{}
 	spec := &catalogIfc.CatalogItemCreateSpec{}
 	spec.Name = name
@@ -138,20 +138,25 @@ func catalogItemsCreate(name, desc , imageUrl *string, ) {
 	} else {
 		fmt.Println("*** Successfully Deleted CatalogItemD :", uuid4.ToUuid4(cItemDelRet.GetTaskUuid()).String())
 	}
-}
+}*/
 
-func catalogItemsDelete() {
+/*func catalogItemsDelete() {
 	cItemDelArg := &catalogIfc.CatalogItemDeleteArg{}
+	arg := &acropolisIfc.ImageCreateArg{}
+	spec1 := &acropolisIfc.ImageCreateSpec{}
+	spec1.
+
 	catalogItem := &catalogIfc.CatalogItemId{}
 	catalogItem.GlobalCatalogItemUuid = uuid4.EmptyUuid().RawBytes()
 	cItemDelArg.CatalogItemId = catalogItem
 	cItemDelRet, err := catalogRpcClient.CatalogItemDelete(cItemDelArg)
+
 	if err != nil {
 		fmt.Println("Error in Deleting CatalogItemD :", err)
 	} else {
 		fmt.Println("*** Successfully Deleted CatalogItemD :", uuid4.ToUuid4(cItemDelRet.GetTaskUuid()).String())
 	}
-}
+}*/
 
 func filesGet() {
 	fmt.Println("\n\n\n-----------------------Fetching Files-------------------")
@@ -177,9 +182,9 @@ func main() {
 	catalogSvcUtil = clientUtil.NewCatalogService("localhost", 9202)
 
 	// Fetch CatalogItems.
-	/*	fmt.Println("\n********************************************************")
-		fmt.Println("Fetching CatalogItems....")*/
-	//catalogItemsGet()
+	fmt.Println("\n********************************************************")
+	fmt.Println("Fetching CatalogItems....")
+	catalogItemsGet()
 	//fmt.Println("Fetching CatalogItems using SendMsg method....")
 	// catalogItemsGetWithSendMsg()
 
@@ -188,15 +193,15 @@ func main() {
 	//catalogItemsDelete()
 	var tname string = "temp1"
 	var desc string = "my Temp Desc"
-	var vmUuid string = "1bbd7143-e127-4d17-bc52-b429d6e99ab4"
-	//fmt.Println("Cteating VMTemplate Shell......")
-	//createTemplateShell(&tname, &desc)
-	fmt.Println("Cteating VMTemplate and Version vm uuid= ", vmUuid)
-	createVMTemplate(&tname, &desc, &vmUuid)
-	/*	fmt.Println("\n********************************************************")
-		time.Sleep(3 * time.Second)
-		fmt.Println("Fetching VMTemplates....")
-		testVmTemplates()*/
+	//var vmUuid string = "1bbd7143-e127-4d17-bc52-b429d6e99ab4"
+	fmt.Println("Cteating VMTemplate Shell......")
+	createTemplateShell(&tname, &desc)
+	/*fmt.Println("Cteating VMTemplate and Version vm uuid= ", vmUuid)
+	createVMTemplate(&tname, &desc, &vmUuid)*/
+	fmt.Println("\n********************************************************")
+	time.Sleep(3 * time.Second)
+	fmt.Println("Fetching VMTemplates....")
+	testVmTemplates()
 
 	/*	time.Sleep(3 * time.Second)
 		fmt.Println("\n********************************************************")
