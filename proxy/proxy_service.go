@@ -1,26 +1,30 @@
 /*
- Copyright (c) 2022 Nutanix Inc. All rights reserved.
+ * Copyright (c) 2022 Nutanix Inc. All rights reserved.
+ *
+ * Authors: rajesh.battala@nutanix.com
 
- Authors: rajesh.battala@nutanix.com
-
- This file implements RPC services to serve Catalog RPC requests.
- The main entry point to here is through the call to NewRpcService(). The
- purpose of this file is for specifying the Catalog RPC service
- to be served by Marina.
-*/
+ * This file implements RPC services to serve Catalog RPC requests.
+ * The main entry point to here is through the call to NewRpcService(). The
+ * purpose of this file is for specifying the Catalog RPC service
+ * to be served by Marina.
+ */
 
 package proxy
 
 import (
 	"fmt"
-	"github.com/nutanix-core/content-management-marina/common"
-	"reflect"
-
+	"github.com/golang/protobuf/proto"
+	"github.com/nutanix-core/acs-aos-go/ergon"
 	"github.com/nutanix-core/acs-aos-go/nutanix/util-go/net"
+	"github.com/nutanix-core/acs-aos-go/nutanix/util-go/uuid4"
+	slbufsNet "github.com/nutanix-core/acs-aos-go/nutanix/util-slbufs/util/sl_bufs/net"
+	"github.com/nutanix-core/content-management-marina/common"
 	marinaError "github.com/nutanix-core/content-management-marina/error"
+	"github.com/nutanix-core/content-management-marina/task/base"
 	marinaUtil "github.com/nutanix-core/content-management-marina/util"
 	clientUtil "github.com/nutanix-core/content-management-marina/util/catalog/client"
 	log "k8s.io/klog/v2"
+	"reflect"
 )
 
 var catalogService *clientUtil.Catalog
@@ -37,6 +41,7 @@ var catalogService *clientUtil.Catalog
 // response argument types statically.
 // Init Catalog Service Handler Instance.
 func NewRpcService(svcName string) *net.Service {
+	// TODO move it to singleton.
 	catalogService = clientUtil.NewCatalogService(marinaUtil.HostAddr, uint16(*common.CatalogPort))
 	// Set up the RPC services.
 	return &net.Service{
@@ -53,7 +58,9 @@ func getRpcSvcDesc(svcName string) *net.ServiceDesc {
 		Methods: map[string]net.ServiceMethodFn{},
 	}
 	var rpcNames []string
-	if svcName == marinaUtil.CatalogServiceName {
+	if svcName == marinaUtil.CatalogServiceName ||
+		svcName == marinaUtil.CatalogLegacyServiceName ||
+		svcName == marinaUtil.CatalogInternalServiceName {
 		rpcNames = CatalogRpcNames
 	} else {
 		log.Fatalln("Unsupported RPC service: ", svcName)
@@ -76,15 +83,23 @@ func rpcHandler(rpc *net.ProtobufRpc, handlers interface{}) error {
 			fmt.Errorf("failed to get request/response type: %v", err))
 	}
 
-	// Handle the RPC request in sync.
-	if err := syncRpcHandler(rpc, request, response); err != nil {
-		return marinaError.ErrInvalidArgument.SetCauseAndLog(
-			fmt.Errorf("Failed to handle sync RPC %s: %s.", rpcName, err))
+	if proxyConfig.isSyncRpc(rpcName) {
+		// Handle the RPC request in sync.
+		if err := syncRpcHandler(rpc, request, response); err != nil {
+			return marinaError.ErrInvalidArgument.SetCauseAndLog(
+				fmt.Errorf("failed to handle sync RPC %s: %s", rpcName, err))
+		}
+	} else {
+		// Handle the RPC request in ASync.
+		if err := asyncRpcHandler(rpc, request, response); err != nil {
+			return marinaError.ErrInvalidArgument.SetCauseAndLog(fmt.Errorf(
+				"failed to create proxy task for %s: %s", rpcName, err))
+		}
 	}
 	// Serialize and sets the response into the RPC context.
 	if err := marshalResponse(rpc, response); err != nil {
 		return marinaError.ErrMarinaInternal.SetCauseAndLog(
-			fmt.Errorf("Failed to serialize RPC response: %v.", err))
+			fmt.Errorf("failed to serialize RPC response: %v", err))
 	}
 
 	return nil
@@ -108,7 +123,7 @@ func processRpcError(rpc *net.ProtobufRpc, err reflect.Value,
 	return marinaErr
 }
 
-// unmarshalRequestPayload unmarshal a RPC request payload into the specified
+// unmarshalRequestPayload unmarshal an RPC request payload into the specified
 // request argument for the given RPC.
 func unmarshalRequestPayload(rpc *net.ProtobufRpc, request reflect.Value,
 	rpcName string) error {
@@ -134,8 +149,7 @@ func marshalResponse(rpc *net.ProtobufRpc, response reflect.Value) error {
 	return nil
 }
 
-// syncRpcHandler handles a sync RPC request by directly invoking the sync RPC
-// call to Catalog.
+// syncRpcHandler handles a sync RPC request by directly invoking the sync RPC call to Catalog.
 func syncRpcHandler(rpc *net.ProtobufRpc, request reflect.Value,
 	response reflect.Value) error {
 
@@ -157,6 +171,89 @@ func syncRpcHandler(rpc *net.ProtobufRpc, request reflect.Value,
 	// Make the sync RPC call to Catalog.
 	if err := rpcHandler.Call(args)[0]; !err.IsNil() {
 		return processRpcError(rpc, err, nil)
+	}
+	return nil
+}
+
+// asyncRpcHandler creates a new proxy task for handling async Catalog RPCs.
+func asyncRpcHandler(rpc *net.ProtobufRpc, request reflect.Value,
+	response reflect.Value) error {
+	//ctx := context.TODO()
+	rpcName := rpc.RequestHeader.GetMethodName()
+	// Create a new task proto for the task to proxy RPCs.
+	taskProto := &ergon.Task{
+		Request: &ergon.MetaRequest{
+			MethodName: proto.String(rpcName),
+			Arg: &ergon.PayloadOrEmbeddedValue{
+				Embedded: rpc.RequestPayload,
+			},
+		},
+	}
+	taskProto.RequestContext = &slbufsNet.RpcRequestContext{}
+	// If request specifies a task UUID for idempotent, set it in Marina task.
+	if err := maybeSetRequestTaskUuid(rpcName, rpc.RequestPayload, taskProto); err != nil {
+		return marinaError.ErrInternal.SetCause(
+			fmt.Errorf("failed to set request task UUID for %s: %s", rpcName, err))
+	}
+	// Create a new Marina proxy task. Start() will save the task to Ergon.
+	proxyTask := NewProxyTask(base.NewMarinaBaseTask(taskProto))
+	var operationType string
+	operationType = rpcName
+	err := proxyTask.Start(proxyTask, proto.String(marinaUtil.ServiceName), &operationType)
+	if err != nil {
+		return marinaError.ErrInternal.SetCause(
+			fmt.Errorf("failed to start task for %s: %s", rpcName, err))
+	}
+	// Get Ergon task UUID and set it in response.
+	taskUUID := uuid4.ToUuid4(proxyTask.Proto().GetUuid())
+	if taskUUID == nil {
+		return marinaError.ErrInternal.SetCause(
+			fmt.Errorf("invalid task UUID for %s", rpcName))
+	}
+	taskUUIDFieldName, err := proxyConfig.getResponseTaskUuidFieldName(rpcName)
+	if err != nil {
+		return marinaError.ErrInternal.SetCause(
+			fmt.Errorf("failed to get RPC response task UUID field for %s: %s", rpcName, err))
+	}
+	if err := marinaUtil.SetReflectBytes(response, taskUUIDFieldName, taskUUID.RawBytes()); err != nil {
+		return marinaError.ErrInternal.SetCause(
+			fmt.Errorf("%s response missing task UUID field: %s", rpcName, err))
+	}
+	return nil
+}
+
+func maybeSetRequestTaskUuid(rpcName string, requestPayload []byte,
+	taskProto *ergon.Task) error {
+	// Retrieve the task UUID field, if exists, in the request.
+	requestTaskUuidField, err := proxyConfig.getRequestTaskUuidFieldName(rpcName)
+	if err != nil {
+		return marinaError.ErrInternal.SetCause(
+			fmt.Errorf("failed to get request task UUID field for %s: %s", rpcName, err))
+	}
+	if requestTaskUuidField == "" {
+		// Request doesn't allow task UUID, so no need to set it.
+		return nil
+	}
+	// Get request reflect value to unmarshal the request payload.
+	request, _, err := proxyConfig.getRequestResponseValues(rpcName)
+	if err != nil {
+		return marinaError.ErrInternal.SetCause(
+			fmt.Errorf("failed to get argument types for %s: %s", rpcName, err))
+	}
+	// Unmarshal the RPC request payload into request argument.
+	if err := marinaUtil.UnmarshalReflectBytes(requestPayload, request); err != nil {
+		return marinaError.ErrInternal.SetCause(
+			fmt.Errorf("failed to unmarshal request for %s: %s", rpcName, err))
+	}
+	requestTaskUuid, err := marinaUtil.GetReflectBytes(request, requestTaskUuidField)
+	if err != nil {
+		return marinaError.ErrInternal.SetCause(
+			fmt.Errorf("failed to get response task UUID for %s: %s", rpcName, err))
+	}
+	// Set request task UUID as Marina task UUID, if specified.
+	if len(requestTaskUuid) > 0 {
+		taskUUID := uuid4.ToUuid4(requestTaskUuid)
+		taskProto.Uuid = taskUUID.RawBytes()
 	}
 	return nil
 }

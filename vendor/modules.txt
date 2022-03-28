@@ -57,9 +57,9 @@ github.com/nutanix-core/acs-aos-go/aplos/client/transport
 github.com/nutanix-core/acs-aos-go/cassandra/cassandra_client
 github.com/nutanix-core/acs-aos-go/catalog
 github.com/nutanix-core/acs-aos-go/catalog/client
-
 github.com/nutanix-core/acs-aos-go/ergon
 github.com/nutanix-core/acs-aos-go/ergon/client
+github.com/nutanix-core/acs-aos-go/ergon/task
 github.com/nutanix-core/acs-aos-go/go-zookeeper
 github.com/nutanix-core/acs-aos-go/hyperint
 github.com/nutanix-core/acs-aos-go/insights/insights_interface
@@ -70,6 +70,7 @@ github.com/nutanix-core/acs-aos-go/nutanix/util-go/base
 github.com/nutanix-core/acs-aos-go/nutanix/util-go/config
 github.com/nutanix-core/acs-aos-go/nutanix/util-go/errors
 github.com/nutanix-core/acs-aos-go/nutanix/util-go/misc
+github.com/nutanix-core/acs-aos-go/nutanix/util-go/misc/serial_executor
 github.com/nutanix-core/acs-aos-go/nutanix/util-go/net
 github.com/nutanix-core/acs-aos-go/nutanix/util-go/uuid4
 github.com/nutanix-core/acs-aos-go/nutanix/util-go/version
@@ -88,7 +89,6 @@ github.com/nutanix-core/acs-aos-go/zeus
 github.com/nutanix-core/acs-aos-go/zeus/config
 # github.com/nutanix-core/idf-interfaces v0.0.0-20210826054358-401fceaf6887
 ## explicit
-
 # github.com/nutanix-core/ntnx-api-utils-go v1.0.0
 ## explicit; go 1.14
 github.com/nutanix-core/ntnx-api-utils-go/tracer
@@ -122,7 +122,6 @@ github.com/spf13/cobra
 github.com/spf13/pflag
 # github.com/traefik/yaegi v0.11.2
 ## explicit; go 1.16
-
 # go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.28.0
 ## explicit; go 1.16
 go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc
@@ -157,7 +156,6 @@ go.opentelemetry.io/otel/sdk/trace
 go.opentelemetry.io/otel/trace
 # go.uber.org/goleak v1.1.12
 ## explicit; go 1.13
-
 # golang.org/x/crypto v0.0.0-20211215153901-e495a2d5b3d3
 ## explicit; go 1.17
 golang.org/x/crypto/blowfish

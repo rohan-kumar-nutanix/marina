@@ -11,13 +11,13 @@ package main
 
 import (
 	"github.com/nutanix-core/content-management-marina/common"
+	"github.com/nutanix-core/content-management-marina/task"
 	"net/http"
 
 	"strconv"
 	"sync"
 	"syscall"
 
-	"github.com/golang/glog"
 	"github.com/nutanix-core/acs-aos-go/nutanix/util-go/net"
 	marinaGRPCServer "github.com/nutanix-core/content-management-marina/grpc"
 	"github.com/nutanix-core/content-management-marina/proxy"
@@ -27,8 +27,9 @@ import (
 
 // Marina service configurations.
 type marinaServiceConfig struct {
-	grpcServer marinaGRPCServer.Server    // Marina gRPC server.
-	rpcServer  *net.ProtobufRPCHTTPServer // Marina RPC server.
+	grpcServer  marinaGRPCServer.Server    // Marina gRPC server.
+	rpcServer   *net.ProtobufRPCHTTPServer // Marina RPC server.
+	taskManager *task.MarinaTaskManager    // Marina task manager.
 }
 
 var (
@@ -56,7 +57,7 @@ func runRPCServer() {
 // executed with the mutex lock, so no need to issue that lock again.
 func startRPCServer(isLeader bool) {
 	log.Info("Starting.. ProtobufRPCHTTP server... on Port : ", *common.MarinaRPCPort)
-	// Create a new HTTP server for Narsil RPC server.
+	// Create a new HTTP server for Marina RPC server.
 	httpServer := net.NewHTTPServer("0.0.0.0",
 		strconv.FormatUint(*common.MarinaRPCPort, 10))
 	httpServer.RegisterDebugHandlerFunc("exit", exitHTTPServerHandler)
@@ -65,12 +66,30 @@ func startRPCServer(isLeader bool) {
 	// Export Catalog RPC service.
 	catalogSvc := proxy.NewRpcService(util.CatalogServiceName)
 	if !svcConfig.rpcServer.ExportService(catalogSvc) {
-		glog.Fatalf("Failed to register Catalog RPC services.")
+		log.Fatalf("Failed to register Catalog RPC services.", catalogSvc)
 	}
+
+	// Export Catalog RPC service.
+	catalogOldSvc := proxy.NewRpcService(util.CatalogLegacyServiceName)
+	if !svcConfig.rpcServer.ExportService(catalogOldSvc) {
+		log.Fatalf("Failed to register Catalog RPC services.", catalogOldSvc)
+	}
+
+	// Export Catalog RPC service.
+	catalogInternalSvc := proxy.NewRpcService(util.CatalogInternalServiceName)
+	if !svcConfig.rpcServer.ExportService(catalogInternalSvc) {
+		log.Fatalf("Failed to register Catalog RPC services.", catalogInternalSvc)
+	}
+
+	// TODO: Start TaskDispatcher on Leader node only.
+	// Start a new task manager to dispatch Marina tasks on leader.
+	log.Infof("Starting Marina TaskDispatcher...")
+	svcConfig.taskManager = task.NewMarinaTaskManager()
+	svcConfig.taskManager.StartTaskDispatcher()
 
 	// Start the RPC server.
 	go func() {
-		glog.Fatal(svcConfig.rpcServer.StartProtobufRPCHTTPServer())
+		log.Fatal(svcConfig.rpcServer.StartProtobufRPCHTTPServer())
 	}()
 }
 
@@ -80,7 +99,10 @@ func exitHTTPServerHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func terminate() {
-	syscall.Kill(syscall.Getpid(), syscall.SIGQUIT)
+	err := syscall.Kill(syscall.Getpid(), syscall.SIGQUIT)
+	if err != nil {
+		log.Errorf("unable to terminate the process/service.")
+	}
 }
 
 func startGRPCServer() {
