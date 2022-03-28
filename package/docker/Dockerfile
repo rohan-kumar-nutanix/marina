@@ -1,4 +1,4 @@
-FROM docker.dyn.ntnxdpro.com/ntnx-general-docker/golang as build
+FROM docker.dyn.ntnxdpro.com/ntnx-general-docker/golang:1.15 as build
 
 LABEL maintainer="acropolis-catalog@nutanix.com"
 
@@ -14,9 +14,9 @@ RUN curl -LO https://github.com/protocolbuffers/protobuf/releases/download/v3.15
     && unzip -o $PROTOC_ZIP -d /usr/local 'include/*' \
     && rm -f $PROTOC_ZIP
 
-RUN go get -u github.com/golang/protobuf/protoc-gen-go@v1.5.2
-RUN go get -u google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.1.0
-RUN go get -u github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@v2.4.0
+# RUN go get -u github.com/golang/protobuf/protoc-gen-go@v1.5.2
+# RUN go get -u google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.1.0
+# RUN go get -u github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@v2.4.0
 
 WORKDIR /go/src/github/marina
 
