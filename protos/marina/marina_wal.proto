@@ -1,0 +1,66 @@
+/*
+ * Copyright (c) 2022 Nutanix Inc. All rights reserved.
+ *
+ * Author: rajesh.battala@nutanix.com
+ */
+
+syntax = "proto2";
+
+package protos.marina;
+
+option go_package = "protos/marina";
+
+message PcTaskWalRecordCatalogItemData {
+  // Catalog item UUID.
+  optional bytes catalog_item_uuid = 1;
+
+  // Catalog item's logical timestamp
+  optional int64 version = 2 [ default = -1 ];
+
+  // List of UUIDs of files created in the file repository as the result of a
+  // task.
+  repeated bytes file_uuid_list = 3;
+
+  // Catalog item UUID.
+  optional bytes global_catalog_item_uuid = 4;
+
+  // Cluster UUIDs where the image RPC is fanned out. Used by the PC version
+  // of the forward image task.
+  repeated bytes cluster_uuid_list = 5;
+
+  // New Catalog item UUID.
+  optional bytes new_catalog_item_uuid = 6;
+
+}
+
+
+message PcTaskWalRecordData {
+  // WAL data for catalog item related tasks.
+  optional PcTaskWalRecordCatalogItemData catalog_item = 1;
+}
+
+// Marina task WAL.
+message PcTaskWalRecord {
+  // The current task state.
+  //  optional Task task = 1;
+
+  // Additional data logged by operations.
+  optional PcTaskWalRecordData data = 2;
+
+  // Whether the entry has been deleted. Used by the refactored python task
+  // library.
+  optional bool deleted = 3;
+
+  // The proxy task WAL.
+  optional ProxyTaskWal proxy_task_wal = 4;
+
+}
+
+// Proxy task WAL.
+message ProxyTaskWal {
+  // The UUID of the Catalog task.
+  optional bytes task_uuid = 1;
+
+  // The serialization token of the task.
+  optional string serialization_token = 2;
+}

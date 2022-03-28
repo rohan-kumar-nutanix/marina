@@ -26,13 +26,13 @@ func init() {
 func marinaClient(port uint) (*grpc.ClientConn, marina.MarinaClient) {
 	//address := fmt.Sprintf("127.0.0.1:%d", port)
 	// address := fmt.Sprintf("10.37.161.66:%d", port)
-	pc_ip := "localhost" // "10.96.16.100" // "0.0.0.0" //"10.33.33.78"
+	pcIp := "localhost" // "10.96.16.100" // "0.0.0.0" //"10.33.33.78"
 	port = 9200
-	address := fmt.Sprintf("%s:%d", pc_ip, port)
+	address := fmt.Sprintf("%s:%d", pcIp, port)
 	fmt.Println("Connecting to GRPC server at ", address)
 	conn, err := grpc.Dial(address, grpc.WithInsecure(), grpc.WithBlock())
 	if err != nil {
-		fmt.Println("Failed grpc server connection: %v.", err)
+		fmt.Printf("Failed grpc server connection: %v.", err)
 		glog.Fatalf("Failed grpc server connection: %v.", err)
 	}
 
@@ -115,7 +115,7 @@ func GetCatalogItemsById(client marina.MarinaClient, ctx context.Context, uuids 
 	response, err := client.CatalogItemGet(ctx, arg)
 	// fmt.Printf("Error occured %v", err)
 	if err != nil {
-		fmt.Println("\nMarina request error: %s", err)
+		fmt.Println("Marina request error: %s", err)
 		errStatus, _ := status.FromError(err)
 		fmt.Printf("Error Status Message : %s \nCode %s \n full obj : %v", errStatus.Message(),
 			errStatus.Code(), errStatus)
@@ -131,7 +131,6 @@ func GetCatalogItemsById(client marina.MarinaClient, ctx context.Context, uuids 
 	}
 
 }
-
 
 func main1() {
 
@@ -151,8 +150,8 @@ func main1() {
 
 	fmt.Println("Making Marina server request CatalogItemGet.")
 	GetAllCatalogItems(mclient, ctx)
-	fmt.Println("-----------------------------------------------\n")
-	fmt.Println("Fetching CatalogItemGet by UUID's:\n")
+	fmt.Println("-----------------------------------------------")
+	fmt.Println("Fetching CatalogItemGet by UUID's:")
 	fmt.Println("-----------------------------------------------")
 	GetCatalogItemsById(mclient, ctx, nil)
 }

@@ -11,11 +11,12 @@ package main
 
 import (
 	"fmt"
+	"github.com/nutanix-core/acs-aos-go/nutanix/util-go/uuid4"
 	"time"
 
 	catalogIfc "github.com/nutanix-core/acs-aos-go/catalog"
 	catalogClient "github.com/nutanix-core/acs-aos-go/catalog/client"
-	"github.com/nutanix-core/acs-aos-go/nutanix/util-go/uuid4"
+	//	"github.com/nutanix-core/acs-aos-go/nutanix/util-go/uuid4"
 	clientUtil "github.com/nutanix-core/content-management-marina/util/catalog/client"
 )
 
@@ -39,12 +40,45 @@ func testVmTemplates() {
 		fmt.Println("-----------------------------------------------------------------------------------------------------")
 		for _, t := range vmTemplatesGetRet.TemplateDetailsList {
 			//uuid4.ToUuid4(t.TemplateInfo.TemplateUuid).UuidToString()
-			fmt.Println(*t.TemplateInfo.Name, len(t.VersionInfoList))
+			//fmt.Println(*t.TemplateInfo.Name, len(t.VersionInfoList))
 			fmt.Println("***Template Object ***: ", t)
 			time.Sleep(1 * time.Second)
 		}
 	}
 
+}
+
+func createTemplateShell(name, desc *string) {
+	arg := &catalogIfc.TemplateCreateArg{}
+	arg.TemplateName = name
+	arg.TemplateDescription = desc
+	ret := &catalogIfc.TemplateCreateRet{}
+	err := catalogSvcUtil.SendMsg("VmTemplateCreate", arg, ret)
+	if err != nil {
+		fmt.Println("Error in Creating VMTemplate Shell :", err)
+	} else {
+		fmt.Println("Successfully  VMTemplate Shell got created Task uuid :", uuid4.ToUuid4(ret.TaskUuid).String())
+	}
+}
+func createVMTemplate(name, desc, vmuuid *string) {
+	arg := &catalogIfc.TemplateAndVersionCreateArg{}
+	arg.TemplateName = name
+	arg.TemplateDescription = desc
+	vmUuid, err := uuid4.StringToUuid4(*vmuuid)
+	if err == nil {
+		arg.VmUuid = vmUuid.RawBytes()
+	} else {
+		fmt.Println("Invalid VMUUID passed to function. Returning.. err ", err)
+		return
+	}
+
+	ret := &catalogIfc.TemplateAndVersionCreateRet{}
+	err = catalogSvcUtil.SendMsg("VmTemplateAndVersionCreate", arg, ret)
+	if err != nil {
+		fmt.Println("Error in Creating VMTemplate and version :", err)
+	} else {
+		fmt.Println("Successfully  VMTemplate and version got created Task uuid :", uuid4.ToUuid4(ret.TaskUuid).String())
+	}
 }
 
 func catalogItemsGetWithSendMsg() {
@@ -60,8 +94,8 @@ func catalogItemsGetWithSendMsg() {
 		fmt.Println("G_UUID                                   Name           		Type              Version")
 		fmt.Println("-----------------------------------------------------------------------------------------------------")
 		for _, item := range cItemGetRet.CatalogItemList {
-			// fmt.Println("'%v': %v\n", i, item)
-			fmt.Println(uuid4.ToUuid4(item.GlobalCatalogItemUuid).UuidToString(), *item.Name, "\t", *item.ItemType, "\t", *item.Version)
+			fmt.Println("%v\n", item)
+			//fmt.Println(uuid4.ToUuid4(item.GlobalCatalogItemUuid).UuidToString(), *item.Name, "\t", *item.ItemType, "\t", *item.Version)
 		}
 	}
 
@@ -79,12 +113,50 @@ func catalogItemsGet() {
 		fmt.Println("G_UUID                                   Name            Type              Version")
 		fmt.Println("-----------------------------------------------------------------------------------------------------")
 		for _, item := range cItemGetRet.CatalogItemList {
-			// fmt.Println("'%v': %v\n", i, item)
-			fmt.Println(uuid4.ToUuid4(item.GlobalCatalogItemUuid).UuidToString(), *item.Name, "\t", *item.ItemType, "\t", *item.Version)
+			fmt.Println(item)
+			//fmt.Println(uuid4.ToUuid4(item.GlobalCatalogItemUuid).UuidToString(), *item.Name, "\t", *item.ItemType, "\t", *item.Version)
 		}
 	}
 
 }
+
+/*func catalogItemsCreate(name, desc , imageUrl *string, ) {
+	arg := &catalogIfc.CatalogItemCreateArg{}
+	spec := &catalogIfc.CatalogItemCreateSpec{}
+	spec.Name = name
+	spec.Annotation = desc
+	sourceGroup := &catalogIfc.SourceGroupSpec{}
+	sourceGroup.
+	append(a, )
+	spec.
+	catalogItem := &catalogIfc.CatalogItemId{}
+	catalogItem.GlobalCatalogItemUuid = uuid4.EmptyUuid().RawBytes()
+	cItemDelArg.CatalogItemId = catalogItem
+	cItemDelRet, err := catalogRpcClient.CatalogItemDelete(cItemDelArg)
+	if err != nil {
+		fmt.Println("Error in Deleting CatalogItemD :", err)
+	} else {
+		fmt.Println("*** Successfully Deleted CatalogItemD :", uuid4.ToUuid4(cItemDelRet.GetTaskUuid()).String())
+	}
+}*/
+
+/*func catalogItemsDelete() {
+	cItemDelArg := &catalogIfc.CatalogItemDeleteArg{}
+	arg := &acropolisIfc.ImageCreateArg{}
+	spec1 := &acropolisIfc.ImageCreateSpec{}
+	spec1.
+
+	catalogItem := &catalogIfc.CatalogItemId{}
+	catalogItem.GlobalCatalogItemUuid = uuid4.EmptyUuid().RawBytes()
+	cItemDelArg.CatalogItemId = catalogItem
+	cItemDelRet, err := catalogRpcClient.CatalogItemDelete(cItemDelArg)
+
+	if err != nil {
+		fmt.Println("Error in Deleting CatalogItemD :", err)
+	} else {
+		fmt.Println("*** Successfully Deleted CatalogItemD :", uuid4.ToUuid4(cItemDelRet.GetTaskUuid()).String())
+	}
+}*/
 
 func filesGet() {
 	fmt.Println("\n\n\n-----------------------Fetching Files-------------------")
@@ -113,17 +185,27 @@ func main() {
 	fmt.Println("\n********************************************************")
 	fmt.Println("Fetching CatalogItems....")
 	catalogItemsGet()
-	fmt.Println("Fetching CatalogItems using SendMsg method....")
-	catalogItemsGetWithSendMsg()
+	//fmt.Println("Fetching CatalogItems using SendMsg method....")
+	// catalogItemsGetWithSendMsg()
 
+	// Deleting CatalogItems.
+	//fmt.Println("Deleting CatalogItems....")
+	//catalogItemsDelete()
+	var tname string = "temp1"
+	var desc string = "my Temp Desc"
+	//var vmUuid string = "1bbd7143-e127-4d17-bc52-b429d6e99ab4"
+	fmt.Println("Cteating VMTemplate Shell......")
+	createTemplateShell(&tname, &desc)
+	/*fmt.Println("Cteating VMTemplate and Version vm uuid= ", vmUuid)
+	createVMTemplate(&tname, &desc, &vmUuid)*/
 	fmt.Println("\n********************************************************")
 	time.Sleep(3 * time.Second)
 	fmt.Println("Fetching VMTemplates....")
 	testVmTemplates()
 
-	time.Sleep(3 * time.Second)
-	fmt.Println("\n********************************************************")
-	fmt.Println("Fetching FileItems....")
-	filesGet()
+	/*	time.Sleep(3 * time.Second)
+		fmt.Println("\n********************************************************")
+		fmt.Println("Fetching FileItems....")*/
+	//filesGet()
 
 }

@@ -18,10 +18,10 @@ import (
 	log "k8s.io/klog/v2"
 )
 
-// serviceConfig specifies fields of Catalog RPCs that are needed for
+// catalogServiceConfig specifies fields of Catalog RPCs that are needed for
 // proxying. We only include Catalog RPCs that are supported to be
 // proxied by Marina Server.
-type serviceConfig struct {
+type catalogServiceConfig struct {
 	// isSync indicates if the RPC is a sync RPC or an async RPC.
 	isSync bool
 	// requestTaskUuid refers to the field name for the task UUID as found in
@@ -52,10 +52,10 @@ var (
 	// global_catalog_item_uuid. If global_catalog_item_uuid is not present, return an empty string.
 	catalogItemSerializationToken = serializationTokenFunc("global_catalog_item_uuid")
 	// Sync RPC configuration where only "isSync" is needed.
-	syncRpc = serviceConfig{isSync: true}
+	syncRpc = catalogServiceConfig{isSync: true}
 	// CatalogItem async RPCs serialized by global_catalog_item_uuid, if exists.
 	asyncCatalogItemRpc  = asyncRpc("TaskUuid", catalogItemSerializationToken)
-	supportedCatalogRpcs = map[string]serviceConfig{
+	supportedCatalogRpcs = map[string]catalogServiceConfig{
 		// Catalog sync RPCs.
 		"CatalogItemGet":                  syncRpc,
 		"FileGet":                         syncRpc,
@@ -70,7 +70,39 @@ var (
 		//"ImageViewGet":                    syncRpc,
 
 		// Catalog async RPCs.
-		"CatalogItemCreate": asyncCatalogItemRpc,
+		"CatalogItemCreate":     asyncCatalogItemRpc,
+		"CatalogItemUpdate":     asyncCatalogItemRpc,
+		"CatalogItemDelete":     asyncCatalogItemRpc,
+		"CatalogItemCheckout":   asyncCatalogItemRpc,
+		"CatalogItemUncheckout": asyncCatalogItemRpc,
+		"CatalogItemRemove":     asyncCatalogItemRpc,
+		// "CatalogItemUpload": asyncCatalogItemRpc,
+		// "CatalogMigratePc": asyncCatalogItemRpc,
+		// "CatalogRemoteSeedingSourceArg": asyncCatalogItemRpc,
+		"CatalogClusterRegistration":   asyncCatalogItemRpc,
+		"CatalogClusterUnregistration": asyncCatalogItemRpc,
+		"ImageCreate":                  asyncCatalogItemRpc,
+		"ImageUpdate":                  asyncCatalogItemRpc,
+		"ImageDelete":                  asyncCatalogItemRpc,
+		"ImageUpload":                  asyncCatalogItemRpc,
+		"CatalogPlacementPolicyCreate": asyncCatalogItemRpc,
+		"CatalogPlacementPolicyUpdate": asyncCatalogItemRpc,
+		"CatalogPlacementPolicyDelete": asyncCatalogItemRpc,
+		"ImageCheckout":                asyncCatalogItemRpc,
+		"VmTemplateCreate":             asyncCatalogItemRpc,
+		"VmTemplateVersionCreate":      asyncCatalogItemRpc,
+		// "VmTemplateDeploy":             asyncCatalogItemRpc,
+		"VmTemplateVersionsDelete": asyncCatalogItemRpc,
+		// "VmTemplateVersionDeploy":      asyncCatalogItemRpc,
+		// "VmTemplateAndVersionCreate": asyncCatalogItemRpc,
+		// "VmTemplateInitiateGuestChanges": asyncCatalogItemRpc,
+		// "VmTemplateCompleteGuestChanges" : asyncCatalogItemRpc,
+		// "VmTemplateCancelGuestChanges": asyncCatalogItemRpc,
+		// "VmTemplateDelete": asyncCatalogItemRpc,
+		"CatalogRateLimitCreate": asyncCatalogItemRpc,
+		"CatalogRateLimitUpdate": asyncCatalogItemRpc,
+		"CatalogRateLimitDelete": asyncCatalogItemRpc,
+		// NOTE: RPC's which has parent_task_uuid are only supported, if not need to add it.
 	}
 
 	rpcServiceConfigOnce sync.Once
@@ -87,8 +119,8 @@ func serializationTokenFunc(params ...string) func(reflect.Value) (string, error
 }
 
 func asyncRpc(requestTaskUuid string, serializationFunc func(reflect.Value) (
-	string, error)) serviceConfig {
-	return serviceConfig{
+	string, error)) catalogServiceConfig {
+	return catalogServiceConfig{
 		isSync:                    false,
 		requestTaskUuid:           requestTaskUuid,
 		responseTaskUuid:          responseTaskUuid,
@@ -109,12 +141,17 @@ func InitRpcServiceConfig() {
 		for rpcName, rpcService := range supportedCatalogRpcs {
 			CatalogRpcNames = append(CatalogRpcNames, rpcName)
 			// Replace RPC service specification with autofilled values.
+			log.Info("Fetching HandlerMethod for rpcName : ", rpcName)
 			handlerMethod := reflect.ValueOf(&catalog.CatalogExternalRpcClient{}).MethodByName(rpcName)
+			if handlerMethod.IsZero() {
+				log.Errorf("Unsupported Catalog RPC in map :", rpcName)
+				log.Fatal("Unsupported Catalog RPC in map :", rpcName)
+			}
 			requestType := handlerMethod.Type().In(0).Elem()
 			responseType := handlerMethod.Type().Out(0).Elem()
 			validateFields(requestType, false, []string{rpcService.requestTaskUuid})
 			validateFields(responseType, true, []string{rpcService.responseTaskUuid})
-			supportedCatalogRpcs[rpcName] = serviceConfig{
+			supportedCatalogRpcs[rpcName] = catalogServiceConfig{
 				isSync:                    rpcService.isSync,
 				requestTaskUuid:           rpcService.requestTaskUuid,
 				responseTaskUuid:          rpcService.responseTaskUuid,
@@ -152,16 +189,34 @@ func validateFields(reflectType reflect.Type, isSettable bool,
 // and its is mainly for mocking out methods in unit tests.
 type CatalogProxyConfigInterface interface {
 	getRequestResponseValues(rpcName string) (reflect.Value, reflect.Value, error)
+	getRequestTaskUuidFieldName(rpcName string) (string, error)
+	getResponseTaskUuidFieldName(rpcName string) (string, error)
+	getSerializationTokenFunc(rpcName string) (func(reflect.Value) (string, error), error)
+	isSyncRpc(rpcName string) bool
+	isSupportedRpc(rpcName string) bool
 }
 
-type catalogProxyConfigUtil struct{}
+type CatalogProxyConfigUtil struct{}
 
 // A singleton to access proxy config utility functions.
-var proxyConfig = new(catalogProxyConfigUtil)
+var proxyConfig = new(CatalogProxyConfigUtil)
 
-// getRequestResponseValues returns the RPC method request and response reflect
+// isSyncRpc checks if the given method name is a Catalog sync RPC.
+func (*CatalogProxyConfigUtil) isSyncRpc(rpcName string) bool {
+	InitRpcServiceConfig()
+	rpcService, isSupportedRPC := supportedCatalogRpcs[rpcName]
+	return isSupportedRPC && rpcService.isSync
+}
+
+// isSupportedRpc checks if the given method name is a Catalog sync RPC.
+func (*CatalogProxyConfigUtil) isSupportedRpc(rpcName string) bool {
+	_, isSupportedRPC := supportedCatalogRpcs[rpcName]
+	return isSupportedRPC
+}
+
+// GetRequestResponseValues returns the RPC method request and response reflect
 // values associated with the given RPC method name.
-func (*catalogProxyConfigUtil) getRequestResponseValues(rpcName string) (
+func (*CatalogProxyConfigUtil) getRequestResponseValues(rpcName string) (
 	reflect.Value, reflect.Value, error) {
 	if rpcService, found := supportedCatalogRpcs[rpcName]; found {
 		if rpcService.requestType == nil {
@@ -177,5 +232,38 @@ func (*catalogProxyConfigUtil) getRequestResponseValues(rpcName string) (
 		return requestValue, responseValue, nil
 	}
 	return reflect.Value{}, reflect.Value{}, marinaError.ErrMarinaInternal.SetCause(
+		fmt.Errorf("unsupported RPC method: %s", rpcName))
+}
+
+// GetRequestTaskUuidFieldName returns the task UUID field name as found in
+// RPC response protobuf definition.
+func (*CatalogProxyConfigUtil) getRequestTaskUuidFieldName(rpcName string) (string, error) {
+	if rpcService, found := supportedCatalogRpcs[rpcName]; found {
+		return rpcService.requestTaskUuid, nil
+	}
+	return "", marinaError.ErrInternal.SetCause(
+		fmt.Errorf("unsupported RPC method: %s", rpcName))
+}
+
+// GetResponseTaskUUIDFieldName returns the task UUID field name as found in
+// RPC response protobuf definition.
+func (*CatalogProxyConfigUtil) getResponseTaskUuidFieldName(rpcName string) (
+	string, error) {
+	if rpcService, found := supportedCatalogRpcs[rpcName]; found {
+		return rpcService.responseTaskUuid, nil
+	}
+	return "", marinaError.ErrInternal.SetCause(
+		fmt.Errorf("unsupported RPC method: %s", rpcName))
+}
+
+// GetSerializationTokenFunc returns the extractSerializationToken function
+// associated with the given RPC method name.
+func (*CatalogProxyConfigUtil) getSerializationTokenFunc(rpcName string) (
+	func(reflect.Value) (string, error), error) {
+	InitRpcServiceConfig()
+	if rpcService, found := supportedCatalogRpcs[rpcName]; found {
+		return rpcService.extractSerializationToken, nil
+	}
+	return nil, marinaError.ErrInternal.SetCause(
 		fmt.Errorf("unsupported RPC method: %s", rpcName))
 }

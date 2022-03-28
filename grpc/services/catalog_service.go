@@ -9,22 +9,21 @@ package services
 
 import (
 	"context"
-
-	catalog_item "github.com/nutanix-core/content-management-marina/grpc/catalog/catalog_item"
-	marina_pb "github.com/nutanix-core/content-management-marina/protos/marina"
+	"github.com/nutanix-core/content-management-marina/grpc/catalog/catalog_item"
+	marinapb "github.com/nutanix-core/content-management-marina/protos/marina"
 	"github.com/nutanix-core/ntnx-api-utils-go/tracer"
 	log "k8s.io/klog/v2"
 )
 
 type MarinaServer struct {
-	marina_pb.UnimplementedMarinaServer
+	marinapb.UnimplementedMarinaServer
 }
 
 type CatalogItemInterface interface {
-	CatalogItemGet(ctx context.Context, arg *marina_pb.CatalogItemGetArg) (*marina_pb.CatalogItemGetRet, error)
+	CatalogItemGet(ctx context.Context, arg *marinapb.CatalogItemGetArg) (*marinapb.CatalogItemGetRet, error)
 }
 
-func (s *MarinaServer) CatalogItemGet(ctx context.Context, arg *marina_pb.CatalogItemGetArg) (*marina_pb.CatalogItemGetRet, error) {
+func (s *MarinaServer) CatalogItemGet(ctx context.Context, arg *marinapb.CatalogItemGetArg) (*marinapb.CatalogItemGetRet, error) {
 	span, ctx := tracer.StartSpan(ctx, "catalogitem-get")
 	defer span.Finish()
 

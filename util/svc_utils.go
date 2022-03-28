@@ -12,13 +12,14 @@ package utils
 import (
 	"errors"
 	"fmt"
-	"strconv"
-
-	log "k8s.io/klog/v2"
-
+	"github.com/golang/protobuf/proto"
 	ergon "github.com/nutanix-core/acs-aos-go/ergon/client"
 	"github.com/nutanix-core/acs-aos-go/insights/insights_interface"
-	zeus "github.com/nutanix-core/acs-aos-go/zeus"
+	serialExecutor "github.com/nutanix-core/acs-aos-go/nutanix/util-go/misc/serial_executor"
+	"github.com/nutanix-core/acs-aos-go/nutanix/util-go/uuid4"
+	"github.com/nutanix-core/acs-aos-go/zeus"
+	log "k8s.io/klog/v2"
+	"strconv"
 )
 
 // Initialise zookeeper connection.
@@ -33,13 +34,42 @@ func GetZkSession() (*zeus.ZookeeperSession, error) {
 	return zkSession, nil
 }
 
-// Initialise instance of idf service.
+// GetInsightsService Initialise instance of IDF service.
 func GetInsightsService() insights_interface.InsightsServiceInterface {
 	return insights_interface.NewInsightsServiceInterface(HostAddr,
 		uint16(*insights_interface.DefaultInsightPort))
 }
 
-// Initialise instance of ergon service.
+// GetErgonService Initialise instance of Ergon service.
 func GetErgonService() ergon.Ergon {
 	return ergon.NewErgonService(HostAddr, ergon.DefaultErgonPort)
+}
+
+type MarshalInterface interface {
+	Marshal(m proto.Message) ([]byte, error)
+}
+
+type marshalUtil struct {
+}
+
+func Marshal(m proto.Message) ([]byte, error) {
+	return proto.Marshal(m)
+}
+
+type UuidInterface interface {
+	New() (*uuid4.Uuid, error)
+}
+
+type UuidUtil struct {
+}
+
+func NewUuid() (*uuid4.Uuid, error) {
+	uuid, err := uuid4.New()
+	return uuid, err
+}
+
+// SerialExecutor returns the singleton serial executor.
+func SerialExecutor() serialExecutor.SerialExecutorIfc {
+	// TODO: init with supported Max Tasks
+	return serialExecutor.NewSerialExecutor()
 }

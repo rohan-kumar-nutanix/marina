@@ -1,10 +1,10 @@
 /*
-Copyright (c) 2022 Nutanix Inc. All rights reserved.
-
-Author: rajesh.battala@nutanix.com
-
-The gflags management for Marina Server.
-*/
+* Copyright (c) 2022 Nutanix Inc. All rights reserved.
+*
+* Author: rajesh.battala@nutanix.com
+*
+* The gflags management for Marina Server.
+ */
 
 package common
 
