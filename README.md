@@ -28,21 +28,21 @@ The top level directory of your repository should be set up like this:
 Canaveral uses CircleCI for building, packaging, and alerting its Deployment Engine. Your repository should have been registered with CircleCI when it was provisioned.  Here are some additional steps you should follow to ensure proper builds:
 
 ### Dependencies
-go version go1.17 or later
-protoc: libprotoc 3.6.1
-protoc-gen-go v1.5.2
-protoc-gen-go-grpc v1.1.0
-protoc-gen-grpc-gateway v2.4.0
+- go version go1.17 or later
+- protoc: libprotoc 3.6.1
+- protoc-gen-go v1.5.2
+- protoc-gen-go-grpc v1.1.0
+- protoc-gen-grpc-gateway v2.4.0
 
 ### Build in local box (Mac, Linux, UBVM)
 Make sure above the repo is checkout, above dependencies are installed.
 set the following as per your user and env in .bashrc [shell rc file]
-export GIT_TOKEN = <your github token>
-export CANAVERAL_ARTIFACTORY_USERNAME = <your email id>
-export CANAVERAL_ARTIFACTORY_PASSWORD = <your api key>
-export GOPRIVATE="github.com/nutanix-core,github.com/nutanix"
-export GONOSUMDB="github.com/nutanix-core,github.com/nutanix"
-export GONOPROXY="github.com/nutanix-core,github.com/nutanix"
+- export GIT_TOKEN = "your github token"
+- export CANAVERAL_ARTIFACTORY_USERNAME = "your email id"
+- export CANAVERAL_ARTIFACTORY_PASSWORD = "your api key"
+- export GOPRIVATE="github.com/nutanix-core,github.com/nutanix"
+- export GONOSUMDB="github.com/nutanix-core,github.com/nutanix"
+- export GONOPROXY="github.com/nutanix-core,github.com/nutanix"
 
 execute all Make cmds at repo Top level dir.
 
@@ -74,12 +74,12 @@ Install Docker tools in your box. `docker --version` `Docker version 20.10.12, b
 `docker build -t marina_service:v1 -f package/docker/Dockerfile` This will build a docker image.
 
 #### Running Marina server in PC
-`GOOS=linux GOARCH=amd64 go build -ldflags="-s -w"  -o marina_server marina/*.go`
+- `GOOS=linux GOARCH=amd64 go build -ldflags="-s -w"  -o marina_server marina/*.go`
 cmd will build and generate binary with PC arch type.
-Copy the `marina_server` to PC and run it in PC.
-`nohup ./marina_server_task_proxy --proxyrpc_port=2007 --legacycatalog_port=9202 &`
+- Copy the `marina_server` to PC and run it in PC.
+- `nohup ./marina_server_task_proxy --proxyrpc_port=2007 --legacycatalog_port=9202 &`
 
-#### [Marina Deployment in PC using MSP platform] Running Marina server in PC using MSP (CMSP should be enabled in PC)
+#### Marina Deployment in PC using MSP platform [Running Marina server in PC using MSP (CMSP should be enabled in PC)]
 1. build the docker image from above cmd.
 2. `docker save <image id>  > marina.tar` dump the image to tar file.
 3. `scp marina.tar nutanix@pcip:` copy marina.tar to PC
