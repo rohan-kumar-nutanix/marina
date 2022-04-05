@@ -1,7 +1,7 @@
 # content-management-marina
 Marina Service
 
-# Welcome to your new service
+# Welcome to your new service Marina for Content Management.
 We've created an empty service structure to show you the setup and workflow with Canaveral.
 
 ### Directory Structure
@@ -12,6 +12,17 @@ The top level directory of your repository should be set up like this:
   4. `package/`:  add your `Dockerfile` under `package/docker/` to build a docker image.  (Note:  You can refer to files and folders directly in your `Dockerfile` because all files and folders under `services/` will be copied into the same folder as the `Dockerfile` during build.)
   5. `services/`: this directory should have a subdirectory for each `service`, *e.g.* `services/my-service/`.  Each subdirectory (often there is only one) would contain the definition (source and tests) for the service.
   6. `blueprint.json`: this file, if present, contains instructions for Canaveral to deploy the service.
+  7. `common/`: this directory contains common go util functions.
+  8. `config/`: this directory holds the deployment configuration files, helm chart configuration etc.
+  9. `error/`: this directory holds error.go, Marina service errors and Interface Types.
+  10. `grpc/`: this directory has all the new entity servies which are served by gRPC RPC framework.
+  11. `marina/`: this directory holds the Main service, init, metric functions.
+  12. `protos/`: this directory holds all *.proto definitions for the entities.
+  13. `proxy/`: this directory all proxy RPC work. Proxy all Catalog RPC's and delegate to Catalog service.
+  14. `task/`: this directory hold the base task and task realted infrastructure for Marina service.
+  15. `test/`: this directory contains test scripts etc.
+  16. `utils/`: this directory contains util code.
+  17. `vendor/`: This directory is GoLang vendor, contains service external dependencies.
 
 ### Build
 Canaveral uses CircleCI for building, packaging, and alerting its Deployment Engine. Your repository should have been registered with CircleCI when it was provisioned.  Here are some additional steps you should follow to ensure proper builds:
