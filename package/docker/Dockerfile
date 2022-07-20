@@ -34,6 +34,6 @@ COPY --from=build /go/src/github/marina/marina_server /usr/local/bin/marina
 COPY --from=build /go/src/github/marina/marina_client /usr/local/bin/marina_client
 WORKDIR /
 
-EXPOSE 9200 9201 9202 2007
+EXPOSE 9200 9201 9202
 
 CMD ["marina"]
