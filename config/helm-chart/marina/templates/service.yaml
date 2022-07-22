@@ -1,0 +1,24 @@
+# Service defines configurations for the application running on a set of pods
+# like IP address and the ports to listen incoming requests on. The requests are
+# forwarded from port to targetPort on an available pod.
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "marina.fullname" . }}
+  annotations:
+    service.msp.ntnx.io/lb: pc-external
+    meta.helm.sh/release-name: {{ .Release.Name }}
+    meta.helm.sh/release-namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "marina.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    {{- range $serviceTypeKey, $serviceTypeValue := .Values.ports }}
+    - port: {{ $serviceTypeValue.port }}
+      name: {{ $serviceTypeKey }}
+      protocol: TCP
+      targetPort: {{ $serviceTypeValue.targetPort }}
+    {{ end }}
+  selector:
+    {{- include "marina.selectorLabels" . | nindent 4 }}

@@ -1,0 +1,123 @@
+---
+# Source: marina/templates/serviceaccount.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: marina
+  labels:
+    helm.sh/chart: marina-0.1.0
+    app.kubernetes.io/name: marina
+    app.kubernetes.io/instance: marina
+    app.kubernetes.io/version: "1.0.0"
+    app.kubernetes.io/managed-by: Helm
+  annotations:
+    meta.helm.sh/release-name: marina
+    meta.helm.sh/release-namespace: default
+---
+# Source: marina/templates/service.yaml
+# Service defines configurations for the application running on a set of pods
+# like IP address and the ports to listen incoming requests on. The requests are
+# forwarded from port to targetPort on an available pod.
+apiVersion: v1
+kind: Service
+metadata:
+  name: marina
+  annotations:
+    service.msp.ntnx.io/lb: pc-external
+    meta.helm.sh/release-name: marina
+    meta.helm.sh/release-namespace: default
+  labels:
+    helm.sh/chart: marina-0.1.0
+    app.kubernetes.io/name: marina
+    app.kubernetes.io/instance: marina
+    app.kubernetes.io/version: "1.0.0"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  type: LoadBalancer
+  ports:
+    - port: 9200
+      name: grpc
+      protocol: TCP
+      targetPort: 9200
+
+    - port: 9201
+      name: prometheus
+      protocol: TCP
+      targetPort: 9201
+
+    - port: 9202
+      name: proxy-rpc
+      protocol: TCP
+      targetPort: 9202
+
+  selector:
+    app.kubernetes.io/name: marina
+    app.kubernetes.io/instance: marina
+---
+# Source: marina/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: marina
+  labels:
+    helm.sh/chart: marina-0.1.0
+    app.kubernetes.io/name: marina
+    app.kubernetes.io/instance: marina
+    app.kubernetes.io/version: "1.0.0"
+    app.kubernetes.io/managed-by: Helm
+  annotations:
+    meta.helm.sh/release-name: marina
+    meta.helm.sh/release-namespace: default
+spec:
+  # No. of pods required to run the service.
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: marina
+      app.kubernetes.io/instance: marina
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: marina
+        app.kubernetes.io/instance: marina
+    spec:
+      containers:
+        - name: marina
+          securityContext:
+            {}
+          image: "docker.dyn.ntnxdpro.com/canaveral-legacy-docker/nutanix-core/content-management-marina:32"
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: grpc
+              containerPort: 9200
+            - name: prometheus
+              containerPort: 9201
+            - name: proxy-rpc
+              containerPort: 9202
+          # Mount any files or directories onto each pod.
+          volumeMounts:
+            - mountPath: /home/private/gen_server.key
+              name: rpc-cred
+            - mountPath: /home/nutanix/api_artifacts/vmm
+              name: error-api-artifacts
+          lifecycle:
+            postStart:
+              exec:
+                command: [ "/bin/ash", "-c", "chmod 444 /home/private/gen_server.key" ]
+          resources:
+            limits:
+              cpu: 200m
+              memory: 256Mi
+            requests:
+              cpu: 100m
+              memory: 128Mi
+          # Source paths for volume mounts.
+      volumes:
+        - name: rpc-cred
+          hostPath:
+            path: /home/private/gen_server.key
+            type: FileOrCreate
+        - name: error-api-artifacts
+          hostPath:
+            path: /home/nutanix/api_artifacts/vmm
+            type: Directory

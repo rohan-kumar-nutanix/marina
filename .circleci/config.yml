@@ -10,9 +10,11 @@ jobs:
             CANAVERAL_PACKAGE_TOOLS: docker
             DOCKER_REPO_SERVER: artifactory.dyn.ntnxdpro.com/canaveral-legacy-docker
             CANAVERAL_LANGUAGE_VERSION: 3.8.5
-
+            CANAVERAL_PACKAGER_HELM_URI: "https://artifactory.canaveral-corp.us-west-2.aws:443/artifactory/canaveral-helm"
+            CANAVERAL_PACKAGER_HELM_CHART_DIRECTORY_PATH: "/home/circleci/project/config/helm-chart/marina"
             CANAVERAL_USE_LEGACY_PIPELINE_MODE: "0"
             CANAVERAL_USE_BLUEPRINT_PROXY: "1"
+            CANAVERAL_PACKAGER_BRANCH: main
 
         steps:
             - run:
@@ -94,6 +96,17 @@ jobs:
                   path: test-results
             - store_artifacts:
                   path: test-results
+            - run:
+                name: Helm Chart Package
+                command: |-
+                  if [ ${CIRCLE_BRANCH} == ${CANAVERAL_PACKAGER_BRANCH} ]
+                  then
+                      python -c "import canaveral_build_tools.package_systems.helm as h; h.package()"
+                  else
+                      echo "Skipping Helm Chart packaging for dev branch"
+                  fi
+                environment:
+                  PYENV_VERSION: canaveral_build
             - store_artifacts:
                   path: coverage
             - run:

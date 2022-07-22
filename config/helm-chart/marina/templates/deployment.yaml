@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "marina.fullname" . }}
+  labels:
+    {{- include "marina.labels" . | nindent 4 }}
+  annotations:
+    meta.helm.sh/release-name: {{ .Release.Name }}
+    meta.helm.sh/release-namespace: {{ .Release.Namespace }}
+spec:
+  # No. of pods required to run the service.
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "marina.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "marina.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+          {{- range $k, $v := .Values.ports }}
+            - name: {{ $k }}
+              containerPort: {{ $v.port }}
+          {{- end }}
+          # Mount any files or directories onto each pod.
+          volumeMounts:
+            - mountPath: {{ .Values.rpcCred.path }}
+              name: {{ .Values.rpcCred.name }}
+            - mountPath: {{ .Values.errorApiArtifacts.path }}
+              name: {{ .Values.errorApiArtifacts.name }}
+          lifecycle:
+            postStart:
+              exec:
+                command: [ "/bin/ash", "-c", "chmod 444 {{ .Values.rpcCred.path }}" ]
+          resources:
+               {{- toYaml .Values.resources | nindent 12 }}
+          # Source paths for volume mounts.
+      volumes:
+        - name: {{ .Values.rpcCred.name }}
+          hostPath:
+            path: {{ .Values.rpcCred.path }}
+            type: FileOrCreate
+        - name: {{ .Values.errorApiArtifacts.name }}
+          hostPath:
+            path: {{ .Values.errorApiArtifacts.path }}
+            type: Directory
