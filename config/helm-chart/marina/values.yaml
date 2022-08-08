@@ -5,7 +5,7 @@
 replicaCount: 1
 
 image:
-  repository: docker.dyn.ntnxdpro.com/canaveral-legacy-docker/nutanix-core/content-management-marina
+  repository: docker.dyn.ntnxdpro.com/msp-dev-docker/nutanix-msp/content-management-marina
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
   tag: "32"
