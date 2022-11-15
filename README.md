@@ -33,6 +33,10 @@ Canaveral uses CircleCI for building, packaging, and alerting its Deployment Eng
 - protoc-gen-go v1.5.2
 - protoc-gen-go-grpc v1.1.0
 - protoc-gen-grpc-gateway v2.4.0
+  brew commands to install the packages in MAC.
+    brew install protobuf
+    brew install protoc-gen-go
+    brew install protoc-gen-go-grpc
 
 ### Build in local box (Mac, Linux, UBVM)
 Make sure above the repo is checkout, above dependencies are installed.
