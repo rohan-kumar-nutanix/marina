@@ -114,7 +114,6 @@ jobs:
                   command: |-
                       python -m canaveral_build_tools.core.inform_dependencies
                       python -m canaveral_build_tools.core.push_event Build::Finished::Succeeded
-                      python -m canaveral_build_tools.core.deploy
                   environment:
                       PYENV_VERSION: canaveral_build
             - store_artifacts:
