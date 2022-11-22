@@ -24,6 +24,9 @@ The top level directory of your repository should be set up like this:
   16. `utils/`: this directory contains util code.
   17. `vendor/`: This directory is GoLang vendor, contains service external dependencies.
 
+### Belows setup guide is actively updated at https://confluence.eng.nutanix.com:8443/display/~rajesh.battala/Marina+Content+Management+System+Service 
+    https://confluence.eng.nutanix.com:8443/display/~rajesh.battala/Marina+Setup+Guide+for+MAC
+
 ### Build
 Canaveral uses CircleCI for building, packaging, and alerting its Deployment Engine. Your repository should have been registered with CircleCI when it was provisioned.  Here are some additional steps you should follow to ensure proper builds:
 
