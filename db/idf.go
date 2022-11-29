@@ -20,26 +20,6 @@ import (
 	util "github.com/nutanix-core/content-management-marina/util"
 )
 
-const (
-	CatalogItemTable      = "catalog_item_info"
-	DefaultSortAttribute  = "created_time_usecs"
-	Annotation            = "annotation"
-	GlobalCatalogItemUuid = "global_catalog_item_uuid"
-	CatalogItemType       = "item_type"
-	CatalogName           = "name"
-	CatalogItemUuid       = "uuid"
-	CatalogVersion        = "version"
-)
-
-var CatalogItemAttributes = []interface{}{
-	Annotation,
-	GlobalCatalogItemUuid,
-	CatalogItemType,
-	CatalogName,
-	CatalogItemUuid,
-	CatalogVersion,
-}
-
 type IdfClient struct {
 	IdfSvc insights_interface.InsightsServiceInterface
 	Retry  *misc.ExponentialBackoff

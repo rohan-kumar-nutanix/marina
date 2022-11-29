@@ -9,10 +9,12 @@ package services
 
 import (
 	"context"
+
+	log "k8s.io/klog/v2"
+
 	"github.com/nutanix-core/content-management-marina/grpc/catalog/catalog_item"
 	marinaIfc "github.com/nutanix-core/content-management-marina/protos/marina"
 	"github.com/nutanix-core/ntnx-api-utils-go/tracer"
-	log "k8s.io/klog/v2"
 )
 
 type MarinaServer struct {

@@ -13,29 +13,61 @@ import (
 	"errors"
 	"fmt"
 
+	log "k8s.io/klog/v2"
+
 	marinaError "github.com/nutanix-core/content-management-marina/error"
 	marinaIfc "github.com/nutanix-core/content-management-marina/protos/marina"
 	"github.com/nutanix-core/ntnx-api-utils-go/tracer"
-	log "k8s.io/klog/v2"
 )
 
+// CatalogItemGet implements the CatalogItemGet RPC.
 func CatalogItemGet(ctx context.Context, arg *marinaIfc.CatalogItemGetArg) (*marinaIfc.CatalogItemGetRet, error) {
-	span, ctx := tracer.StartSpan(ctx, "GetCatalogItems")
+	span, ctx := tracer.StartSpan(ctx, "CatalogItemGet")
 	defer span.Finish()
 
+	var catalogItemList []*marinaIfc.CatalogItemInfo
+	catalogItemIdList := arg.GetCatalogItemIdList()
+	catalogItemIdListSize := len(catalogItemIdList)
 	catalogItemChan := make(chan []*marinaIfc.CatalogItemInfo)
 	catalogItemErrChan := make(chan error)
+	if catalogItemIdListSize <= *CatalogIdfQueryChunkSize {
 
-	go GetCatalogItemsChan(ctx, arg.GetCatalogItemIdList(), arg.GetCatalogItemTypeList(), arg.GetLatest(),
-		catalogItemChan, catalogItemErrChan)
+		go GetCatalogItemsChan(ctx, catalogItemIdList, arg.GetCatalogItemTypeList(), arg.GetLatest(),
+			catalogItemChan, catalogItemErrChan)
 
-	catalogItemList := <-catalogItemChan
-	err := <-catalogItemErrChan
+		catalogItemList = <-catalogItemChan
+		err := <-catalogItemErrChan
 
-	if err != nil {
-		log.Error("Error occurred : ", err)
-		errMsg := fmt.Sprintf("Error while fetching CatalogItem list: %v", err)
-		return nil, marinaError.ErrInternal.SetCause(errors.New(errMsg))
+		if err != nil {
+			log.Error("Error occurred : ", err)
+			errMsg := fmt.Sprintf("Error while fetching CatalogItem list: %v", err)
+			return nil, marinaError.ErrInternal.SetCause(errors.New(errMsg))
+		}
+
+	} else {
+		count := 0
+		for start := 0; start < catalogItemIdListSize; start += *CatalogIdfQueryChunkSize {
+			count++
+			end := start + *CatalogIdfQueryChunkSize
+			if end > catalogItemIdListSize {
+				end = catalogItemIdListSize
+			}
+
+			log.Infof("Fetching items from index %v to %v", start, end)
+			go GetCatalogItemsChan(ctx, catalogItemIdList[start:end], arg.GetCatalogItemTypeList(), arg.GetLatest(),
+				catalogItemChan, catalogItemErrChan)
+		}
+
+		for i := 0; i < count; i++ {
+			catalogItemList = append(catalogItemList, <-catalogItemChan...)
+			err := <-catalogItemErrChan
+
+			if err != nil {
+				log.Error("Error occurred : ", err)
+				errMsg := fmt.Sprintf("Error while fetching CatalogItem list: %v", err)
+				return nil, marinaError.ErrInternal.SetCause(errors.New(errMsg))
+			}
+		}
 	}
 
 	ret := &marinaIfc.CatalogItemGetRet{CatalogItemList: catalogItemList}

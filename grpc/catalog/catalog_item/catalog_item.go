@@ -11,6 +11,7 @@ package catalog_item
 
 import (
 	"context"
+
 	log "k8s.io/klog/v2"
 
 	"github.com/nutanix-core/acs-aos-go/insights/insights_interface"
@@ -22,13 +23,26 @@ import (
 	util "github.com/nutanix-core/content-management-marina/util"
 )
 
-type CatalogItem struct {
-	catalogItemId *marinaIfc.CatalogItemId
-	// This should be nil if 'exists' is false.
-	catalogItemInfo *marinaIfc.CatalogItemInfo
-	exists          bool
+const (
+	CatalogItemTable      = "catalog_item_info"
+	Annotation            = "annotation"
+	GlobalCatalogItemUuid = "global_catalog_item_uuid"
+	CatalogItemType       = "item_type"
+	CatalogName           = "name"
+	CatalogItemUuid       = "uuid"
+	CatalogVersion        = "version"
+)
+
+var CatalogItemAttributes = []interface{}{
+	Annotation,
+	GlobalCatalogItemUuid,
+	CatalogItemType,
+	CatalogName,
+	CatalogItemUuid,
+	CatalogVersion,
 }
 
+// GetCatalogItemsChan pushes catalog items and error object to respective channels.
 func GetCatalogItemsChan(ctx context.Context, catalogItemIdList []*marinaIfc.CatalogItemId,
 	catalogItemTypeList []marinaIfc.CatalogItemInfo_CatalogItemType, latest bool,
 	catalogItemChan chan []*marinaIfc.CatalogItemInfo, errorChan chan error) {
@@ -37,11 +51,12 @@ func GetCatalogItemsChan(ctx context.Context, catalogItemIdList []*marinaIfc.Cat
 	errorChan <- err
 }
 
-// GetCatalogItems Loads Catalog Items from IDF and returns a list of CatalogItem.
+// GetCatalogItems loads Catalog Items from IDF and returns a list of CatalogItem.
 // Returns (CatalogItem, nil) on success and (nil, error) on failure.
 func getCatalogItems(ctx context.Context, catalogItemIdList []*marinaIfc.CatalogItemId,
 	catalogItemTypeList []marinaIfc.CatalogItemInfo_CatalogItemType, latest bool) ([]*marinaIfc.CatalogItemInfo, error) {
 	var predicateList []*insights_interface.BooleanExpression
+	var whereClause *insights_interface.BooleanExpression
 	if len(catalogItemIdList) > 0 {
 		var catalogItemUuidStrList []string
 		for _, catalogItemId := range catalogItemIdList {
@@ -55,38 +70,38 @@ func getCatalogItems(ctx context.Context, catalogItemIdList []*marinaIfc.Catalog
 			catalogItemUuidStrList = append(catalogItemUuidStrList, gcUuidStr)
 
 			if catalogItemId.Version != nil {
-				predicateList = append(predicateList, AND(EQ(COL(db.GlobalCatalogItemUuid), STR(gcUuidStr)),
-					EQ(COL(db.CatalogVersion), INT64(*catalogItemId.Version))))
+				predicateList = append(predicateList, AND(EQ(COL(GlobalCatalogItemUuid), STR(gcUuidStr)),
+					EQ(COL(CatalogVersion), INT64(*catalogItemId.Version))))
 			} else {
-				predicateList = append(predicateList, EQ(COL(db.GlobalCatalogItemUuid), STR(gcUuidStr)))
+				predicateList = append(predicateList, EQ(COL(GlobalCatalogItemUuid), STR(gcUuidStr)))
 			}
 		}
+		whereClause = ANY(predicateList...)
 	}
 
-	var itemTypeExpression, whereClause *insights_interface.BooleanExpression
+	var itemTypeExpression *insights_interface.BooleanExpression
 	if len(catalogItemTypeList) > 0 {
 		var catalogItemTypeStrList []string
 		for _, catalogItemType := range catalogItemTypeList {
 			catalogItemTypeStrList = append(catalogItemTypeStrList, catalogItemType.Enum().String())
 		}
 
-		itemTypeExpression = IN(COL(db.CatalogItemType), STR_LIST(catalogItemTypeStrList...))
+		itemTypeExpression = IN(COL(CatalogItemType), STR_LIST(catalogItemTypeStrList...))
 
-		if predicateList == nil {
-			predicateList = append(predicateList, itemTypeExpression)
-			whereClause = ANY(predicateList...)
+		if whereClause == nil {
+			whereClause = itemTypeExpression
 		} else {
-			whereClause = AND(ANY(predicateList...), itemTypeExpression)
+			whereClause = AND(whereClause, itemTypeExpression)
 		}
 	}
 
-	queryBuilder := QUERY("latest_catalog_item_list").SELECT(db.CatalogItemAttributes...).FROM(db.CatalogItemTable)
+	queryBuilder := QUERY("catalog_item_list").SELECT(CatalogItemAttributes...).FROM(CatalogItemTable)
 	if whereClause != nil {
 		queryBuilder = queryBuilder.WHERE(whereClause)
 	}
 
 	if latest {
-		queryBuilder = queryBuilder.LIMIT(1).ORDER_BY(DESCENDING(db.CatalogVersion))
+		queryBuilder = queryBuilder.LIMIT(1).ORDER_BY(DESCENDING(CatalogVersion))
 	}
 
 	query, err := queryBuilder.Proto()
@@ -111,20 +126,20 @@ func getCatalogItems(ctx context.Context, catalogItemIdList []*marinaIfc.Catalog
 			}
 
 			switch *metricData.Name {
-			case db.GlobalCatalogItemUuid:
+			case GlobalCatalogItemUuid:
 				catalogItem.GlobalCatalogItemUuid = []byte(metricData.ValueList[0].Value.GetStrValue())
-			case db.CatalogItemUuid:
+			case CatalogItemUuid:
 				catalogItem.Uuid = []byte(metricData.ValueList[0].Value.GetStrValue())
-			case db.CatalogVersion:
+			case CatalogVersion:
 				version := metricData.ValueList[0].Value.GetInt64Value()
 				catalogItem.Version = &version
-			case db.CatalogName:
+			case CatalogName:
 				name := metricData.ValueList[0].Value.GetStrValue()
 				catalogItem.Name = &name
-			case db.Annotation:
+			case Annotation:
 				annotation := metricData.ValueList[0].Value.GetStrValue()
 				catalogItem.Name = &annotation
-			case db.CatalogItemType:
+			case CatalogItemType:
 				catalogItem.ItemType = util.GetCatalogItemTypeEnum(*metricData.Name)
 			}
 		}
