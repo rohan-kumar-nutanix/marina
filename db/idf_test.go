@@ -6,7 +6,7 @@
  * IDF utilities for Marina Service.
  */
 
-package idf
+package db
 
 import (
 	"context"

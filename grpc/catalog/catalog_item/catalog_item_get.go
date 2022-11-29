@@ -1,11 +1,11 @@
 /*
- * Copyright (c) 2021 Nutanix Inc. All rights reserved.
+ * Copyright (c) 2022 Nutanix Inc. All rights reserved.
  *
- * Author: rajesh.battala@nutanix.com
+ * Author: rishabh.gupta@nutanix.com
  *
- * The underlying grpc server that exports the various services. Services may
- * be added in the registerServices() implementation.
+ * The implementation for CatalogItemGet RPC
  */
+
 package catalog_item
 
 import (
@@ -13,130 +13,31 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/nutanix-core/acs-aos-go/insights/insights_interface"
-	. "github.com/nutanix-core/acs-aos-go/insights/insights_interface/query"
-	"github.com/nutanix-core/acs-aos-go/nutanix/util-go/uuid4"
-	"github.com/nutanix-core/content-management-marina/common"
 	marinaError "github.com/nutanix-core/content-management-marina/error"
-	marinaPB "github.com/nutanix-core/content-management-marina/protos/marina"
-	util "github.com/nutanix-core/content-management-marina/util"
-	"github.com/nutanix-core/content-management-marina/util/idf"
+	marinaIfc "github.com/nutanix-core/content-management-marina/protos/marina"
 	"github.com/nutanix-core/ntnx-api-utils-go/tracer"
 	log "k8s.io/klog/v2"
 )
 
-func validateCatalogItemGetArg(arg *marinaPB.CatalogItemGetArg) marinaError.MarinaErrorInterface {
-	for _, catalogItemId := range arg.CatalogItemIdList {
-		if err := common.ValidateUUID(catalogItemId.GlobalCatalogItemUuid, "GlobalCatalogItem"); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func GetCatalogItems(ctx context.Context, arg *marinaPB.CatalogItemGetArg) (*marinaPB.CatalogItemGetRet, error) {
-	// TODO: Add Tracer support.
-	// TODO: Add Authz support.
-	// TODO: leverage channel and go routine for fetching results.
-
+func CatalogItemGet(ctx context.Context, arg *marinaIfc.CatalogItemGetArg) (*marinaIfc.CatalogItemGetRet, error) {
 	span, ctx := tracer.StartSpan(ctx, "GetCatalogItems")
 	defer span.Finish()
 
-	ret := &marinaPB.CatalogItemGetRet{}
-	if err := validateCatalogItemGetArg(arg); err != nil {
-		log.Error("Error occured : ", err)
-		return nil, util.NewGrpcStatusUtil().BuildGrpcError(err)
-	}
+	catalogItemChan := make(chan []*marinaIfc.CatalogItemInfo)
+	catalogItemErrChan := make(chan error)
 
-	var expTwo, whereClause *insights_interface.BooleanExpression
-	var predicateList []*insights_interface.BooleanExpression = nil
-	var orderByColumn string
-	var query *insights_interface.Query
-	whereClause = nil
-	if len(arg.GetCatalogItemIdList()) > 0 {
-		var citemUuidListHex []string
-		for _, catalogItemId := range arg.CatalogItemIdList {
-			str := uuid4.ToUuid4(catalogItemId.GetGlobalCatalogItemUuid()).UuidToString()
-			citemUuidListHex = append(citemUuidListHex, str)
-			if catalogItemId.Version != nil {
-				predicateList = append(predicateList, AND(EQ(COL(idf.GlobalCatalogItemUuid), STR(str)),
-					EQ(COL(idf.CatalogVersion), INT64(*catalogItemId.Version))))
-			} else {
-				predicateList = append(predicateList, EQ(COL(idf.GlobalCatalogItemUuid), STR(str)))
-			}
-		}
-	}
+	go GetCatalogItemsChan(ctx, arg.GetCatalogItemIdList(), arg.GetCatalogItemTypeList(), arg.GetLatest(),
+		catalogItemChan, catalogItemErrChan)
 
-	if len(arg.GetCatalogItemTypeList()) > 0 {
-		var citemTypes []string
-		for _, catalogItemType := range arg.GetCatalogItemTypeList() {
-			log.Infof("Item type %s ", catalogItemType.Enum().String())
-			citemTypes = append(citemTypes, catalogItemType.Enum().String())
-		}
-		expTwo = IN(COL(idf.CatalogItemType), STR_LIST(citemTypes...))
-
-		if predicateList == nil {
-			predicateList = append(predicateList, expTwo)
-			whereClause = ANY(predicateList...)
-		} else {
-			whereClause = AND(ANY(predicateList...), expTwo)
-			log.Info("Adding guid and catalog item types.")
-		}
-	}
-
-	if whereClause != nil {
-		orderByColumn = idf.CatalogVersion
-		query, _ = QUERY("marina_latest_catalog_item_list1").SELECT(
-			idf.CatalogItemAttributes...,
-		).FROM(idf.CatalogDB).
-			WHERE(whereClause).
-			ORDER_BY(DESCENDING(orderByColumn)).Proto()
-	} else {
-		query, _ = QUERY("marina_latest_catalog_item_list2").SELECT(
-			idf.CatalogItemAttributes...,
-		).FROM(idf.CatalogDB).Proto()
-	}
-	// var idfClient = idf.NewIdfClient()
-	idfQueryArg := &insights_interface.GetEntitiesWithMetricsArg{Query: query}
-	idfResponse, err := idf.NewIdfClient().Query(ctx, idfQueryArg)
+	catalogItemList := <-catalogItemChan
+	err := <-catalogItemErrChan
 
 	if err != nil {
-		log.Errorf("IDF query failed because of error - %s\n", err)
-		errMsg := fmt.Sprintf("Error while fetching CatalogItems list: %v", err)
+		log.Error("Error occurred : ", err)
+		errMsg := fmt.Sprintf("Error while fetching CatalogItem list: %v", err)
 		return nil, marinaError.ErrInternal.SetCause(errors.New(errMsg))
 	}
-	var catalogItems []*marinaPB.CatalogItemInfo
 
-	for _, entityWithMetric := range idfResponse {
-		log.Infof("Entity ID: %v", entityWithMetric.EntityGuid.GetEntityId())
-		cItem := &marinaPB.CatalogItemInfo{}
-		for _, metricData := range entityWithMetric.MetricDataList {
-
-			if len(metricData.ValueList) == 0 {
-				log.Infof("Could not find value for metric %v", *metricData.Name)
-				continue
-			}
-
-			switch *metricData.Name {
-			case idf.GlobalCatalogItemUuid:
-				cItem.GlobalCatalogItemUuid = []byte(metricData.ValueList[0].Value.GetStrValue())
-			case idf.CatalogItemUuid:
-				cItem.Uuid = []byte(metricData.ValueList[0].Value.GetStrValue())
-			case idf.CatalogVersion:
-				version := metricData.ValueList[0].Value.GetInt64Value()
-				cItem.Version = &version
-			case idf.CatalogName:
-				name := metricData.ValueList[0].Value.GetStrValue()
-				cItem.Name = &name
-			case idf.Annotation:
-				annotation := metricData.ValueList[0].Value.GetStrValue()
-				cItem.Name = &annotation
-			case idf.CatalogItemType:
-				cItem.ItemType = util.GetCatalogItemTypeEnum(*metricData.Name)
-			}
-		}
-		catalogItems = append(catalogItems, cItem)
-	}
-	ret.CatalogItemList = catalogItems
+	ret := &marinaIfc.CatalogItemGetRet{CatalogItemList: catalogItemList}
 	return ret, nil
 }
