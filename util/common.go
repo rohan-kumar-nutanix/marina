@@ -10,29 +10,29 @@
 package utils
 
 import (
-	marinapb "github.com/nutanix-core/content-management-marina/protos/marina"
+	marinaIfc "github.com/nutanix-core/content-management-marina/protos/marina"
 )
 
 /*
-	itemType - Catalog Item type in string.
-	Returns CatalogItemInfo Enum Type.
+itemType - Catalog Item type in string.
+Returns CatalogItemInfo Enum Type.
 */
-func GetCatalogItemTypeEnum(itemType string) *marinapb.CatalogItemInfo_CatalogItemType {
+func GetCatalogItemTypeEnum(itemType string) *marinaIfc.CatalogItemInfo_CatalogItemType {
 	switch itemType {
 	case "kImage":
-		return marinapb.CatalogItemInfo_kImage.Enum()
+		return marinaIfc.CatalogItemInfo_kImage.Enum()
 	case "kAcropolisVmSnapshot":
-		return marinapb.CatalogItemInfo_kAcropolisVmSnapshot.Enum()
+		return marinaIfc.CatalogItemInfo_kAcropolisVmSnapshot.Enum()
 	case "kVmSnapshot":
-		return marinapb.CatalogItemInfo_kVmSnapshot.Enum()
+		return marinaIfc.CatalogItemInfo_kVmSnapshot.Enum()
 	case "kFile":
-		return marinapb.CatalogItemInfo_kFile.Enum()
+		return marinaIfc.CatalogItemInfo_kFile.Enum()
 	case "kLCM":
-		return marinapb.CatalogItemInfo_kLCM.Enum()
+		return marinaIfc.CatalogItemInfo_kLCM.Enum()
 	case "kOVA":
-		return marinapb.CatalogItemInfo_kOVA.Enum()
+		return marinaIfc.CatalogItemInfo_kOVA.Enum()
 	case "kVmTemplate":
-		return marinapb.CatalogItemInfo_kVmTemplate.Enum()
+		return marinaIfc.CatalogItemInfo_kVmTemplate.Enum()
 	}
 	return nil
 }

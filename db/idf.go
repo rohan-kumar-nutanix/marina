@@ -7,7 +7,7 @@
  *
  */
 
-package idf
+package db
 
 import (
 	"context"
@@ -20,52 +20,9 @@ import (
 	util "github.com/nutanix-core/content-management-marina/util"
 )
 
-const (
-	CatalogDB             = "catalog_item_info"
-	DefaultSortAttribute  = "created_time_usecs"
-	Annotation            = "annotation"
-	GlobalCatalogItemUuid = "global_catalog_item_uuid"
-	CatalogItemType       = "item_type"
-	CatalogName           = "name"
-	CatalogItemUuid       = "uuid"
-	CatalogVersion        = "version"
-)
-
-var CatalogItemAttributes []interface{} = []interface{}{
-	Annotation,
-	GlobalCatalogItemUuid,
-	CatalogItemType,
-	CatalogName,
-	CatalogItemUuid,
-	CatalogVersion,
-}
-
-type IdfClientInterface interface {
-	Query(ctx context.Context, arg *insights_interface.GetEntitiesWithMetricsArg) (
-		[]*insights_interface.EntityWithMetric, error)
-	GetEntities(ctx context.Context, entityGuidList []*insights_interface.EntityGuid,
-		metaDataOnly bool) ([]*insights_interface.Entity, error)
-}
-
 type IdfClient struct {
 	IdfSvc insights_interface.InsightsServiceInterface
 	Retry  *misc.ExponentialBackoff
-}
-
-func NewIdfClient() *IdfClient {
-	insightsSvc := insights_interface.NewInsightsServiceInterface(
-		util.HostAddr,
-		uint16(*insights_interface.InsightsPort))
-
-	insightsSvc.SetRequestTimeout(util.IdfRpcTimeOut)
-	idfClient := IdfClient{IdfSvc: insightsSvc}
-	return &idfClient
-}
-
-func NewIdfClientWithoutRetry() *IdfClient {
-	idfClient := NewIdfClient()
-	idfClient.Retry = misc.NewExponentialBackoff(0, 0, 0)
-	return idfClient
 }
 
 func (idf *IdfClient) IdfService() insights_interface.InsightsServiceInterface {

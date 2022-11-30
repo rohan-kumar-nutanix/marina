@@ -39,9 +39,9 @@ func initHostIP() {
 }
 func initOpenTelemetryTracing() {
 	traceProvider, err := tracer.InitTracer(utils.ServiceName)
-	if traceProvider != nil {
+	if traceProvider == nil {
 		log.Errorf("Error while initializing tracer: %v ", err.Error())
 	} else {
-		log.Info("OpenTelemetry Tracer got initialized %v", traceProvider)
+		log.Infof("OpenTelemetry Tracer got initialized %v", traceProvider)
 	}
 }

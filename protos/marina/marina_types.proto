@@ -6,11 +6,6 @@ option go_package = "protos/marina";
 
 import "google/protobuf/descriptor.proto";
 
-/* // TODO: ENG-379475 Remove 'major' field .
-extend google.protobuf.FieldOptions {
-  optional bool major = 50002;
-} */
-
 message CatalogItemInfo {
   // Catalog item UUID.
   optional bytes uuid = 1;
@@ -99,9 +94,6 @@ message CatalogItemInfo {
   // item has divereged and creating another copy of same catalog item
   // again is valid.
   optional CatalogItemId source_catalog_item_id = 13;
-
-  // VM template version info.
-  // optional VmTemplateVersionInfo vm_template_version_info = 14;
 }
 
 //-----------------------------------------------------------------------------
