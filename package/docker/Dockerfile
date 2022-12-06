@@ -15,9 +15,9 @@ RUN curl -LO https://github.com/protocolbuffers/protobuf/releases/download/v3.15
     && unzip -o $PROTOC_ZIP -d /usr/local 'include/*' \
     && rm -f $PROTOC_ZIP
 
-# RUN go get -u github.com/golang/protobuf/protoc-gen-go@v1.5.2
-# RUN go get -u google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.1.0
-# RUN go get -u github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@v2.4.0
+RUN go install github.com/golang/protobuf/protoc-gen-go@v1.5.2
+RUN go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.1.0
+RUN go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@v2.4.0
 
 # Download public key for github.com
 # Setup git and ssh to be able to clone from Nutanix private github repos
@@ -29,6 +29,7 @@ WORKDIR /go/src/github/marina
 COPY . .
 
 # The mount prefix here will allow the command to use ssh keys to authenticate to Nutanix github.
+RUN --mount=type=secret,id=ssh,dst=/root/.ssh/id_rsa make build-protos
 RUN --mount=type=secret,id=ssh,dst=/root/.ssh/id_rsa go get -d -v ./...
 RUN --mount=type=secret,id=ssh,dst=/root/.ssh/id_rsa make server
 

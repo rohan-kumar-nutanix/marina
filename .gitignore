@@ -1,11 +1,13 @@
+# Build
 build/
 vendor/
 marina_client
 marina_server
+*.pb.go
 
 # UT
 coverage.out
 mocks/
 
-#IDE
+# IDE
 .idea/

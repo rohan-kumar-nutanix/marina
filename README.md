@@ -22,13 +22,9 @@ The top level directory of your repository should be set up like this:
   14. `task/`: this directory hold the base task and task realted infrastructure for Marina service.
   15. `test/`: this directory contains test scripts etc.
   16. `utils/`: this directory contains util code.
-  17. `vendor/`: This directory is GoLang vendor, contains service external dependencies.
 
 ### Belows setup guide is actively updated at https://confluence.eng.nutanix.com:8443/display/~rajesh.battala/Marina+Content+Management+System+Service 
     https://confluence.eng.nutanix.com:8443/display/~rajesh.battala/Marina+Setup+Guide+for+MAC
-
-### Build
-Canaveral uses CircleCI for building, packaging, and alerting its Deployment Engine. Your repository should have been registered with CircleCI when it was provisioned.  Here are some additional steps you should follow to ensure proper builds:
 
 ### Dependencies
 - go version go1.17 or later
@@ -41,7 +37,7 @@ Canaveral uses CircleCI for building, packaging, and alerting its Deployment Eng
     - brew install protoc-gen-go
     - brew install protoc-gen-go-grpc
 
-### Build in local box (Mac, Linux, UBVM)
+### Local Build (Mac, Linux, UBVM)
 Make sure above the repo is checkout, above dependencies are installed.
 set the following as per your user and env in .bashrc [shell rc file]
 - export GIT_TOKEN = "your github token"
@@ -59,7 +55,6 @@ execute all Make cmds at repo Top level dir.
 #### Building Server
 `go mod vendor` to sync the vendor folder/ update dependencies.
 `make server` To build Marina server binary. marina_server binary file will be created.
-
 
 #### Running Server
 1. Disable IPTables in PC. (sudo service iptables stop)
