@@ -1,0 +1,11 @@
+build/
+vendor/
+marina_client
+marina_server
+
+# UT
+coverage.out
+mocks/
+
+#IDE
+.idea/

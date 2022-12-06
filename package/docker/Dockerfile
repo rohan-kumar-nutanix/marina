@@ -1,10 +1,11 @@
-FROM docker.dyn.ntnxdpro.com/ntnx-general-docker/golang:1.17 as build
+FROM docker.dyn.ntnxdpro.com/ntnx-general-docker/golang:1.19 as build
 
 LABEL maintainer="acropolis-catalog@nutanix.com"
 
 ENV GO111MODULE=on
 ENV CGO_ENABLED=0
 ENV PROTOC_ZIP=protoc-3.15.8-linux-x86_64.zip
+ENV GOPRIVATE=github.com/nutanix-core,github.com/nutanix
 
 RUN apt-get update && apt-get install -y unzip
 
@@ -18,14 +19,18 @@ RUN curl -LO https://github.com/protocolbuffers/protobuf/releases/download/v3.15
 # RUN go get -u google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.1.0
 # RUN go get -u github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@v2.4.0
 
+# Download public key for github.com
+# Setup git and ssh to be able to clone from Nutanix private github repos
+RUN mkdir -p -m 0600 ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
+RUN git config --global url."git@github.com:".insteadOf "https://github.com"
+
 WORKDIR /go/src/github/marina
 
 COPY . .
 
-# Generating echo binary.
-#RUN make echo
-# Generating marina binary.
-RUN make server
+# The mount prefix here will allow the command to use ssh keys to authenticate to Nutanix github.
+RUN --mount=type=secret,id=ssh,dst=/root/.ssh/id_rsa go get -d -v ./...
+RUN --mount=type=secret,id=ssh,dst=/root/.ssh/id_rsa make server
 
 # Start a new image and copy the binary file.
 FROM docker.dyn.ntnxdpro.com/ntnx-general-docker/alpine:3.11.6

@@ -5,11 +5,15 @@ jobs:
             - image: cimg/python:3.8.5
         resource_class: small
         environment:
-            CANAVERAL_DEPS: jq
-            CANAVERAL_BUILD_SYSTEM: noop
+            CANAVERAL_DEPS: jq openjdk-8-jdk protobuf-compiler
+            CANAVERAL_BUILD_SYSTEM: golang
+            CANAVERAL_LANGUAGE_VERSION: 1.19
+            CANAVERAL_GIT_USER: API-Infra-Build-User
+            CANAVERAL_GIT_EMAIL: svc.canGit@nutanix.com
             CANAVERAL_PACKAGE_TOOLS: docker
             DOCKER_REPO_SERVER: artifactory.dyn.ntnxdpro.com/canaveral-legacy-docker
-            CANAVERAL_LANGUAGE_VERSION: 3.8.5
+            DOCKER_BUILD_SECRETS: ssh=/../.ssh/id_rsa
+            DOCKER_BUILD_ENABLE_SSH: 1
             CANAVERAL_PACKAGER_HELM_URI: "https://artifactory.canaveral-corp.us-west-2.aws:443/artifactory/canaveral-helm"
             CANAVERAL_PACKAGER_HELM_CHART_DIRECTORY_PATH: "/home/circleci/project/config/helm-chart/marina"
             CANAVERAL_USE_LEGACY_PIPELINE_MODE: "0"
