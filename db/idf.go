@@ -29,14 +29,12 @@ func (idf *IdfClient) IdfService() insights_interface.InsightsServiceInterface {
 	return idf.IdfSvc
 }
 
+// Query IDF and returns entities which match the query.
+// If none matches, return ErrNotFound.
 func (idf *IdfClient) Query(
 	ctx context.Context,
 	arg *insights_interface.GetEntitiesWithMetricsArg) (
 	[]*insights_interface.EntityWithMetric, error) {
-	/*
-	   Queries the IDF and returns entities which matches the following query
-	   If none matches, it will return ErrNotFound
-	*/
 
 	ret := &insights_interface.GetEntitiesWithMetricsRet{}
 	err := idf.IdfSvc.SendMsg("GetEntitiesWithMetrics", arg, ret, idf.Retry)

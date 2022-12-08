@@ -17,7 +17,7 @@ import (
 	catalogClient "github.com/nutanix-core/acs-aos-go/catalog/client"
 	"github.com/nutanix-core/acs-aos-go/ergon"
 	"github.com/nutanix-core/acs-aos-go/nutanix/util-go/uuid4"
-	marinaError "github.com/nutanix-core/content-management-marina/error"
+	marinaError "github.com/nutanix-core/content-management-marina/errors"
 	marinaProtos "github.com/nutanix-core/content-management-marina/protos/marina"
 	"github.com/nutanix-core/content-management-marina/task/base"
 	util "github.com/nutanix-core/content-management-marina/util"

@@ -19,7 +19,7 @@ import (
 	"github.com/nutanix-core/acs-aos-go/nutanix/util-go/uuid4"
 	slbufsNet "github.com/nutanix-core/acs-aos-go/nutanix/util-slbufs/util/sl_bufs/net"
 	"github.com/nutanix-core/content-management-marina/common"
-	marinaError "github.com/nutanix-core/content-management-marina/error"
+	marinaError "github.com/nutanix-core/content-management-marina/errors"
 	"github.com/nutanix-core/content-management-marina/task/base"
 	marinaUtil "github.com/nutanix-core/content-management-marina/util"
 	clientUtil "github.com/nutanix-core/content-management-marina/util/catalog/client"

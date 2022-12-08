@@ -9,7 +9,7 @@
  * Marina Error and Interface Types
  */
 
-package error
+package errors
 
 import (
 	"fmt"
@@ -156,7 +156,6 @@ type InternalError struct {
 	operation string
 }
 
-
 func ErrInternalError(operation string) *InternalError {
 	return &InternalError{
 		MarinaError: err("Operation Timeout Error", 21),
@@ -173,7 +172,6 @@ func (e *InternalError) SetCause(err error) MarinaErrorInterface {
 	e.MarinaError = e.MarinaError.SetCause(err)
 	return e
 }
-
 
 // Internal error.
 type MarinaInternalError struct {

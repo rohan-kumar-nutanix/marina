@@ -14,7 +14,7 @@ import (
 	"sync"
 
 	"github.com/nutanix-core/acs-aos-go/catalog"
-	marinaError "github.com/nutanix-core/content-management-marina/error"
+	marinaError "github.com/nutanix-core/content-management-marina/errors"
 	log "k8s.io/klog/v2"
 )
 

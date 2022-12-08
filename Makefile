@@ -16,17 +16,20 @@ build-protos-with-cobra:
 clean:
 	find ./protos -name \*.pb.go -type f -exec rm -f {} +
 	rm -f echo_server echo_client
-	rm -f marina_server client
+	rm -f marina_server marina_client
+	rm -rf mocks/
+	rm -f coverage.out
 
 server:
 	$(info Building binary at the project root)
 	$(info ===================================)
 	$(info )
-	env GOOS=linux GOARCH=amd64
-	go build -o marina_server marina/*.go
-	go build -o marina_client client/*.go
-#	go build -o marina_server services/marina/server.go
-#	go build -o marina_client client/marina_grpc_client.go
+	env GOOS=linux GOARCH=amd64 go build -o marina_server marina/*.go
+	env GOOS=linux GOARCH=amd64 go build -o marina_client client/*.go
+
+unit-tests:
+	rm -rf ./mocks/
+	bash hooks/test-services-finalize.sh
 
 echo:
 	$(info Building binary at the project root)

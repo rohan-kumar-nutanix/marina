@@ -115,7 +115,7 @@ func GetCatalogItemsById(client marina.MarinaClient, ctx context.Context, uuids 
 	response, err := client.CatalogItemGet(ctx, arg)
 	// fmt.Printf("Error occured %v", err)
 	if err != nil {
-		fmt.Println("Marina request error: %s", err)
+		fmt.Printf("Marina request error: %s\n", err)
 		errStatus, _ := status.FromError(err)
 		fmt.Printf("Error Status Message : %s \nCode %s \n full obj : %v", errStatus.Message(),
 			errStatus.Code(), errStatus)

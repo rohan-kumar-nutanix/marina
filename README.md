@@ -14,7 +14,7 @@ The top level directory of your repository should be set up like this:
   6. `blueprint.json`: this file, if present, contains instructions for Canaveral to deploy the service.
   7. `common/`: this directory contains common go util functions.
   8. `config/`: this directory holds the deployment configuration files, helm chart configuration etc.
-  9. `error/`: this directory holds error.go, Marina service errors and Interface Types.
+  9. `errors/`: this directory holds rpc_errors.go, Marina service errors and Interface Types.
   10. `grpc/`: this directory has all the new entity servies which are served by gRPC RPC framework.
   11. `marina/`: this directory holds the Main service, init, metric functions.
   12. `protos/`: this directory holds all *.proto definitions for the entities.
@@ -32,10 +32,12 @@ The top level directory of your repository should be set up like this:
 - protoc-gen-go v1.5.2
 - protoc-gen-go-grpc v1.1.0
 - protoc-gen-grpc-gateway v2.4.0
+- mockery v2.14.1
 -  brew commands to install the packages in MAC.
-    - brew install protobuf
-    - brew install protoc-gen-go
-    - brew install protoc-gen-go-grpc
+  - brew install protobuf
+  - brew install protoc-gen-go
+  - brew install protoc-gen-go-grpc
+  - brew install mockery
 
 ### Local Build (Mac, Linux, UBVM)
 Make sure above the repo is checkout, above dependencies are installed.
@@ -55,6 +57,9 @@ execute all Make cmds at repo Top level dir.
 #### Building Server
 `go mod vendor` to sync the vendor folder/ update dependencies.
 `make server` To build Marina server binary. marina_server binary file will be created.
+
+### Running Unit Tests
+`make unit-tests` To run the tests
 
 #### Running Server
 1. Disable IPTables in PC. (sudo service iptables stop)

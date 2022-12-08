@@ -15,13 +15,15 @@ import (
 
 	log "k8s.io/klog/v2"
 
-	marinaError "github.com/nutanix-core/content-management-marina/error"
+	"github.com/nutanix-core/content-management-marina/db"
+	marinaError "github.com/nutanix-core/content-management-marina/errors"
 	marinaIfc "github.com/nutanix-core/content-management-marina/protos/marina"
 	"github.com/nutanix-core/ntnx-api-utils-go/tracer"
 )
 
 // CatalogItemGet implements the CatalogItemGet RPC.
-func CatalogItemGet(ctx context.Context, arg *marinaIfc.CatalogItemGetArg) (*marinaIfc.CatalogItemGetRet, error) {
+func CatalogItemGet(ctx context.Context, arg *marinaIfc.CatalogItemGetArg, idfIfc db.IdfClientInterface) (*marinaIfc.CatalogItemGetRet, error) {
+	log.V(2).Info("CatalogItemGet RPC started.")
 	span, ctx := tracer.StartSpan(ctx, "CatalogItemGet")
 	defer span.Finish()
 
@@ -32,7 +34,7 @@ func CatalogItemGet(ctx context.Context, arg *marinaIfc.CatalogItemGetArg) (*mar
 	catalogItemErrChan := make(chan error)
 	if catalogItemIdListSize <= *CatalogIdfQueryChunkSize {
 
-		go GetCatalogItemsChan(ctx, catalogItemIdList, arg.GetCatalogItemTypeList(), arg.GetLatest(),
+		go GetCatalogItemsChan(ctx, idfIfc, catalogItemIdList, arg.GetCatalogItemTypeList(), arg.GetLatest(),
 			catalogItemChan, catalogItemErrChan)
 
 		catalogItemList = <-catalogItemChan
@@ -53,8 +55,8 @@ func CatalogItemGet(ctx context.Context, arg *marinaIfc.CatalogItemGetArg) (*mar
 				end = catalogItemIdListSize
 			}
 
-			log.Infof("Fetching items from index %v to %v", start, end)
-			go GetCatalogItemsChan(ctx, catalogItemIdList[start:end], arg.GetCatalogItemTypeList(), arg.GetLatest(),
+			log.Infof("Fetching catalog items from index %v to %v", start, end)
+			go GetCatalogItemsChan(ctx, idfIfc, catalogItemIdList[start:end], arg.GetCatalogItemTypeList(), arg.GetLatest(),
 				catalogItemChan, catalogItemErrChan)
 		}
 
@@ -71,5 +73,6 @@ func CatalogItemGet(ctx context.Context, arg *marinaIfc.CatalogItemGetArg) (*mar
 	}
 
 	ret := &marinaIfc.CatalogItemGetRet{CatalogItemList: catalogItemList}
+	log.V(2).Info("CatalogItemGet RPC finished.")
 	return ret, nil
 }

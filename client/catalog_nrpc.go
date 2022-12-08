@@ -94,7 +94,7 @@ func catalogItemsGetWithSendMsg() {
 		fmt.Println("G_UUID                                   Name           		Type              Version")
 		fmt.Println("-----------------------------------------------------------------------------------------------------")
 		for _, item := range cItemGetRet.CatalogItemList {
-			fmt.Println("%v\n", item)
+			fmt.Printf("%v\n", item)
 			//fmt.Println(uuid4.ToUuid4(item.GlobalCatalogItemUuid).UuidToString(), *item.Name, "\t", *item.ItemType, "\t", *item.Version)
 		}
 	}
@@ -160,7 +160,7 @@ func catalogItemsGet() {
 
 func filesGet() {
 	fmt.Println("\n\n\n-----------------------Fetching Files-------------------")
-	fmt.Println("-----------------------------------------------------------------------------------------------------\n\n")
+	fmt.Println("-----------------------------------------------------------------------------------------------------")
 	filesGetArg := &catalogIfc.FileGetArg{}
 	filesGetRet, err := catalogRpcClient.FileGet(filesGetArg)
 	if err != nil {

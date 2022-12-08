@@ -12,7 +12,7 @@ package utils
 import (
 	"fmt"
 	"github.com/golang/protobuf/proto"
-	marinaError "github.com/nutanix-core/content-management-marina/error"
+	marinaError "github.com/nutanix-core/content-management-marina/errors"
 	log "k8s.io/klog/v2"
 	"reflect"
 )

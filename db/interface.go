@@ -3,7 +3,7 @@
  *
  * Author: rishabh.gupta@nutanix.com
  *
- * The implementation for CatalogItemGet RPC
+ * The IDF interface
  */
 
 package db

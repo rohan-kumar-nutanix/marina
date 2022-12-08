@@ -14,7 +14,7 @@ import (
 	"fmt"
 
 	"github.com/nutanix-core/acs-aos-go/nutanix/util-go/uuid4"
-	marinaError "github.com/nutanix-core/content-management-marina/error"
+	marinaError "github.com/nutanix-core/content-management-marina/errors"
 )
 
 func ValidateUUID(uuidValue []byte, fieldName string) marinaError.MarinaErrorInterface {

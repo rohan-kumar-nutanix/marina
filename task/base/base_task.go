@@ -48,7 +48,7 @@ import (
 	"github.com/nutanix-core/acs-aos-go/ergon"
 	ergonClient "github.com/nutanix-core/acs-aos-go/ergon/client"
 	ergonTask "github.com/nutanix-core/acs-aos-go/ergon/task"
-	marinaError "github.com/nutanix-core/content-management-marina/error"
+	marinaError "github.com/nutanix-core/content-management-marina/errors"
 	marinaProtos "github.com/nutanix-core/content-management-marina/protos/marina"
 	util "github.com/nutanix-core/content-management-marina/util"
 

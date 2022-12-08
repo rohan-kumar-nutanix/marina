@@ -9,6 +9,7 @@ package services
 
 import (
 	"context"
+	"github.com/nutanix-core/content-management-marina/db"
 
 	log "k8s.io/klog/v2"
 
@@ -30,5 +31,5 @@ func (s *MarinaServer) CatalogItemGet(ctx context.Context, arg *marinaIfc.Catalo
 	defer span.Finish()
 
 	log.Infof("Arg received %v", arg)
-	return catalog_item.CatalogItemGet(ctx, arg)
+	return catalog_item.CatalogItemGet(ctx, arg, db.IdfClientWithRetry())
 }
