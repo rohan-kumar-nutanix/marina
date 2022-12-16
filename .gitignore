@@ -7,6 +7,7 @@ marina_server
 
 # UT
 coverage.out
+coverage.html
 mocks/
 
 # IDE

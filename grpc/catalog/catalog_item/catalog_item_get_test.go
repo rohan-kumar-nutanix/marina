@@ -14,6 +14,8 @@ import (
 	"github.com/stretchr/testify/mock"
 
 	"github.com/nutanix-core/acs-aos-go/insights/insights_interface"
+	dbMock "github.com/nutanix-core/content-management-marina/mocks/db"
+	catalogItemMock "github.com/nutanix-core/content-management-marina/mocks/grpc/catalog/catalog_item"
 	marinaIfc "github.com/nutanix-core/content-management-marina/protos/marina"
 )
 
@@ -21,18 +23,27 @@ func TestCatalogItemGetEmptyArg(t *testing.T) {
 	ctx := context.Background()
 	arg := &marinaIfc.CatalogItemGetArg{}
 
+	mockCatalogItemIfc := &catalogItemMock.CatalogItemInterface{}
 	catalogItemInfo := &marinaIfc.CatalogItemInfo{}
-	entities := getIdfResponse(catalogItemInfo)
-	mockIdfIfc.On("Query", mock.Anything, mock.Anything).
-		Return(entities, nil).
+	catalogItemInfoList := []*marinaIfc.CatalogItemInfo{catalogItemInfo}
+	mockCatalogItemIfc.On("GetCatalogItemsChan", mock.Anything, mock.Anything, mock.Anything, mock.Anything,
+		mock.Anything, mock.Anything, mock.Anything).
+		Run(func(args mock.Arguments) {
+			catalogItemChan := args.Get(5).(chan []*marinaIfc.CatalogItemInfo)
+			catalogItemChan <- catalogItemInfoList
+			errChan := args.Get(6).(chan error)
+			errChan <- nil
+		}).
 		Once()
 
-	ret, err := CatalogItemGet(ctx, arg, mockIdfIfc)
-	assert.Nil(t, err)
+	mockIdfIfc := &dbMock.IdfClientInterface{}
+	ret, err := CatalogItemGet(ctx, arg, mockCatalogItemIfc, mockIdfIfc)
 
+	assert.Nil(t, err)
 	catalogItemList := ret.GetCatalogItemList()
 	assert.Equal(t, 1, len(catalogItemList))
 	assert.Equal(t, catalogItemInfo, catalogItemList[0])
+	mockCatalogItemIfc.AssertExpectations(t)
 }
 
 func TestCatalogItemGetNonEmptyArg(t *testing.T) {
@@ -44,30 +55,50 @@ func TestCatalogItemGetNonEmptyArg(t *testing.T) {
 	}
 	arg := &marinaIfc.CatalogItemGetArg{CatalogItemIdList: catalogItemIdList}
 
+	mockCatalogItemIfc := &catalogItemMock.CatalogItemInterface{}
 	catalogItemInfo := &marinaIfc.CatalogItemInfo{}
-	entities := getIdfResponse(catalogItemInfo)
-	mockIdfIfc.On("Query", mock.Anything, mock.Anything).
-		Return(entities, nil).
+	catalogItemInfoList := []*marinaIfc.CatalogItemInfo{catalogItemInfo}
+	mockCatalogItemIfc.On("GetCatalogItemsChan", mock.Anything, mock.Anything, mock.Anything, mock.Anything,
+		mock.Anything, mock.Anything, mock.Anything).
+		Run(func(args mock.Arguments) {
+			catalogItemChan := args.Get(5).(chan []*marinaIfc.CatalogItemInfo)
+			catalogItemChan <- catalogItemInfoList
+			errChan := args.Get(6).(chan error)
+			errChan <- nil
+		}).
 		Twice()
 
-	ret, err := CatalogItemGet(ctx, arg, mockIdfIfc)
-	assert.Nil(t, err)
+	mockIdfIfc := &dbMock.IdfClientInterface{}
+	ret, err := CatalogItemGet(ctx, arg, mockCatalogItemIfc, mockIdfIfc)
 
+	assert.Nil(t, err)
 	catalogItemList := ret.GetCatalogItemList()
 	assert.Equal(t, 2, len(catalogItemList))
 	assert.Equal(t, catalogItemInfo, catalogItemList[0])
 	assert.Equal(t, catalogItemInfo, catalogItemList[1])
+	mockCatalogItemIfc.AssertExpectations(t)
 }
 
 func TestCatalogItemGetEmptyArgError(t *testing.T) {
 	ctx := context.Background()
 	arg := &marinaIfc.CatalogItemGetArg{}
-	mockIdfIfc.On("Query", mock.Anything, mock.Anything).
-		Return(nil, insights_interface.ErrInternalError).
+
+	mockCatalogItemIfc := &catalogItemMock.CatalogItemInterface{}
+	mockCatalogItemIfc.On("GetCatalogItemsChan", mock.Anything, mock.Anything, mock.Anything, mock.Anything,
+		mock.Anything, mock.Anything, mock.Anything).
+		Run(func(args mock.Arguments) {
+			catalogItemChan := args.Get(5).(chan []*marinaIfc.CatalogItemInfo)
+			catalogItemChan <- nil
+			errChan := args.Get(6).(chan error)
+			errChan <- insights_interface.ErrInternalError
+		}).
 		Once()
 
-	_, err := CatalogItemGet(ctx, arg, mockIdfIfc)
+	mockIdfIfc := &dbMock.IdfClientInterface{}
+	_, err := CatalogItemGet(ctx, arg, mockCatalogItemIfc, mockIdfIfc)
+
 	assert.NotNil(t, err)
+	mockCatalogItemIfc.AssertExpectations(t)
 }
 
 func TestCatalogItemGetNonEmptyArgError(t *testing.T) {
@@ -78,10 +109,20 @@ func TestCatalogItemGetNonEmptyArgError(t *testing.T) {
 			&marinaIfc.CatalogItemId{GlobalCatalogItemUuid: testCatalogItemUuid.RawBytes()})
 	}
 	arg := &marinaIfc.CatalogItemGetArg{CatalogItemIdList: catalogItemIdList}
-	mockIdfIfc.On("Query", mock.Anything, mock.Anything).
-		Return(nil, insights_interface.ErrInternalError).
+
+	mockCatalogItemIfc := &catalogItemMock.CatalogItemInterface{}
+	mockCatalogItemIfc.On("GetCatalogItemsChan", mock.Anything, mock.Anything, mock.Anything, mock.Anything,
+		mock.Anything, mock.Anything, mock.Anything).
+		Run(func(args mock.Arguments) {
+			catalogItemChan := args.Get(5).(chan []*marinaIfc.CatalogItemInfo)
+			catalogItemChan <- nil
+			errChan := args.Get(6).(chan error)
+			errChan <- insights_interface.ErrInternalError
+		}).
 		Twice()
 
-	_, err := CatalogItemGet(ctx, arg, mockIdfIfc)
+	mockIdfIfc := &dbMock.IdfClientInterface{}
+	_, err := CatalogItemGet(ctx, arg, mockCatalogItemIfc, mockIdfIfc)
+
 	assert.NotNil(t, err)
 }

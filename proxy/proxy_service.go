@@ -13,7 +13,11 @@ package proxy
 
 import (
 	"fmt"
+	"reflect"
+
 	"github.com/golang/protobuf/proto"
+	log "k8s.io/klog/v2"
+
 	"github.com/nutanix-core/acs-aos-go/ergon"
 	"github.com/nutanix-core/acs-aos-go/nutanix/util-go/net"
 	"github.com/nutanix-core/acs-aos-go/nutanix/util-go/uuid4"
@@ -23,8 +27,6 @@ import (
 	"github.com/nutanix-core/content-management-marina/task/base"
 	marinaUtil "github.com/nutanix-core/content-management-marina/util"
 	clientUtil "github.com/nutanix-core/content-management-marina/util/catalog/client"
-	log "k8s.io/klog/v2"
-	"reflect"
 )
 
 var catalogService *clientUtil.Catalog

@@ -7,11 +7,12 @@ MODE=count
 
 # ensure mocks are generated
 mockery --all --keeptree
+
 # Build the coverage profile
 go test -v -coverpkg=./db/...,./grpc/... -covermode=$MODE -coverprofile=${COVFILE} ./...
 
-# get coverage report in HTML
-#go tool cover -html=${COVFILE} -o coverage.html
+# Get coverage report in HTML
+go tool cover -html=${COVFILE} -o coverage.html
 
 # Output the percent
 COVERAGE_PERCENT=$(go tool cover -func=${COVFILE} | \

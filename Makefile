@@ -19,6 +19,7 @@ clean:
 	rm -f marina_server marina_client
 	rm -rf mocks/
 	rm -f coverage.out
+	rm -f coverage.html
 
 server:
 	$(info Building binary at the project root)

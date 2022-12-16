@@ -10,11 +10,13 @@ package main
 
 import (
 	"os"
+
 	log "k8s.io/klog/v2"
 )
 
 func main() {
 	initFlags()
+	initMarina()
 	initHostIP()
 	initOpenTelemetryTracing()
 	if traceProvider != nil {

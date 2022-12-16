@@ -15,9 +15,9 @@ import (
 	"github.com/nutanix-core/acs-aos-go/insights/insights_interface"
 	. "github.com/nutanix-core/acs-aos-go/insights/insights_interface/query"
 	"github.com/nutanix-core/acs-aos-go/nutanix/util-go/uuid4"
-	"github.com/nutanix-core/content-management-marina/common"
 	"github.com/nutanix-core/content-management-marina/db"
 	marinaIfc "github.com/nutanix-core/content-management-marina/protos/marina"
+	utils "github.com/nutanix-core/content-management-marina/util"
 )
 
 const (
@@ -27,23 +27,27 @@ const (
 	CatalogVersion        = "version"
 )
 
-var CatalogItemAttributes = []interface{}{
+var catalogItemAttributes = []interface{}{
 	insights_interface.COMPRESSED_PROTOBUF_ATTR,
 }
 
+type CatalogItemImpl struct {
+}
+
 // GetCatalogItemsChan pushes catalog items and error object to respective channels.
-func GetCatalogItemsChan(ctx context.Context, idfIfc db.IdfClientInterface, catalogItemIdList []*marinaIfc.CatalogItemId,
-	catalogItemTypeList []marinaIfc.CatalogItemInfo_CatalogItemType, latest bool,
-	catalogItemChan chan []*marinaIfc.CatalogItemInfo, errorChan chan error) {
-	catalogItemList, err := getCatalogItems(ctx, idfIfc, catalogItemIdList, catalogItemTypeList, latest, "catalog_item_list")
+func (catalogItem *CatalogItemImpl) GetCatalogItemsChan(ctx context.Context, idfIfc db.IdfClientInterface,
+	catalogItemIdList []*marinaIfc.CatalogItemId, catalogItemTypeList []marinaIfc.CatalogItemInfo_CatalogItemType,
+	latest bool, catalogItemChan chan []*marinaIfc.CatalogItemInfo, errorChan chan error) {
+	catalogItemList, err := catalogItem.GetCatalogItems(ctx, idfIfc, catalogItemIdList, catalogItemTypeList, latest, "catalog_item_list")
 	catalogItemChan <- catalogItemList
 	errorChan <- err
 }
 
 // GetCatalogItems loads Catalog Items from IDF and returns a list of CatalogItem.
 // Returns ([]CatalogItem, nil) on success and (nil, error) on failure.
-func getCatalogItems(ctx context.Context, idfIfc db.IdfClientInterface, catalogItemIdList []*marinaIfc.CatalogItemId,
-	catalogItemTypeList []marinaIfc.CatalogItemInfo_CatalogItemType, latest bool, queryName string) ([]*marinaIfc.CatalogItemInfo, error) {
+func (*CatalogItemImpl) GetCatalogItems(ctx context.Context, idfIfc db.IdfClientInterface,
+	catalogItemIdList []*marinaIfc.CatalogItemId, catalogItemTypeList []marinaIfc.CatalogItemInfo_CatalogItemType,
+	latest bool, queryName string) ([]*marinaIfc.CatalogItemInfo, error) {
 	var predicateList []*insights_interface.BooleanExpression
 	var whereClause *insights_interface.BooleanExpression
 	if len(catalogItemIdList) > 0 {
@@ -51,7 +55,7 @@ func getCatalogItems(ctx context.Context, idfIfc db.IdfClientInterface, catalogI
 		for _, catalogItemId := range catalogItemIdList {
 			gcUuid := catalogItemId.GetGlobalCatalogItemUuid()
 
-			if err := common.ValidateUUID(gcUuid, "GlobalCatalogItemUUID"); err != nil {
+			if err := utils.ValidateUUID(gcUuid, "GlobalCatalogItemUUID"); err != nil {
 				return nil, err
 			}
 
@@ -84,7 +88,7 @@ func getCatalogItems(ctx context.Context, idfIfc db.IdfClientInterface, catalogI
 		}
 	}
 
-	queryBuilder := QUERY(queryName).SELECT(CatalogItemAttributes...).FROM(CatalogItemTable)
+	queryBuilder := QUERY(queryName).SELECT(catalogItemAttributes...).FROM(CatalogItemTable)
 	if whereClause != nil {
 		queryBuilder = queryBuilder.WHERE(whereClause)
 	}
@@ -98,8 +102,7 @@ func getCatalogItems(ctx context.Context, idfIfc db.IdfClientInterface, catalogI
 		return nil, err
 	}
 
-	idfQueryArg := &insights_interface.GetEntitiesWithMetricsArg{Query: query}
-	idfResponse, err := idfIfc.Query(ctx, idfQueryArg)
+	idfResponse, err := idfIfc.Query(ctx, query)
 
 	var catalogItems []*marinaIfc.CatalogItemInfo
 	if err == insights_interface.ErrNotFound {

@@ -13,17 +13,23 @@ Initialize Marian, including:
 package main
 
 import (
+	"net"
+
+	otelSdkTrace "go.opentelemetry.io/otel/sdk/trace"
+	log "k8s.io/klog/v2"
+
 	"github.com/nutanix-core/content-management-marina/common"
 	utils "github.com/nutanix-core/content-management-marina/util"
 	"github.com/nutanix-core/ntnx-api-utils-go/tracer"
-	otelSdkTrace "go.opentelemetry.io/otel/sdk/trace"
-	log "k8s.io/klog/v2"
-	"net"
 )
 
 var traceProvider *otelSdkTrace.TracerProvider
 
-// initGflags initialize gflags for Marina.
+func initMarina() {
+	common.InitSingletonService()
+}
+
+// initFlags initialize gflags for Marina.
 func initFlags() {
 	common.FlagsInit()
 }
@@ -37,6 +43,7 @@ func initHostIP() {
 	utils.HostAddr = pcIP[0].String()
 	log.Info("Setting HostAddr to : ", utils.HostAddr)
 }
+
 func initOpenTelemetryTracing() {
 	traceProvider, err := tracer.InitTracer(utils.ServiceName)
 	if traceProvider == nil {

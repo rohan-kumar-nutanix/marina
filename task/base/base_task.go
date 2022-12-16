@@ -45,15 +45,16 @@ package base
 
 import (
 	"fmt"
-	"github.com/nutanix-core/acs-aos-go/ergon"
-	ergonClient "github.com/nutanix-core/acs-aos-go/ergon/client"
-	ergonTask "github.com/nutanix-core/acs-aos-go/ergon/task"
-	marinaError "github.com/nutanix-core/content-management-marina/errors"
-	marinaProtos "github.com/nutanix-core/content-management-marina/protos/marina"
-	util "github.com/nutanix-core/content-management-marina/util"
 
 	"github.com/golang/protobuf/proto"
 	glog "k8s.io/klog/v2"
+
+	"github.com/nutanix-core/acs-aos-go/ergon"
+	ergonClient "github.com/nutanix-core/acs-aos-go/ergon/client"
+	ergonTask "github.com/nutanix-core/acs-aos-go/ergon/task"
+	"github.com/nutanix-core/content-management-marina/common"
+	marinaError "github.com/nutanix-core/content-management-marina/errors"
+	marinaProtos "github.com/nutanix-core/content-management-marina/protos/marina"
 )
 
 type MarinaBaseTaskInterface interface {
@@ -93,7 +94,7 @@ func NewMarinaBaseTask(taskProto *ergon.Task) *MarinaBaseTask {
 
 // Ergon returns an Ergon client.
 func (t *MarinaBaseTask) Ergon() ergonClient.Ergon {
-	return util.GetErgonService()
+	return common.Interfaces().ErgonService()
 }
 
 // StartHook initializes for task execution. A Marina task that embeds
@@ -133,7 +134,7 @@ func (t *MarinaBaseTaskUtil) Wal() *marinaProtos.PcTaskWalRecord {
 
 // SetWal set the task WAL to ergon task proto.
 func (t *MarinaBaseTaskUtil) SetWal(wal *marinaProtos.PcTaskWalRecord) error {
-	data, err := util.Marshal(wal)
+	data, err := proto.Marshal(wal)
 	if err != nil {
 		return marinaError.ErrInternal.SetCause(
 			fmt.Errorf("could not marshal WAL: %s", err))

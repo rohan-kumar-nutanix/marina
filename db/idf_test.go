@@ -1,54 +1,148 @@
 /*
- * Copyright (c) 2021 Nutanix Inc. All rights reserved.
- *
- * Author: rajesh.battala@nutanix.com
- *
- * IDF utilities for Marina Service.
+* Copyright (c) 2021 Nutanix Inc. All rights reserved.
+*
+* Author: rajesh.battala@nutanix.com
+*
+* IDF utilities for Marina Service.
  */
 
 package db
 
 import (
 	"context"
-	"reflect"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+
 	"github.com/nutanix-core/acs-aos-go/insights/insights_interface"
-	"github.com/nutanix-core/acs-aos-go/nutanix/util-go/misc"
+	mockIdfIfc "github.com/nutanix-core/acs-aos-go/insights/insights_interface/mock"
+	. "github.com/nutanix-core/acs-aos-go/insights/insights_interface/query"
 )
 
-func TestIdfClient_Query(t *testing.T) {
+func TestIdfClientWithRetry(t *testing.T) {
+	idfClient := IdfClientWithRetry()
+	idfObj := idfClient.(*IdfClient)
+	assert.NotNil(t, idfObj)
+	assert.NotNil(t, idfObj.IdfSvc)
+	assert.Nil(t, idfObj.Retry)
+}
+
+func TestIdfClientWithoutRetry(t *testing.T) {
+	idfClient := IdfClientWithoutRetry()
+	idfObj := idfClient.(*IdfClient)
+	assert.NotNil(t, idfObj)
+	assert.NotNil(t, idfObj.IdfSvc)
+	assert.NotNil(t, idfObj.Retry)
+}
+
+func TestQuery(t *testing.T) {
+	idfMockSvc := new(mockIdfIfc.InsightsServiceInterface)
+	idfClient := IdfClient{
+		IdfSvc: idfMockSvc,
+	}
+
+	tableName := "catalog_item_info"
+	query, _ := QUERY("test_query").
+		FROM(tableName).
+		Proto()
+	arg := &insights_interface.GetEntitiesWithMetricsArg{Query: query}
+	ret := &insights_interface.GetEntitiesWithMetricsRet{}
+	dummyEntityWithMetric := &insights_interface.EntityWithMetric{
+		EntityGuid: &insights_interface.EntityGuid{
+			EntityTypeName: &tableName,
+		},
+	}
+	var rawResults []*insights_interface.EntityWithMetric
+	rawResults = append(rawResults, dummyEntityWithMetric)
+	validGroupResultList := &insights_interface.QueryGroupResult{
+		RawResults: rawResults,
+	}
+	idfMockSvc.On("SendMsg", "GetEntitiesWithMetrics", arg, ret, idfClient.Retry).
+		Return(nil).
+		Run(func(args mock.Arguments) {
+			arg := args.Get(2).(*insights_interface.GetEntitiesWithMetricsRet)
+			arg.GroupResultsList = make([]*insights_interface.QueryGroupResult, 0)
+			arg.GroupResultsList = append(arg.GroupResultsList, validGroupResultList)
+		}).Once()
+
 	ctx := context.Background()
-	type fields struct {
-		IdfSvc insights_interface.InsightsServiceInterface
-		Retry  *misc.ExponentialBackoff
+	entities, err := idfClient.Query(ctx, query)
+	assert.Equal(t, entities, rawResults)
+	assert.Nil(t, err)
+	idfMockSvc.AssertExpectations(t)
+}
+
+func TestQueryEmptyGroupResult(t *testing.T) {
+	idfMockSvc := new(mockIdfIfc.InsightsServiceInterface)
+	idfClient := IdfClient{
+		IdfSvc: idfMockSvc,
 	}
-	type args struct {
-		arg *insights_interface.GetEntitiesWithMetricsArg
+
+	query, _ := QUERY("test_query").
+		FROM("catalog_item_info").
+		Proto()
+	arg := &insights_interface.GetEntitiesWithMetricsArg{Query: query}
+	ret := &insights_interface.GetEntitiesWithMetricsRet{}
+	idfMockSvc.On("SendMsg", "GetEntitiesWithMetrics", arg, ret, idfClient.Retry).
+		Return(nil).
+		Once()
+
+	ctx := context.Background()
+	entities, err := idfClient.Query(ctx, query)
+
+	assert.Nil(t, entities)
+	assert.Equal(t, err, insights_interface.ErrNotFound)
+	idfMockSvc.AssertExpectations(t)
+}
+
+func TestQueryEmptyResult(t *testing.T) {
+	idfMockSvc := new(mockIdfIfc.InsightsServiceInterface)
+	idfClient := IdfClient{
+		IdfSvc: idfMockSvc,
 	}
-	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		want    []*insights_interface.EntityWithMetric
-		wantErr bool
-	}{
-		// TODO: Add test cases.
+
+	query, _ := QUERY("test_query").
+		FROM("catalog_item_info").
+		Proto()
+	arg := &insights_interface.GetEntitiesWithMetricsArg{Query: query}
+	ret := &insights_interface.GetEntitiesWithMetricsRet{}
+	emptyGroupResultList := &insights_interface.QueryGroupResult{}
+	idfMockSvc.On("SendMsg", "GetEntitiesWithMetrics", arg, ret, idfClient.Retry).
+		Return(nil).
+		Run(func(args mock.Arguments) {
+			arg := args.Get(2).(*insights_interface.GetEntitiesWithMetricsRet)
+			arg.GroupResultsList = make([]*insights_interface.QueryGroupResult, 0)
+			arg.GroupResultsList = append(arg.GroupResultsList, emptyGroupResultList)
+		}).Once()
+
+	ctx := context.Background()
+	entities, err := idfClient.Query(ctx, query)
+
+	assert.Nil(t, entities)
+	assert.Equal(t, err, insights_interface.ErrNotFound)
+	idfMockSvc.AssertExpectations(t)
+}
+
+func TestQueryError(t *testing.T) {
+	idfMockSvc := new(mockIdfIfc.InsightsServiceInterface)
+	idfClient := IdfClient{
+		IdfSvc: idfMockSvc,
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			idf := &IdfClient{
-				IdfSvc: tt.fields.IdfSvc,
-				Retry:  tt.fields.Retry,
-			}
-			got, err := idf.Query(ctx, tt.args.arg)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("IdfClient.Query() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("IdfClient.Query() = %v, want %v", got, tt.want)
-			}
-		})
-	}
+
+	query, _ := QUERY("test_query").
+		FROM("catalog_item_info").
+		Proto()
+	arg := &insights_interface.GetEntitiesWithMetricsArg{Query: query}
+	ret := &insights_interface.GetEntitiesWithMetricsRet{}
+	idfMockSvc.On("SendMsg", "GetEntitiesWithMetrics", arg, ret, idfClient.Retry).
+		Return(insights_interface.ErrRetry).
+		Once()
+
+	ctx := context.Background()
+	entities, err := idfClient.Query(ctx, query)
+
+	assert.Nil(t, entities)
+	assert.Equal(t, err, insights_interface.ErrRetry)
+	idfMockSvc.AssertExpectations(t)
 }

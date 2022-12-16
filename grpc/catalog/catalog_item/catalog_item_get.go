@@ -22,7 +22,8 @@ import (
 )
 
 // CatalogItemGet implements the CatalogItemGet RPC.
-func CatalogItemGet(ctx context.Context, arg *marinaIfc.CatalogItemGetArg, idfIfc db.IdfClientInterface) (*marinaIfc.CatalogItemGetRet, error) {
+func CatalogItemGet(ctx context.Context, arg *marinaIfc.CatalogItemGetArg, catalogItemIfc CatalogItemInterface,
+	idfIfc db.IdfClientInterface) (*marinaIfc.CatalogItemGetRet, error) {
 	log.V(2).Info("CatalogItemGet RPC started.")
 	span, ctx := tracer.StartSpan(ctx, "CatalogItemGet")
 	defer span.Finish()
@@ -33,9 +34,8 @@ func CatalogItemGet(ctx context.Context, arg *marinaIfc.CatalogItemGetArg, idfIf
 	catalogItemChan := make(chan []*marinaIfc.CatalogItemInfo)
 	catalogItemErrChan := make(chan error)
 	if catalogItemIdListSize <= *CatalogIdfQueryChunkSize {
-
-		go GetCatalogItemsChan(ctx, idfIfc, catalogItemIdList, arg.GetCatalogItemTypeList(), arg.GetLatest(),
-			catalogItemChan, catalogItemErrChan)
+		go catalogItemIfc.GetCatalogItemsChan(ctx, idfIfc, catalogItemIdList, arg.GetCatalogItemTypeList(),
+			arg.GetLatest(), catalogItemChan, catalogItemErrChan)
 
 		catalogItemList = <-catalogItemChan
 		err := <-catalogItemErrChan
@@ -56,8 +56,8 @@ func CatalogItemGet(ctx context.Context, arg *marinaIfc.CatalogItemGetArg, idfIf
 			}
 
 			log.Infof("Fetching catalog items from index %v to %v", start, end)
-			go GetCatalogItemsChan(ctx, idfIfc, catalogItemIdList[start:end], arg.GetCatalogItemTypeList(), arg.GetLatest(),
-				catalogItemChan, catalogItemErrChan)
+			go catalogItemIfc.GetCatalogItemsChan(ctx, idfIfc, catalogItemIdList[start:end],
+				arg.GetCatalogItemTypeList(), arg.GetLatest(), catalogItemChan, catalogItemErrChan)
 		}
 
 		for i := 0; i < count; i++ {

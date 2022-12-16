@@ -13,16 +13,19 @@
 package task
 
 import (
+	"sync"
+	"time"
+	
+	log "k8s.io/klog/v2"
+
 	"github.com/nutanix-core/acs-aos-go/ergon"
 	ergonClient "github.com/nutanix-core/acs-aos-go/ergon/client"
 	ergonTask "github.com/nutanix-core/acs-aos-go/ergon/task"
 	"github.com/nutanix-core/acs-aos-go/nutanix/util-go/misc"
+	"github.com/nutanix-core/content-management-marina/common"
 	"github.com/nutanix-core/content-management-marina/proxy"
 	"github.com/nutanix-core/content-management-marina/task/base"
 	utils "github.com/nutanix-core/content-management-marina/util"
-	log "k8s.io/klog/v2"
-	"sync"
-	"time"
 )
 
 const (
@@ -105,7 +108,7 @@ func (m *MarinaTaskManager) StopTaskDispatcher() {
 
 // Ergon returns the ergon service.
 func (m *MarinaTaskManager) Ergon() ergonClient.Ergon {
-	return utils.GetErgonService()
+	return common.Interfaces().ErgonService()
 }
 
 // Component returns the Marina service name.

@@ -14,15 +14,17 @@ import (
 	"reflect"
 
 	"github.com/golang/protobuf/proto"
+	log "k8s.io/klog/v2"
+
 	catalogClient "github.com/nutanix-core/acs-aos-go/catalog/client"
 	"github.com/nutanix-core/acs-aos-go/ergon"
 	"github.com/nutanix-core/acs-aos-go/nutanix/util-go/uuid4"
+	"github.com/nutanix-core/content-management-marina/common"
 	marinaError "github.com/nutanix-core/content-management-marina/errors"
 	marinaProtos "github.com/nutanix-core/content-management-marina/protos/marina"
 	"github.com/nutanix-core/content-management-marina/task/base"
 	util "github.com/nutanix-core/content-management-marina/util"
 	"github.com/nutanix-core/ntnx-api-utils-go/tracer"
-	log "k8s.io/klog/v2"
 )
 
 // ProxyTask is the task to handle Catalog RPC proxy.
@@ -47,7 +49,7 @@ func (t *ProxyTask) StartHook() error {
 		return marinaError.ErrMarinaInternal.SetCauseAndLog(
 			fmt.Errorf("failed to create proxy task serialization token: %s", err))
 	}
-	taskUuid, err := util.NewUuid()
+	taskUuid, err := uuid4.New()
 	if err != nil {
 		return marinaError.ErrMarinaInternal.SetCauseAndLog(
 			fmt.Errorf("failed to create a new proxy task UUID: %s", err))
@@ -242,7 +244,7 @@ func (t *ProxyTask) updateMarinaTask(ctx context.Context, retTask *ergon.Task, r
 
 // Enqueue added the task to serial executor.
 func (t *ProxyTask) Enqueue() {
-	se := util.SerialExecutor()
+	se := common.Interfaces().SerialExecutor()
 	se.SubmitJob(t)
 }
 
@@ -281,7 +283,7 @@ func (t *ProxyTask) serializationToken() (*string, error) {
 	// not be serialized
 	if id == "" {
 		log.Infof("%s request is not getting serialized.", rpcName)
-		uuid, err := util.NewUuid()
+		uuid, err := uuid4.New()
 		if err != nil {
 			return nil, marinaError.ErrInternal.SetCauseAndLog(
 				fmt.Errorf("failed to create new UUID"))

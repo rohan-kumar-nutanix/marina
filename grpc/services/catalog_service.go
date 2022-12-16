@@ -9,10 +9,10 @@ package services
 
 import (
 	"context"
-	"github.com/nutanix-core/content-management-marina/db"
 
 	log "k8s.io/klog/v2"
 
+	"github.com/nutanix-core/content-management-marina/common"
 	"github.com/nutanix-core/content-management-marina/grpc/catalog/catalog_item"
 	marinaIfc "github.com/nutanix-core/content-management-marina/protos/marina"
 	"github.com/nutanix-core/ntnx-api-utils-go/tracer"
@@ -22,7 +22,7 @@ type MarinaServer struct {
 	marinaIfc.UnimplementedMarinaServer
 }
 
-type CatalogItemInterface interface {
+type MarinaServiceInterface interface {
 	CatalogItemGet(ctx context.Context, arg *marinaIfc.CatalogItemGetArg) (*marinaIfc.CatalogItemGetRet, error)
 }
 
@@ -31,5 +31,5 @@ func (s *MarinaServer) CatalogItemGet(ctx context.Context, arg *marinaIfc.Catalo
 	defer span.Finish()
 
 	log.Infof("Arg received %v", arg)
-	return catalog_item.CatalogItemGet(ctx, arg, db.IdfClientWithRetry())
+	return catalog_item.CatalogItemGet(ctx, arg, common.Interfaces().CatalogItemService(), common.Interfaces().IdfService())
 }

@@ -30,7 +30,6 @@ COPY . .
 
 # The mount prefix here will allow the command to use ssh keys to authenticate to Nutanix github.
 RUN --mount=type=secret,id=ssh,dst=/root/.ssh/id_rsa make build-protos
-RUN --mount=type=secret,id=ssh,dst=/root/.ssh/id_rsa go get -d -v ./...
 RUN --mount=type=secret,id=ssh,dst=/root/.ssh/id_rsa make server
 
 # Start a new image and copy the binary file.

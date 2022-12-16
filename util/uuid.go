@@ -8,7 +8,7 @@
  *
  */
 
-package common
+package utils
 
 import (
 	"fmt"
@@ -22,15 +22,6 @@ func ValidateUUID(uuidValue []byte, fieldName string) marinaError.MarinaErrorInt
 		return marinaError.ErrMarinaInvalidUuid(string(uuidValue)).SetCauseAndLog(
 			fmt.Errorf("invalid '%s' (%s). UUID must be exactly 16 bytes string",
 				fieldName, string(uuidValue)))
-	}
-	return nil
-}
-
-func ValidateUUIDS(uuids [][]byte, fieldName string) error {
-	for i, uuid := range uuids {
-		if err := ValidateUUID(uuid, fmt.Sprintf("%v[%v]", fieldName, i)); err != nil {
-			return err
-		}
 	}
 	return nil
 }
