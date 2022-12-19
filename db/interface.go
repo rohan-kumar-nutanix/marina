@@ -9,15 +9,12 @@
 package db
 
 import (
-	"context"
-
 	"github.com/nutanix-core/acs-aos-go/insights/insights_interface"
 	"github.com/nutanix-core/acs-aos-go/nutanix/util-go/misc"
 	utils "github.com/nutanix-core/content-management-marina/util"
 )
 
 type IdfClientInterface interface {
-	Query(ctx context.Context, arg *insights_interface.Query) ([]*insights_interface.EntityWithMetric, error)
 }
 
 func newIdfClientWithRetry() *IdfClient {

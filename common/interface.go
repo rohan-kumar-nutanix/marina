@@ -17,6 +17,8 @@ import (
 	log "k8s.io/klog/v2"
 
 	ergonClient "github.com/nutanix-core/acs-aos-go/ergon/client"
+	"github.com/nutanix-core/acs-aos-go/insights/insights_interface"
+	cpdb "github.com/nutanix-core/acs-aos-go/nusights/util/db"
 	"github.com/nutanix-core/acs-aos-go/nutanix/util-go/misc/serial_executor"
 	"github.com/nutanix-core/acs-aos-go/zeus"
 	"github.com/nutanix-core/content-management-marina/db"
@@ -26,6 +28,7 @@ import (
 
 type MarinaCommonInterfaces interface {
 	CatalogItemService() catalog_item.CatalogItemInterface
+	CPDBService() cpdb.CPDBClientInterface
 	ErgonService() ergonClient.Ergon
 	IdfService() db.IdfClientInterface
 	SerialExecutor() serial_executor.SerialExecutorIfc
@@ -34,6 +37,7 @@ type MarinaCommonInterfaces interface {
 
 type singletonService struct {
 	catalogItemService catalog_item.CatalogItemInterface
+	cpdbService        cpdb.CPDBClientInterface
 	ergonService       ergonClient.Ergon
 	idfService         db.IdfClientInterface
 	serialExecutor     serial_executor.SerialExecutorIfc
@@ -56,6 +60,7 @@ func InitSingletonService() {
 	singletonServiceOnce.Do(func() {
 		singleton = &singletonService{
 			catalogItemService: new(catalog_item.CatalogItemImpl),
+			cpdbService:        cpdb.NewCPDBService(utils.HostAddr, uint16(*insights_interface.InsightsPort)),
 			ergonService:       ergonClient.NewErgonService(utils.HostAddr, ergonClient.DefaultErgonPort),
 			idfService:         db.IdfClientWithRetry(),
 			serialExecutor:     serial_executor.NewSerialExecutor(),
@@ -72,6 +77,11 @@ func Interfaces() MarinaCommonInterfaces {
 // CatalogItemService - Returns the singleton for CatalogItemInterface
 func (s *singletonService) CatalogItemService() catalog_item.CatalogItemInterface {
 	return s.catalogItemService
+}
+
+// CPDBService - Returns the singleton for CPDB Service
+func (s *singletonService) CPDBService() cpdb.CPDBClientInterface {
+	return s.cpdbService
 }
 
 // ErgonService returns the singleton Ergon service.

@@ -31,5 +31,5 @@ func (s *MarinaServer) CatalogItemGet(ctx context.Context, arg *marinaIfc.Catalo
 	defer span.Finish()
 
 	log.Infof("Arg received %v", arg)
-	return catalog_item.CatalogItemGet(ctx, arg, common.Interfaces().CatalogItemService(), common.Interfaces().IdfService())
+	return catalog_item.CatalogItemGet(ctx, arg, common.Interfaces().CatalogItemService(), common.Interfaces().CPDBService())
 }

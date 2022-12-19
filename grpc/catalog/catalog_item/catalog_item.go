@@ -14,8 +14,8 @@ import (
 
 	"github.com/nutanix-core/acs-aos-go/insights/insights_interface"
 	. "github.com/nutanix-core/acs-aos-go/insights/insights_interface/query"
+	cpdb "github.com/nutanix-core/acs-aos-go/nusights/util/db"
 	"github.com/nutanix-core/acs-aos-go/nutanix/util-go/uuid4"
-	"github.com/nutanix-core/content-management-marina/db"
 	marinaIfc "github.com/nutanix-core/content-management-marina/protos/marina"
 	utils "github.com/nutanix-core/content-management-marina/util"
 )
@@ -35,17 +35,17 @@ type CatalogItemImpl struct {
 }
 
 // GetCatalogItemsChan pushes catalog items and error object to respective channels.
-func (catalogItem *CatalogItemImpl) GetCatalogItemsChan(ctx context.Context, idfIfc db.IdfClientInterface,
+func (catalogItem *CatalogItemImpl) GetCatalogItemsChan(ctx context.Context, cpdbIfc cpdb.CPDBClientInterface,
 	catalogItemIdList []*marinaIfc.CatalogItemId, catalogItemTypeList []marinaIfc.CatalogItemInfo_CatalogItemType,
 	latest bool, catalogItemChan chan []*marinaIfc.CatalogItemInfo, errorChan chan error) {
-	catalogItemList, err := catalogItem.GetCatalogItems(ctx, idfIfc, catalogItemIdList, catalogItemTypeList, latest, "catalog_item_list")
+	catalogItemList, err := catalogItem.GetCatalogItems(ctx, cpdbIfc, catalogItemIdList, catalogItemTypeList, latest, "catalog_item_list")
 	catalogItemChan <- catalogItemList
 	errorChan <- err
 }
 
 // GetCatalogItems loads Catalog Items from IDF and returns a list of CatalogItem.
 // Returns ([]CatalogItem, nil) on success and (nil, error) on failure.
-func (*CatalogItemImpl) GetCatalogItems(ctx context.Context, idfIfc db.IdfClientInterface,
+func (*CatalogItemImpl) GetCatalogItems(ctx context.Context, cpdbIfc cpdb.CPDBClientInterface,
 	catalogItemIdList []*marinaIfc.CatalogItemId, catalogItemTypeList []marinaIfc.CatalogItemInfo_CatalogItemType,
 	latest bool, queryName string) ([]*marinaIfc.CatalogItemInfo, error) {
 	var predicateList []*insights_interface.BooleanExpression
@@ -102,7 +102,8 @@ func (*CatalogItemImpl) GetCatalogItems(ctx context.Context, idfIfc db.IdfClient
 		return nil, err
 	}
 
-	idfResponse, err := idfIfc.Query(ctx, query)
+	arg := insights_interface.GetEntitiesWithMetricsArg{Query: query}
+	idfResponse, err := cpdbIfc.Query(&arg)
 
 	var catalogItems []*marinaIfc.CatalogItemInfo
 	if err == insights_interface.ErrNotFound {

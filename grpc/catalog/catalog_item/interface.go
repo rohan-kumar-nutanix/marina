@@ -12,15 +12,15 @@ package catalog_item
 import (
 	"context"
 
-	"github.com/nutanix-core/content-management-marina/db"
+	cpdb "github.com/nutanix-core/acs-aos-go/nusights/util/db"
 	marinaIfc "github.com/nutanix-core/content-management-marina/protos/marina"
 )
 
 type CatalogItemInterface interface {
-	GetCatalogItemsChan(ctx context.Context, idfIfc db.IdfClientInterface, catalogItemIdList []*marinaIfc.CatalogItemId,
+	GetCatalogItemsChan(ctx context.Context, cpdbIfc cpdb.CPDBClientInterface, catalogItemIdList []*marinaIfc.CatalogItemId,
 		catalogItemTypeList []marinaIfc.CatalogItemInfo_CatalogItemType, latest bool,
 		catalogItemChan chan []*marinaIfc.CatalogItemInfo, errorChan chan error)
-	GetCatalogItems(ctx context.Context, idfIfc db.IdfClientInterface, catalogItemIdList []*marinaIfc.CatalogItemId,
+	GetCatalogItems(ctx context.Context, cpdbIfc cpdb.CPDBClientInterface, catalogItemIdList []*marinaIfc.CatalogItemId,
 		catalogItemTypeList []marinaIfc.CatalogItemInfo_CatalogItemType, latest bool,
 		queryName string) ([]*marinaIfc.CatalogItemInfo, error)
 }

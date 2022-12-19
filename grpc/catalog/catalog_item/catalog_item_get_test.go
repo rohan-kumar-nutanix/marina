@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/mock"
 
 	"github.com/nutanix-core/acs-aos-go/insights/insights_interface"
-	dbMock "github.com/nutanix-core/content-management-marina/mocks/db"
+	cpdbMock "github.com/nutanix-core/acs-aos-go/nusights/util/db/mocks"
 	catalogItemMock "github.com/nutanix-core/content-management-marina/mocks/grpc/catalog/catalog_item"
 	marinaIfc "github.com/nutanix-core/content-management-marina/protos/marina"
 )
@@ -36,8 +36,8 @@ func TestCatalogItemGetEmptyArg(t *testing.T) {
 		}).
 		Once()
 
-	mockIdfIfc := &dbMock.IdfClientInterface{}
-	ret, err := CatalogItemGet(ctx, arg, mockCatalogItemIfc, mockIdfIfc)
+	mockCpdbIfc := &cpdbMock.CPDBClientInterface{}
+	ret, err := CatalogItemGet(ctx, arg, mockCatalogItemIfc, mockCpdbIfc)
 
 	assert.Nil(t, err)
 	catalogItemList := ret.GetCatalogItemList()
@@ -68,8 +68,8 @@ func TestCatalogItemGetNonEmptyArg(t *testing.T) {
 		}).
 		Twice()
 
-	mockIdfIfc := &dbMock.IdfClientInterface{}
-	ret, err := CatalogItemGet(ctx, arg, mockCatalogItemIfc, mockIdfIfc)
+	mockCpdbIfc := &cpdbMock.CPDBClientInterface{}
+	ret, err := CatalogItemGet(ctx, arg, mockCatalogItemIfc, mockCpdbIfc)
 
 	assert.Nil(t, err)
 	catalogItemList := ret.GetCatalogItemList()
@@ -94,8 +94,8 @@ func TestCatalogItemGetEmptyArgError(t *testing.T) {
 		}).
 		Once()
 
-	mockIdfIfc := &dbMock.IdfClientInterface{}
-	_, err := CatalogItemGet(ctx, arg, mockCatalogItemIfc, mockIdfIfc)
+	mockCpdbIfc := &cpdbMock.CPDBClientInterface{}
+	_, err := CatalogItemGet(ctx, arg, mockCatalogItemIfc, mockCpdbIfc)
 
 	assert.NotNil(t, err)
 	mockCatalogItemIfc.AssertExpectations(t)
@@ -121,8 +121,8 @@ func TestCatalogItemGetNonEmptyArgError(t *testing.T) {
 		}).
 		Twice()
 
-	mockIdfIfc := &dbMock.IdfClientInterface{}
-	_, err := CatalogItemGet(ctx, arg, mockCatalogItemIfc, mockIdfIfc)
+	mockCpdbIfc := &cpdbMock.CPDBClientInterface{}
+	_, err := CatalogItemGet(ctx, arg, mockCatalogItemIfc, mockCpdbIfc)
 
 	assert.NotNil(t, err)
 }
