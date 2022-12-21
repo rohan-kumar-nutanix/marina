@@ -103,3 +103,7 @@ rpcCred:
 errorApiArtifacts:
   name: "error-api-artifacts"
   path: "/home/nutanix/api_artifacts/vmm"
+
+serviceCerts:
+  name: "service-certs"
+  path: "/home/certs"

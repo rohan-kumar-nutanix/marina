@@ -5,7 +5,7 @@ kind: ServiceAccount
 metadata:
   name: marina
   labels:
-    helm.sh/chart: marina-0.1.0
+    helm.sh/chart: marina-0.2.0
     app.kubernetes.io/name: marina
     app.kubernetes.io/instance: marina
     app.kubernetes.io/version: "1.0.0"
@@ -27,7 +27,7 @@ metadata:
     meta.helm.sh/release-name: marina
     meta.helm.sh/release-namespace: default
   labels:
-    helm.sh/chart: marina-0.1.0
+    helm.sh/chart: marina-0.2.0
     app.kubernetes.io/name: marina
     app.kubernetes.io/instance: marina
     app.kubernetes.io/version: "1.0.0"
@@ -39,17 +39,17 @@ spec:
       name: grpc
       protocol: TCP
       targetPort: 9200
-
+    
     - port: 9201
       name: prometheus
       protocol: TCP
       targetPort: 9201
-
+    
     - port: 9202
       name: proxy-rpc
       protocol: TCP
       targetPort: 9202
-
+    
   selector:
     app.kubernetes.io/name: marina
     app.kubernetes.io/instance: marina
@@ -60,7 +60,7 @@ kind: Deployment
 metadata:
   name: marina
   labels:
-    helm.sh/chart: marina-0.1.0
+    helm.sh/chart: marina-0.2.0
     app.kubernetes.io/name: marina
     app.kubernetes.io/instance: marina
     app.kubernetes.io/version: "1.0.0"
@@ -85,7 +85,7 @@ spec:
         - name: marina
           securityContext:
             {}
-          image: "docker.dyn.ntnxdpro.com/canaveral-legacy-docker/nutanix-core/content-management-marina:32"
+          image: "docker.dyn.ntnxdpro.com/msp-dev-docker/nutanix-msp/content-management-marina:32"
           imagePullPolicy: IfNotPresent
           ports:
             - name: grpc
@@ -100,10 +100,15 @@ spec:
               name: rpc-cred
             - mountPath: /home/nutanix/api_artifacts/vmm
               name: error-api-artifacts
+            - mountPath: /home/certs
+              name: service-certs
           lifecycle:
             postStart:
               exec:
-                command: [ "/bin/ash", "-c", "chmod 444 /home/private/gen_server.key" ]
+                command:
+                  - sh
+                  - -c
+                  - "chmod 444 /home/private/gen_server.key; chmod -R 444 /home/certs"
           resources:
             limits:
               cpu: 200m
@@ -120,4 +125,8 @@ spec:
         - name: error-api-artifacts
           hostPath:
             path: /home/nutanix/api_artifacts/vmm
+            type: Directory
+        - name: service-certs
+          hostPath:
+            path: /home/certs
             type: Directory

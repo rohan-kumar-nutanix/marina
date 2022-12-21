@@ -37,10 +37,15 @@ spec:
               name: {{ .Values.rpcCred.name }}
             - mountPath: {{ .Values.errorApiArtifacts.path }}
               name: {{ .Values.errorApiArtifacts.name }}
+            - mountPath: {{ .Values.serviceCerts.path }}
+              name: {{ .Values.serviceCerts.name }}
           lifecycle:
             postStart:
               exec:
-                command: [ "/bin/ash", "-c", "chmod 444 {{ .Values.rpcCred.path }}" ]
+                command:
+                  - sh
+                  - -c
+                  - "chmod 444 /home/private/gen_server.key; chmod -R 444 /home/certs"
           resources:
                {{- toYaml .Values.resources | nindent 12 }}
           # Source paths for volume mounts.
@@ -52,4 +57,8 @@ spec:
         - name: {{ .Values.errorApiArtifacts.name }}
           hostPath:
             path: {{ .Values.errorApiArtifacts.path }}
+            type: Directory
+        - name: {{ .Values.serviceCerts.name }}
+          hostPath:
+            path: {{ .Values.serviceCerts.path }}
             type: Directory
