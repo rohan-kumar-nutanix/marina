@@ -9,7 +9,7 @@ MODE=count
 mockery --all --keeptree
 
 # Build the coverage profile
-go test -v -coverpkg=./db/...,./grpc/... -covermode=$MODE -coverprofile=${COVFILE} ./...
+go test -v -coverpkg=./db/...,./grpc/...,./metadata/... -covermode=$MODE -coverprofile=${COVFILE} ./...
 
 # Get coverage report in HTML
 go tool cover -html=${COVFILE} -o coverage.html

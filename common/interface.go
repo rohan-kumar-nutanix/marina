@@ -23,6 +23,7 @@ import (
 	"github.com/nutanix-core/acs-aos-go/zeus"
 	"github.com/nutanix-core/content-management-marina/db"
 	"github.com/nutanix-core/content-management-marina/grpc/catalog/catalog_item"
+	"github.com/nutanix-core/content-management-marina/metadata"
 	utils "github.com/nutanix-core/content-management-marina/util"
 )
 
@@ -31,6 +32,7 @@ type MarinaCommonInterfaces interface {
 	CPDBService() cpdb.CPDBClientInterface
 	ErgonService() ergonClient.Ergon
 	IdfService() db.IdfClientInterface
+	MetadataService() metadata.EntityMetadataInterface
 	SerialExecutor() serial_executor.SerialExecutorIfc
 	ZkSession() *zeus.ZookeeperSession
 }
@@ -40,6 +42,7 @@ type singletonService struct {
 	cpdbService        cpdb.CPDBClientInterface
 	ergonService       ergonClient.Ergon
 	idfService         db.IdfClientInterface
+	metadataService    metadata.EntityMetadataInterface
 	serialExecutor     serial_executor.SerialExecutorIfc
 	zkSession          *zeus.ZookeeperSession
 }
@@ -63,6 +66,7 @@ func InitSingletonService() {
 			cpdbService:        cpdb.NewCPDBService(utils.HostAddr, uint16(*insights_interface.InsightsPort)),
 			ergonService:       ergonClient.NewErgonService(utils.HostAddr, ergonClient.DefaultErgonPort),
 			idfService:         db.IdfClientWithRetry(),
+			metadataService:    new(metadata.EntityMetadataUtil),
 			serialExecutor:     serial_executor.NewSerialExecutor(),
 			zkSession:          initZkSession(),
 		}
@@ -92,6 +96,11 @@ func (s *singletonService) ErgonService() ergonClient.Ergon {
 // IdfService - Returns the singleton for IdfClientInterface
 func (s *singletonService) IdfService() db.IdfClientInterface {
 	return s.idfService
+}
+
+// MetadataService - Returns the singleton for Metadata Interface.
+func (s *singletonService) MetadataService() metadata.EntityMetadataInterface {
+	return s.metadataService
 }
 
 // SerialExecutor returns the singleton Serial Executor.

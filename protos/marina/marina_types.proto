@@ -144,3 +144,20 @@ message Source {
   // UUID pointing at a cerebro snapshot.
   optional bytes snapshot_uuid = 3;
 }
+
+message EntityMetadata {
+  // Entity creation timestamp.
+  optional int64 create_time_usecs = 1;
+
+  // Entity last update timestamp.
+  optional int64 last_update_time_usecs = 2;
+
+  // Entity owner UUID.
+  optional bytes owner_user_uuid = 3;
+
+  // Entity owner name.
+  optional string owner_user_name = 4;
+
+  // List of categories attached to the Entity.
+  repeated bytes categories_uuid_list = 5;
+}
