@@ -12,3 +12,6 @@ mocks/
 
 # IDE
 .idea/
+
+# PC certs.
+certs/
