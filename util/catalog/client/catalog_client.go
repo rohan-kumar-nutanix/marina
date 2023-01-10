@@ -13,13 +13,13 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/proto"
+	log "k8s.io/klog/v2"
 
 	ntnx_errors "github.com/nutanix-core/acs-aos-go/nutanix/util-go/errors"
 	util_misc "github.com/nutanix-core/acs-aos-go/nutanix/util-go/misc"
 	util_net "github.com/nutanix-core/acs-aos-go/nutanix/util-go/net"
 	"github.com/nutanix-core/content-management-marina/common"
 	utils "github.com/nutanix-core/content-management-marina/util"
-	log "k8s.io/klog/v2"
 )
 
 const (

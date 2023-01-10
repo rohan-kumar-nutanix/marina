@@ -6,6 +6,8 @@ option go_package = "protos/marina";
 
 import "google/protobuf/descriptor.proto";
 
+//-----------------------------------------------------------------------------
+
 message CatalogItemInfo {
   // Catalog item UUID.
   optional bytes uuid = 1;
@@ -144,6 +146,286 @@ message Source {
   // UUID pointing at a cerebro snapshot.
   optional bytes snapshot_uuid = 3;
 }
+
+//-----------------------------------------------------------------------------
+
+message CatalogItemCreateSpec {
+  // Catalog item UUID for idempotence.
+  optional bytes uuid = 1;
+
+  // Catalog item name.
+  optional string name = 2;
+
+  // Annotation describing the catalog item.
+  optional string annotation = 3;
+
+  // Catalog item type.
+  optional CatalogItemInfo.CatalogItemType item_type = 4;
+
+  // Number of copies of the catalog item to maintain. Note that these copies
+  // are spread across availability zones/clusters.
+  optional int32 number_of_copies = 5;
+
+  // Opaque blob that can be used by the consuming service to deploy an entity
+  // from a catalog item.
+  optional bytes opaque = 6;
+
+  // List of source groups specs.
+  repeated SourceGroupSpec source_group_spec_list = 7;
+
+  // This field should only be used by the instance of the catalog living at
+  // the PC level when checking out a catalog item on a cluster.
+  optional bytes global_catalog_item_uuid = 8;
+
+  // Human readable version for CatalogItem
+  optional CatalogVersion catalog_version = 9;
+
+  // Catalog item version. This field is meant to be used only by checkout
+  // task and not used by end clients.
+  optional int64 version = 10;
+
+  // Holds uuid of cluster that is allowed to perform CUD operations
+  // on this catalog item. For catalog items on PE that are not migrated
+  // to PC, this will be the PE uuid. For catalog items on PE that are
+  // migrated to PC, this will be the PC uuid.
+  optional bytes owner_cluster_uuid = 11;
+
+  // UUID of the source catalog item form which this catalog item is being
+  // copied from.
+  optional CatalogItemId source_catalog_item_id = 12;
+
+  // Categories UUID list
+  // cluster uuids listed here would used to create catalog items initially.
+  repeated bytes categories_uuid_list = 13;
+
+  // cluster reference list
+  repeated bytes initial_cluster_uuid_list = 14;
+}
+
+message SourceGroupSpec {
+  // List of UUIDs pointing at the clusters where this source group must
+  // reside.
+  // The location of catalog items will be decided based on policies. DEPRECATED
+  // repeated bytes cluster_uuid_list = 1;
+
+  // List of logical IDs pointing at the availability zones where this source
+  // group must reside.
+  // The location of catalog items will be decided based on policies. DEPRECATED
+  // repeated string availability_zone_logical_id_list = 2;
+
+  // List of source specs.
+  repeated SourceSpec source_spec_list = 3;
+
+  optional bytes uuid = 4;
+}
+
+message SourceSpec {
+  // Spec describing a file to import into the catalog.
+  optional FileImportSpec import_spec = 1;
+
+  // Snapshot UUID.
+  optional bytes snapshot_uuid = 3;
+
+  // A child catalog item UUID.
+  optional bytes catalog_item_uuid = 4;
+}
+
+//-----------------------------------------------------------------------------
+
+message FileImportSpec {
+  // Pass a UUID for idempotence.
+  optional bytes file_uuid = 1;
+
+  // A list of specs describing a remote locations where the file can be
+  // imported from.
+  repeated RemoteImportSpec remote_import_list = 2;
+
+  // A list of specs describing locations on Nutanix clusters where the file
+  // can be imported from.
+  repeated LocalImportSpec local_import_list = 3;
+
+  // For files that are already existing but only need creation of a repo
+  // entry
+  optional ExistingFileSpec existing_file_spec = 4;
+
+  // Checksum details for verifying the integrity of the file.
+  optional Checksum checksum = 5;
+
+  // If true, the request will be considered as Content Addressable Storage
+  // request.
+  optional bool is_request_content_addressable = 6 [ default = false ];
+}
+
+message RemoteImportSpec {
+  // A URL pointing at a file to import into the file repository.
+  optional string url = 1;
+
+  // A destination container where the source should be imported. If missing
+  // the catalog will try to auto select a container.
+  optional bytes container_uuid = 2;
+
+  // Authetication credentials
+  optional AuthenticationCredentials auth_cred = 3;
+
+  // True to skip server SSL/TLS certificate verification, False otherwise.
+  optional bool allow_insecure_url = 4 [ default = false ];
+}
+
+message LocalImportSpec {
+  // A cluster UUID where the ADSF path exists or file repository entry exists.
+  optional bytes cluster_uuid = 1;
+
+  // A local ADSF path pointing at a file to import into the file repository.
+  optional string adsf_path = 2;
+
+  // A pointer to a file repo entry on a cluster.
+  optional bytes file_uuid = 3;
+
+  // An availability zone where the file repository entry exists.
+  optional string availability_zone_logical_id = 4;
+
+  // Spec describing the information to track a file upload that is currently
+  // in progress.
+  optional CatalogFileUploadSpec upload_spec = 5;
+
+  // Container UUID, for when adsf_path is relative.
+  optional bytes container_uuid = 6;
+}
+
+message ExistingFileSpec {
+  // The container uuid where the file exists
+  optional bytes container_uuid = 1;
+}
+
+message AuthenticationCredentials {
+  // Basic authentication credentials (username/password)
+  optional BasicAuth basic_auth = 1;
+
+  // AWS authentication credentials
+  optional AWSAuth aws_auth = 2;
+}
+
+message BasicAuth {
+  // Username
+  optional string username = 1;
+
+  // Password
+  optional string password = 2;
+}
+
+message AWSAuth {
+  // Access Key
+  optional string access_key = 1;
+
+  // Secret Key
+  optional string secret_key = 2;
+}
+
+//-----------------------------------------------------------------------------
+
+message CatalogFileUploadSpec {
+  // ADSF path where the uploaded file resides. Should only be provided when
+  // uploading on PE.
+  optional string upload_adsf_path = 1;
+
+  // Size of the upload. Should only be provided when uploading on PE.
+  optional int64 upload_image_size = 2;
+
+  // The task that is currently processing the file upload.
+  optional EndpointTask upload_task = 3;
+
+  // UUID of catalog item for which file is being uploaded
+  optional bytes catalog_item_uuid = 4;
+}
+
+message EndpointTask {
+  // The task UUID of the task currently processing the file upload.
+  optional bytes task_uuid = 1;
+
+  // Only one of the 'cluster_uuid' or 'availability_zone_logical_id'
+  // must be provided. A cluster_uuid should be provided if the update
+  // is being executed from PC. Similarily, if the update is being
+  // executed from Xi, then an availability zone logical ID
+  // should be provided.
+
+  // The cluster UUID where the file upload is being processed.
+  optional bytes cluster_uuid = 2;
+
+  // The availability zone logical ID where the file upload is being
+  // processed.
+  optional string availability_zone_logical_id = 3;
+
+  // The Catalog UUID involved in this task.
+  optional bytes global_catalog_item_uuid = 4;
+}
+
+//-----------------------------------------------------------------------------
+
+message CatalogItemUpdateSpec {
+  // Catalog item name.
+  optional string name = 2;
+
+  // Annotation describing the catalog item.
+  optional string annotation = 3;
+
+  enum CatalogItemType {
+    // Acropolis image.
+    kImage = 1;
+    // Acropolis VM snapshot.
+    kAcropolisVmSnapshot = 2;
+    // VM snapshot (cerebro).
+    kVmSnapshot = 3;
+    // File store item
+    kFile = 4;
+    // LCM module.
+    kLCM = 5;
+    // OVA package.
+    kOVA = 6;
+  }
+
+  // Catalog item type.
+  optional CatalogItemType item_type = 4;
+
+  // Number of copies of the catalog item to maintain. Note that these copies
+  // are spread across availability zones/clusters.
+  optional int32 number_of_copies = 5;
+
+  // Opaque blob that can be used by the consuming service to deploy an entity
+  // from a catalog item.
+  optional bytes opaque = 6;
+
+  // UUIDs of source groups to be removed from catalog item.
+  repeated bytes remove_source_group_uuid_list = 7;
+
+  // List of source group specs.
+  repeated SourceGroupSpec add_source_group_list = 8;
+
+  // Human readable version for CatalogItem.
+  optional CatalogVersion catalog_version = 9;
+
+  // UUIDs of files to be removed from catalog item.
+  repeated bytes remove_file_uuid_list = 10;
+
+  // Catalog item version.
+  optional int64 version = 11;
+}
+
+//-----------------------------------------------------------------------------
+
+message Checksum {
+  enum Type {
+    kSha256 = 1;
+    kSha1 = 2;
+    kMd5 = 3;
+  }
+  // Checksum type.
+  optional Type type = 1;
+
+  // Checksum represented as bytes.
+  optional bytes value_bytes = 2;
+}
+
+//-----------------------------------------------------------------------------
 
 message EntityMetadata {
   // Entity creation timestamp.

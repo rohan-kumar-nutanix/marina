@@ -32,7 +32,7 @@ The top level directory of your repository should be set up like this:
 - protoc-gen-go v1.5.2
 - protoc-gen-go-grpc v1.1.0
 - protoc-gen-grpc-gateway v2.4.0
-- mockery v2.14.1
+- mockery v2.15.0
 -  brew commands to install the packages in MAC.
   - brew install protobuf
   - brew install protoc-gen-go

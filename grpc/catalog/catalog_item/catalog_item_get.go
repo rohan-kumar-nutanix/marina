@@ -10,20 +10,18 @@ package catalog_item
 
 import (
 	"context"
-	"errors"
-	"fmt"
 
 	log "k8s.io/klog/v2"
 
 	cpdb "github.com/nutanix-core/acs-aos-go/nusights/util/db"
-	marinaError "github.com/nutanix-core/content-management-marina/errors"
 	marinaIfc "github.com/nutanix-core/content-management-marina/protos/marina"
+	utils "github.com/nutanix-core/content-management-marina/util"
 	"github.com/nutanix-core/ntnx-api-utils-go/tracer"
 )
 
 // CatalogItemGet implements the CatalogItemGet RPC.
 func CatalogItemGet(ctx context.Context, arg *marinaIfc.CatalogItemGetArg, catalogItemIfc CatalogItemInterface,
-	cpdbIfc cpdb.CPDBClientInterface) (*marinaIfc.CatalogItemGetRet, error) {
+	cpdbIfc cpdb.CPDBClientInterface, uuidIfc utils.UuidUtilInterface) (*marinaIfc.CatalogItemGetRet, error) {
 	log.V(2).Info("CatalogItemGet RPC started.")
 	span, ctx := tracer.StartSpan(ctx, "CatalogItemGet")
 	defer span.Finish()
@@ -34,16 +32,15 @@ func CatalogItemGet(ctx context.Context, arg *marinaIfc.CatalogItemGetArg, catal
 	catalogItemChan := make(chan []*marinaIfc.CatalogItemInfo)
 	catalogItemErrChan := make(chan error)
 	if catalogItemIdListSize <= *CatalogIdfQueryChunkSize {
-		go catalogItemIfc.GetCatalogItemsChan(ctx, cpdbIfc, catalogItemIdList, arg.GetCatalogItemTypeList(),
+		go catalogItemIfc.GetCatalogItemsChan(ctx, cpdbIfc, uuidIfc, catalogItemIdList, arg.GetCatalogItemTypeList(),
 			arg.GetLatest(), catalogItemChan, catalogItemErrChan)
 
 		catalogItemList = <-catalogItemChan
 		err := <-catalogItemErrChan
 
 		if err != nil {
-			log.Error("Error occurred : ", err)
-			errMsg := fmt.Sprintf("Error while fetching CatalogItem list: %v", err)
-			return nil, marinaError.ErrInternal.SetCause(errors.New(errMsg))
+			log.Errorf("Error while fetching Catalog Item list: %v", err)
+			return nil, err
 		}
 
 	} else {
@@ -56,7 +53,7 @@ func CatalogItemGet(ctx context.Context, arg *marinaIfc.CatalogItemGetArg, catal
 			}
 
 			log.Infof("Fetching catalog items from index %v to %v", start, end)
-			go catalogItemIfc.GetCatalogItemsChan(ctx, cpdbIfc, catalogItemIdList[start:end],
+			go catalogItemIfc.GetCatalogItemsChan(ctx, cpdbIfc, uuidIfc, catalogItemIdList[start:end],
 				arg.GetCatalogItemTypeList(), arg.GetLatest(), catalogItemChan, catalogItemErrChan)
 		}
 
@@ -65,9 +62,8 @@ func CatalogItemGet(ctx context.Context, arg *marinaIfc.CatalogItemGetArg, catal
 			err := <-catalogItemErrChan
 
 			if err != nil {
-				log.Error("Error occurred : ", err)
-				errMsg := fmt.Sprintf("Error while fetching CatalogItem list: %v", err)
-				return nil, marinaError.ErrInternal.SetCause(errors.New(errMsg))
+				log.Errorf("Error while fetching CatalogItem list: %v", err)
+				return nil, err
 			}
 		}
 	}

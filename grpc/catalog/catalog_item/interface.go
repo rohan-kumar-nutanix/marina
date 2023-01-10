@@ -14,13 +14,14 @@ import (
 
 	cpdb "github.com/nutanix-core/acs-aos-go/nusights/util/db"
 	marinaIfc "github.com/nutanix-core/content-management-marina/protos/marina"
+	utils "github.com/nutanix-core/content-management-marina/util"
 )
 
 type CatalogItemInterface interface {
-	GetCatalogItemsChan(ctx context.Context, cpdbIfc cpdb.CPDBClientInterface, catalogItemIdList []*marinaIfc.CatalogItemId,
-		catalogItemTypeList []marinaIfc.CatalogItemInfo_CatalogItemType, latest bool,
-		catalogItemChan chan []*marinaIfc.CatalogItemInfo, errorChan chan error)
-	GetCatalogItems(ctx context.Context, cpdbIfc cpdb.CPDBClientInterface, catalogItemIdList []*marinaIfc.CatalogItemId,
-		catalogItemTypeList []marinaIfc.CatalogItemInfo_CatalogItemType, latest bool,
-		queryName string) ([]*marinaIfc.CatalogItemInfo, error)
+	GetCatalogItemsChan(ctx context.Context, cpdbIfc cpdb.CPDBClientInterface, uuidIfc utils.UuidUtilInterface,
+		catalogItemIdList []*marinaIfc.CatalogItemId, catalogItemTypeList []marinaIfc.CatalogItemInfo_CatalogItemType,
+		latest bool, catalogItemChan chan []*marinaIfc.CatalogItemInfo, errorChan chan error)
+	GetCatalogItems(ctx context.Context, cpdbIfc cpdb.CPDBClientInterface, cuuidIfc utils.UuidUtilInterface,
+		atalogItemIdList []*marinaIfc.CatalogItemId, catalogItemTypeList []marinaIfc.CatalogItemInfo_CatalogItemType,
+		latest bool, queryName string) ([]*marinaIfc.CatalogItemInfo, error)
 }

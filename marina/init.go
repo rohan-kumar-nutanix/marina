@@ -19,6 +19,8 @@ import (
 	log "k8s.io/klog/v2"
 
 	"github.com/nutanix-core/content-management-marina/common"
+	"github.com/nutanix-core/content-management-marina/interface/external"
+	internal "github.com/nutanix-core/content-management-marina/interface/local"
 	utils "github.com/nutanix-core/content-management-marina/util"
 	"github.com/nutanix-core/ntnx-api-utils-go/tracer"
 )
@@ -26,7 +28,8 @@ import (
 var traceProvider *otelSdkTrace.TracerProvider
 
 func initMarina() {
-	common.InitSingletonService()
+	external.InitSingletonService()
+	internal.InitSingletonService()
 }
 
 // initFlags initialize gflags for Marina.
@@ -45,10 +48,15 @@ func initHostIP() {
 }
 
 func initOpenTelemetryTracing() {
-	traceProvider, err := tracer.InitTracer(utils.ServiceName)
-	if traceProvider == nil {
+	var err error
+	traceProvider, err = tracer.InitTracer(utils.ServiceName)
+	if err != nil {
 		log.Errorf("Error while initializing tracer: %v ", err.Error())
-	} else {
+
+	} else if traceProvider != nil {
 		log.Infof("OpenTelemetry Tracer got initialized %v", traceProvider)
+
+	} else {
+		log.Info("OpenTelemetry Tracer is disabled")
 	}
 }

@@ -15,14 +15,16 @@ package task
 import (
 	"sync"
 	"time"
-	
+
 	log "k8s.io/klog/v2"
 
 	"github.com/nutanix-core/acs-aos-go/ergon"
 	ergonClient "github.com/nutanix-core/acs-aos-go/ergon/client"
 	ergonTask "github.com/nutanix-core/acs-aos-go/ergon/task"
 	"github.com/nutanix-core/acs-aos-go/nutanix/util-go/misc"
-	"github.com/nutanix-core/content-management-marina/common"
+	"github.com/nutanix-core/content-management-marina/grpc/catalog/catalog_item/tasks"
+	"github.com/nutanix-core/content-management-marina/grpc/services"
+	"github.com/nutanix-core/content-management-marina/interface/external"
 	"github.com/nutanix-core/content-management-marina/proxy"
 	"github.com/nutanix-core/content-management-marina/task/base"
 	utils "github.com/nutanix-core/content-management-marina/util"
@@ -108,7 +110,7 @@ func (m *MarinaTaskManager) StopTaskDispatcher() {
 
 // Ergon returns the ergon service.
 func (m *MarinaTaskManager) Ergon() ergonClient.Ergon {
-	return common.Interfaces().ErgonService()
+	return external.Interfaces().ErgonService()
 }
 
 // Component returns the Marina service name.
@@ -138,6 +140,10 @@ func (m *MarinaTaskManager) hydrateTask(taskProto *ergon.Task) ergonTask.FullTas
 	}
 	methodName := taskProto.GetOperationType()
 	log.Info("HydrateTask RPC methodName :", methodName)
-
-	return proxy.NewProxyTask(base.NewMarinaBaseTask(taskProto))
+	fullTask := services.GetTaskByRPC(tasks.NewCatalogItemBaseTask(base.NewMarinaBaseTask(taskProto)))
+	if fullTask == nil {
+		log.Warning("Proxying task to catalog service")
+		fullTask = proxy.NewProxyTask(base.NewMarinaBaseTask(taskProto))
+	}
+	return fullTask
 }

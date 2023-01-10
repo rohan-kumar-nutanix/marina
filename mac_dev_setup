@@ -10,17 +10,21 @@ PC_IP=$1
 # Directory where this script is present is assumed to be workspace dir.
 WORKSPACE_DIR_PATH=$( dirname -- "$0"; )
 
-# /etc/hosts related consts.
+# /etc/hosts related constants.
 HOST_FILE_PATH=/etc/hosts
 HOST_FILE_START_SECTION="# Added by Marina PC setup script on"
 HOST_FILE_END_SECTION="# End of section added by Marina PC setup script"
 
 
-# certs related consts.
+# certs related constants.
 REMOTE_CERT_FOLDER_PATH=/home/certs
 LOCAL_CERT_FOLDER_PATH=$WORKSPACE_DIR_PATH/certs
 CERTS_FILES_TO_COPY=("ca.pem" "ica.crt")
 CERTS_FOLDERS_TO_COPY=("CatalogService")
+
+# zookeeper related constants.
+FACTORY_CONFIG_PATH=("/etc/nutanix/factory_config.json")
+LOCAL_FACTORY_CONFIG_PATH=("/etc/nutanix")
 
 function guide() {
     echo "Example:
@@ -89,6 +93,20 @@ EOS
   chmod -R 555 $LOCAL_CERT_FOLDER_PATH
 }
 
+function add_factory_config () {
+  print_step "Adding factory config $FACTORY_CONFIG_PATH"
+  mkdir -p /etc/nutanix
+
+expect <<EOS
+    spawn rsync -va nutanix@$PC_IP:$FACTORY_CONFIG_PATH $LOCAL_FACTORY_CONFIG_PATH
+    expect {
+      "continue" { send "yes\n"; exp_continue }
+      "password:" { send "nutanix/4u\n"; exp_continue}
+    }
+EOS
+  ls $LOCAL_FACTORY_CONFIG_PATH >>/dev/null 2>&1 || (print_step "Failed to transfer $FACTORY_CONFIG_PATH" && exit 1)
+}
+
 if [[ $EUID -ne 0 ]]; then
   echo "Please run as root / sudo."
   guide
@@ -104,4 +122,5 @@ fi
 delete_existing_entries
 add_new_entry
 copy_certs
+add_factory_config
 print_step "Successful."

@@ -7,7 +7,7 @@ require (
 	github.com/golang/protobuf v1.5.2
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
-	github.com/nutanix-core/acs-aos-go v0.0.0-20221219073119-d450b3d1c311
+	github.com/nutanix-core/acs-aos-go v0.0.0-20230105084401-e57321cb49b8
 	github.com/nutanix-core/ntnx-api-utils-go v1.0.0
 	github.com/prometheus/client_golang v1.11.0
 	github.com/sirupsen/logrus v1.8.2-0.20210422133436-b50299cfaaa1

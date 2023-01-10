@@ -34,7 +34,6 @@ func getMockEntityMetricAndMetadata(uuid *uuid4.Uuid) (*insights_interface.Entit
 
 	cat1, _ := uuid4.New()
 	cat2, _ := uuid4.New()
-	categoryIdList := categoryIdList
 	categoryList := [][]byte{
 		cat1.RawBytes(),
 		cat2.RawBytes(),
@@ -108,7 +107,7 @@ func getMockEntityMetricAndMetadata(uuid *uuid4.Uuid) (*insights_interface.Entit
 			},
 
 			{
-				Name: &categoryIdList,
+				Name: proto.String(categoryIdList),
 				ValueList: []*insights_interface.TimeValuePair{
 					{
 						Value: &insights_interface.DataValue{
@@ -152,7 +151,8 @@ func TestGetEntityMetadataQueryBuilderError(t *testing.T) {
 	metadataByUuid, err := metadataUtil.GetEntityMetadata(ctx, mockCpdbIfc, kindIDs, idfKind, queryName)
 
 	assert.Nil(t, metadataByUuid)
-	assert.NotNil(t, err)
+	assert.Error(t, err)
+	assert.IsType(t, new(errors.InternalError), err)
 	mockCpdbIfc.AssertNotCalled(t, "Query")
 }
 
@@ -177,7 +177,8 @@ func TestGetEntityMetadataQueryError(t *testing.T) {
 	metadataByUuid, err := metadataUtil.GetEntityMetadata(ctx, mockCpdbIfc, kindIDs, idfKind, queryName)
 
 	assert.Nil(t, metadataByUuid)
-	assert.NotNil(t, err)
+	assert.Error(t, err)
+	assert.IsType(t, new(errors.InternalError), err)
 	mockCpdbIfc.AssertExpectations(t)
 }
 
@@ -207,7 +208,7 @@ func TestGetEntityMetadata(t *testing.T) {
 	metadataUtil := EntityMetadataUtil{}
 	metadataByUuid, err := metadataUtil.GetEntityMetadata(ctx, mockCpdbIfc, kindIDs, idfKind, queryName)
 
-	assert.Nil(t, err)
+	assert.NoError(t, err)
 	assert.Equal(t,
 		EntityMetadataByUuid{
 			*entityUuid1: metadata1,

@@ -52,8 +52,9 @@ import (
 	"github.com/nutanix-core/acs-aos-go/ergon"
 	ergonClient "github.com/nutanix-core/acs-aos-go/ergon/client"
 	ergonTask "github.com/nutanix-core/acs-aos-go/ergon/task"
-	"github.com/nutanix-core/content-management-marina/common"
 	marinaError "github.com/nutanix-core/content-management-marina/errors"
+	"github.com/nutanix-core/content-management-marina/interface/external"
+	internal "github.com/nutanix-core/content-management-marina/interface/local"
 	marinaProtos "github.com/nutanix-core/content-management-marina/protos/marina"
 )
 
@@ -67,14 +68,16 @@ type MarinaBaseTaskInterface interface {
 // an interface that implements Start, Save, Recover, Resume, and Complete.
 // Task implements Ergon, Proto, Enqueue, StartHook, RecoverHook, and Run.
 type MarinaBaseTask struct {
-	// BaseTask is included so as to access methods such as Start(), and
-	// Complete().
+	// BaseTask is included to access methods such as Start(), and Complete().
 	ergonTask.BaseTask
-	// TaskUtilInterface is included so as to access methods such as PollAll()
-	// and AddEntity().
+	// TaskUtilInterface is included to access methods such as PollAll() and AddEntity().
 	ergonTask.TaskUtilInterface
 	// MarinaBaseTaskInterface is included for unit tests with SetWal.
 	MarinaBaseTaskInterface
+	// External Singleton interface
+	ExternalSingletonInterface external.MarinaExternalInterfaces
+	// Internal Singleton interface
+	InternalSingletonInterface internal.MarinaInternalInterfaces
 }
 
 // NewMarinaBaseTask creates a new Marina base task.
@@ -82,9 +85,11 @@ func NewMarinaBaseTask(taskProto *ergon.Task) *MarinaBaseTask {
 	baseTask := &MarinaBaseTask{
 		// note that TaskUtil implements methods in both BaseTask and
 		// TaskUtilInterface, and so we use it to initialize both interfaces.
-		BaseTask:                ergonTask.NewTaskUtil(),
-		TaskUtilInterface:       ergonTask.NewTaskUtil(),
-		MarinaBaseTaskInterface: NewMarinaBaseTaskUtil(taskProto),
+		BaseTask:                   ergonTask.NewTaskUtil(),
+		TaskUtilInterface:          ergonTask.NewTaskUtil(),
+		MarinaBaseTaskInterface:    NewMarinaBaseTaskUtil(taskProto),
+		ExternalSingletonInterface: external.Interfaces(),
+		InternalSingletonInterface: internal.Interfaces(),
 	}
 	if err := proto.Unmarshal(taskProto.GetInternalOpaque(), baseTask.Wal()); err != nil {
 		glog.Error("Failed to unmarshal WAL for a new base task.")
@@ -94,7 +99,7 @@ func NewMarinaBaseTask(taskProto *ergon.Task) *MarinaBaseTask {
 
 // Ergon returns an Ergon client.
 func (t *MarinaBaseTask) Ergon() ergonClient.Ergon {
-	return common.Interfaces().ErgonService()
+	return external.Interfaces().ErgonService()
 }
 
 // StartHook initializes for task execution. A Marina task that embeds
@@ -107,6 +112,14 @@ func (t *MarinaBaseTask) StartHook() error {
 // MarinaBaseTask can optionally override RecoverHook.
 func (t *MarinaBaseTask) RecoverHook() error {
 	return nil
+}
+
+func (t *MarinaBaseTask) ExternalInterfaces() external.MarinaExternalInterfaces {
+	return t.ExternalSingletonInterface
+}
+
+func (t *MarinaBaseTask) InternalInterfaces() internal.MarinaInternalInterfaces {
+	return t.InternalSingletonInterface
 }
 
 type MarinaBaseTaskUtil struct {

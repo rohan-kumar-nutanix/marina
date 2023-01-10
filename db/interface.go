@@ -9,12 +9,17 @@
 package db
 
 import (
+	"context"
+
 	"github.com/nutanix-core/acs-aos-go/insights/insights_interface"
+	cpdb "github.com/nutanix-core/acs-aos-go/nusights/util/db"
 	"github.com/nutanix-core/acs-aos-go/nutanix/util-go/misc"
 	utils "github.com/nutanix-core/content-management-marina/util"
 )
 
 type IdfClientInterface interface {
+	DeleteEntities(ctx context.Context, cpdbIfc cpdb.CPDBClientInterface, entityType EntityType,
+		entityUuidList []string, isCasEnabled bool) error
 }
 
 func newIdfClientWithRetry() *IdfClient {

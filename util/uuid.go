@@ -1,6 +1,6 @@
 /*
  *
- * Common Utils code.
+ * UUID Utils code.
  *
  * Copyright (c) 2021 Nutanix Inc. All rights reserved.
  *
@@ -11,17 +11,37 @@
 package utils
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/nutanix-core/acs-aos-go/nutanix/util-go/uuid4"
 	marinaError "github.com/nutanix-core/content-management-marina/errors"
 )
 
-func ValidateUUID(uuidValue []byte, fieldName string) marinaError.MarinaErrorInterface {
-	if err := uuid4.ToUuid4(uuidValue); err == nil {
-		return marinaError.ErrMarinaInvalidUuid(string(uuidValue)).SetCauseAndLog(
-			fmt.Errorf("invalid '%s' (%s). UUID must be exactly 16 bytes string",
-				fieldName, string(uuidValue)))
+var NilUuid uuid4.Uuid
+
+type UuidUtilInterface interface {
+	New() (*uuid4.Uuid, error)
+	ValidateUUID(uuidValue []byte, fieldName string) error
+}
+
+type UuidUtil struct {
+}
+
+func (*UuidUtil) New() (*uuid4.Uuid, error) {
+	uuid, err := uuid4.New()
+	if err != nil {
+		errMsg := fmt.Sprintf("Error while creating a UUID: %v", err)
+		return nil, marinaError.ErrInternalError().SetCauseAndLog(errors.New(errMsg))
+	}
+	return uuid, nil
+}
+
+func (*UuidUtil) ValidateUUID(uuidValue []byte, fieldName string) error {
+	if uuid := uuid4.ToUuid4(uuidValue); uuid == nil {
+		errMsg := fmt.Sprintf("Invalid '%s' (%s). UUID must be exactly 16 bytes string",
+			fieldName, string(uuidValue))
+		return marinaError.ErrMarinaInvalidUuid(string(uuidValue)).SetCauseAndLog(errors.New(errMsg))
 	}
 	return nil
 }

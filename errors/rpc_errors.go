@@ -16,9 +16,10 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/nutanix-core/acs-aos-go/nutanix/util-go/errors"
 	"google.golang.org/grpc/codes"
 	log "k8s.io/klog/v2"
+
+	"github.com/nutanix-core/acs-aos-go/nutanix/util-go/errors"
 )
 
 // MarinaErrorInterface shall be embedded in each of the app error struct defined below.
@@ -95,7 +96,7 @@ var marinaAppErrorCodeGrpcCodeMapping = map[int]codes.Code{
 }
 
 var marinaErrorCodeMapping = map[int]MarinaErrorInterface{
-	20201: ErrMarinaInternalError(""),
+	20201: ErrMarinaInternalError(),
 	20301: ErrMarinaInvalidArgument("", "", ""),
 }
 
@@ -128,12 +129,12 @@ func (e *MarinaError) TypeOfError() int {
 }
 
 // SetCause sets the cause of the provided error.
-func (e *MarinaError) SetCause(err error) *MarinaError {
+func (e *MarinaError) SetCause(err error) MarinaErrorInterface {
 	return &MarinaError{e.NtnxError.SetCause(err).(*errors.NtnxError)}
 }
 
 // SetCauseAndLog sets the cause of the provided error, and logs the err message.
-func (e *MarinaError) SetCauseAndLog(err error) *MarinaError {
+func (e *MarinaError) SetCauseAndLog(err error) MarinaErrorInterface {
 	_, fullPath, line, _ := runtime.Caller(1)
 	paths := strings.Split(fullPath, "/")
 	pathLen := len(paths)
@@ -150,49 +151,45 @@ func err(errMsg string, errCode int) *MarinaError {
 	}
 }
 
-// Internal error.
+// InternalError - Internal error.
 type InternalError struct {
 	*MarinaError
-	operation string
 }
 
-func ErrInternalError(operation string) *InternalError {
+func ErrInternalError() *InternalError {
 	return &InternalError{
-		MarinaError: err("Operation Timeout Error", 21),
-		operation:   operation,
+		MarinaError: err("Marina Server Internal Error", 21),
 	}
 }
 
 func (e *InternalError) SetCauseAndLog(err error) MarinaErrorInterface {
-	e.MarinaError = e.MarinaError.SetCauseAndLog(err)
+	e.MarinaError.SetCauseAndLog(err)
 	return e
 }
 
 func (e *InternalError) SetCause(err error) MarinaErrorInterface {
-	e.MarinaError = e.MarinaError.SetCause(err)
+	e.MarinaError.SetCause(err)
 	return e
 }
 
-// Internal error.
+// MarinaInternalError - Marina Internal error.
 type MarinaInternalError struct {
 	*MarinaError
-	operation string
 }
 
-func ErrMarinaInternalError(operation string) *InternalError {
+func ErrMarinaInternalError() *InternalError {
 	return &InternalError{
 		MarinaError: err("Operation Timeout Error", 21),
-		operation:   operation,
 	}
 }
 
 func (e *MarinaInternalError) SetCauseAndLog(err error) MarinaErrorInterface {
-	e.MarinaError = e.MarinaError.SetCauseAndLog(err)
+	e.MarinaError.SetCauseAndLog(err)
 	return e
 }
 
 func (e *MarinaInternalError) SetCause(err error) MarinaErrorInterface {
-	e.MarinaError = e.MarinaError.SetCause(err)
+	e.MarinaError.SetCause(err)
 	return e
 }
 
@@ -214,12 +211,12 @@ func ErrMarinaInvalidArgument(uuid, argumentKey, argumentValue string) *MarinaIn
 }
 
 func (e *MarinaInvalidArgumentError) SetCauseAndLog(err error) MarinaErrorInterface {
-	e.MarinaError = e.MarinaError.SetCauseAndLog(err)
+	e.MarinaError.SetCauseAndLog(err)
 	return e
 }
 
 func (e *MarinaInvalidArgumentError) SetCause(err error) MarinaErrorInterface {
-	e.MarinaError = e.MarinaError.SetCause(err)
+	e.MarinaError.SetCause(err)
 	return e
 }
 
@@ -237,11 +234,34 @@ func ErrMarinaInvalidUuid(uuid string) *MarinaInvalidUuidError {
 }
 
 func (e *MarinaInvalidUuidError) SetCauseAndLog(err error) MarinaErrorInterface {
-	e.MarinaError = e.MarinaError.SetCauseAndLog(err)
+	e.MarinaError.SetCauseAndLog(err)
 	return e
 }
 
 func (e *MarinaInvalidUuidError) SetCause(err error) MarinaErrorInterface {
-	e.MarinaError = e.MarinaError.SetCause(err)
+	e.MarinaError.SetCause(err)
+	return e
+}
+
+// MarinaNotSupportedError - Marina Not supported error.
+type MarinaNotSupportedError struct {
+	*MarinaError
+	operation string
+}
+
+func ErrMarinaNotSupportedError(operation string) *MarinaNotSupportedError {
+	return &MarinaNotSupportedError{
+		MarinaError: err(fmt.Sprintf("Operation %s not supported by Marina", operation), 19),
+		operation:   operation,
+	}
+}
+
+func (e *MarinaNotSupportedError) SetCauseAndLog(err error) MarinaErrorInterface {
+	e.MarinaError.SetCauseAndLog(err)
+	return e
+}
+
+func (e *MarinaNotSupportedError) SetCause(err error) MarinaErrorInterface {
+	e.MarinaError.SetCause(err)
 	return e
 }

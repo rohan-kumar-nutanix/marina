@@ -236,8 +236,8 @@ github.com/modern-go/reflect2 v0.0.0-20180701023420-4b7aa43c6742/go.mod h1:bx2lN
 github.com/modern-go/reflect2 v1.0.1/go.mod h1:bx2lNnkwVCuqBIxFjflWJWanXIb3RllmbCylyMrvgv0=
 github.com/mwitkow/go-conntrack v0.0.0-20161129095857-cc309e4a2223/go.mod h1:qRWi+5nqEBWmkhHvq77mSJWrCKwh8bxhgT7d/eI7P4U=
 github.com/mwitkow/go-conntrack v0.0.0-20190716064945-2f068394615f/go.mod h1:qRWi+5nqEBWmkhHvq77mSJWrCKwh8bxhgT7d/eI7P4U=
-github.com/nutanix-core/acs-aos-go v0.0.0-20221219073119-d450b3d1c311 h1:GX1RzqTtdbgfrYtNws3KxT9JZk/SV+DdnKe1lqatWVw=
-github.com/nutanix-core/acs-aos-go v0.0.0-20221219073119-d450b3d1c311/go.mod h1:HawC1NNU7NOVugEfDfhaLq1SS2NjvWtSECF5s/PPIG4=
+github.com/nutanix-core/acs-aos-go v0.0.0-20230105084401-e57321cb49b8 h1:Z4J2HbZj/75vo2u8VLQGf51PICZWMFi8+S8BzhdVqxc=
+github.com/nutanix-core/acs-aos-go v0.0.0-20230105084401-e57321cb49b8/go.mod h1:HawC1NNU7NOVugEfDfhaLq1SS2NjvWtSECF5s/PPIG4=
 github.com/nutanix-core/idf-interfaces v0.0.0-20210826054358-401fceaf6887/go.mod h1:Jmkv8gtNfID8yei3YYLiMGlr+d6OeVNvJzsJGTMCEAY=
 github.com/nutanix-core/ntnx-api-utils-go v1.0.0 h1:K0FzkeEhyIhJuZdFPZm6o04YHNdWQu2w58uuN7qzTwQ=
 github.com/nutanix-core/ntnx-api-utils-go v1.0.0/go.mod h1:QOLOTKHsttOo/Kj/2rTy07YbXocHporjl/LcE7L2+no=

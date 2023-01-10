@@ -1,5 +1,5 @@
 # This file should contain our go build and go test stuff.
-curl -o mockery.tar.gz -L'#' https://github.com/vektra/mockery/releases/download/v2.14.1/mockery_2.14.1_Linux_x86_64.tar.gz
+curl -o mockery.tar.gz -L'#' https://github.com/vektra/mockery/releases/download/v2.15.0/mockery_2.15.0_Linux_x86_64.tar.gz
 tar -xf mockery.tar.gz mockery && sudo mv mockery /usr/local/bin/mockery
 sudo chmod +x /usr/local/bin/mockery
 

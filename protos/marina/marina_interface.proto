@@ -32,8 +32,191 @@ message CatalogItemGetRet {
 
 //-----------------------------------------------------------------------------
 
-service Marina {
+message CatalogItemCreateArg {
+  // Catalog item spec used to create the catalog item.
+  optional CatalogItemCreateSpec spec = 1;
 
+  // Task UUID. This is used as an idempotence token.
+  optional bytes task_uuid = 2;
+
+  // Parent task.
+  optional bytes parent_task_uuid = 3;
+
+  // Only set when parent_task_uuid is set. Sequence ID of this child
+  // among all the children of the parent task.
+  optional uint64 subtask_sequence_id = 4;
+
+  // Forces a catalog item update. This option ignores any mechanisms that
+  // prevent updates in the catalog (i.e PE being registered).
+  optional bool force_update = 5 [ default = false ];
+}
+
+message CatalogItemCreateRet {
+  // A task to poll for completion. On success, the task will contain a
+  // CatalogItemCreateTaskRet.
+  optional bytes task_uuid = 1;
+}
+
+message CatalogItemCreateTaskRet {
+  // Newly created catalog item UUID.
+  optional bytes catalog_item_uuid = 1;
+
+  // Newly created catalog item global UUID.
+  optional bytes global_catalog_item_uuid = 2;
+}
+
+//-----------------------------------------------------------------------------
+
+message CatalogItemUpdateArg {
+  // UUID of the catalog item to update.
+  optional bytes global_catalog_item_uuid = 1;
+
+  // Catalog item spec used to update the catalog item.
+  optional CatalogItemUpdateSpec spec = 2;
+
+  // Current version of the catalog item.
+  optional int64 version = 3 [ default = -1 ];
+
+  // Task UUID. This is used as an idempotence token.
+  optional bytes task_uuid = 4;
+
+  // Parent task.
+  optional bytes parent_task_uuid = 5;
+
+  // Only set when parent_task_uuid is set. Sequence ID of this child
+  // among all the children of the parent task.
+  optional uint64 subtask_sequence_id = 6;
+
+  // Forces a catalog item update. This option ignores any mechanisms that
+  // prevent updates in the catalog (i.e PE being registered).
+  optional bool force_update = 7 [ default = false ];
+}
+
+message CatalogItemUpdateRet {
+  // A task to poll for completion. On success, the task will contain a
+  // CatalogItemUpdateTaskRet.
+  optional bytes task_uuid = 1;
+}
+
+message CatalogItemUpdateTaskRet {
+}
+
+//-----------------------------------------------------------------------------
+
+message CatalogItemDeleteArg {
+  // Task UUID. This is used as an idempotence token.
+  optional bytes task_uuid = 1;
+
+  // List of catalog item query details.
+  optional CatalogItemId catalog_item_id = 2;
+
+  // Parent task.
+  optional bytes parent_task_uuid = 3;
+
+  // Only set when parent_task_uuid is set. Sequence ID of this child
+  // among all the children of the parent task.
+  optional uint64 subtask_sequence_id = 4;
+
+  // Forces a catalog item update. This option ignores any mechanisms that
+  // prevent updates in the catalog (i.e PE being registered).
+  optional bool force_update = 5 [ default = false ];
+}
+
+message CatalogItemDeleteRet {
+  // A task to poll for completion. On success, the task will contain a
+  // CatalogItemDeleteTaskRet.
+  optional bytes task_uuid = 1;
+}
+
+message CatalogItemDeleteTaskRet {
+}
+
+//-----------------------------------------------------------------------------
+
+message CatalogItemUploadArg {
+  // Catalog item global UUID.
+  optional bytes global_catalog_item_uuid = 1;
+
+  // Upload spec that contains the details of the catalog item being uploaded.
+  optional CatalogFileUploadSpec upload_spec = 2;
+
+  // Task UUID. This is used as an idempotence token.
+  optional bytes task_uuid = 3;
+
+  // Catalog item version (logical timestamp).
+  optional int64 version = 4;
+
+  // Tenant UUID.
+  optional bytes tenant_uuid = 5;
+
+  // User UUID.
+  optional bytes user_uuid = 6;
+}
+
+message CatalogItemUploadRet {
+  // A task to poll for completion. On success, the task will contain a
+  // CatalogItemUploadTaskRet.
+  optional bytes task_uuid = 1;
+}
+
+message CatalogItemUploadTaskRet {
+}
+
+//-----------------------------------------------------------------------------
+
+message CatalogMigratePcArg {
+  // UUID of the PE cluster registered with PC
+  optional bytes cluster_uuid = 1;
+
+  optional bytes task_uuid = 2;
+
+  // List of catalog item types to use as a filter.
+  repeated CatalogItemInfo.CatalogItemType catalog_item_type_list = 3;
+
+  // ID list for catalog items to be migrated from PE cluster
+  repeated CatalogItemId catalog_item_id_list = 4;
+}
+
+message CatalogMigratePcRet {
+  // A task to poll for completion. On success, the task will contain a
+  // CatalogMigratePcTaskRet.
+  optional bytes task_uuid = 1;
+}
+
+message CatalogMigratePcTaskRet {
+}
+
+//-----------------------------------------------------------------------------
+
+service Marina {
+  // Returns information about a set of catalog items.
   rpc CatalogItemGet(CatalogItemGetArg)
     returns (CatalogItemGetRet);
+
+  // Creates a new catalog item.
+  rpc CatalogItemCreate(CatalogItemCreateArg)
+      returns (CatalogItemCreateRet);
+
+  // Updates a catalog item. Note that the bits that back the catalog item are
+  // immutable, but all of the metadata is mutable.
+  rpc CatalogItemUpdate(CatalogItemUpdateArg)
+      returns (CatalogItemUpdateRet);
+
+  // Deletes a catalog item. Upon successful completion the catalog item
+  // (metadata + data) will no longer be accessible.
+  rpc CatalogItemDelete(CatalogItemDeleteArg)
+      returns (CatalogItemDeleteRet);
+
+  // Special RPC used to handle catalog item uploads. Uploads are handled
+  // differently from the other RPC calls,  since the RPC itself is not
+  // forwarded and the REST API is streamed to PE first.
+  rpc CatalogItemUpload(CatalogItemUploadArg)
+      returns (CatalogItemUploadRet);
+
+  // RPC used to handle catalog item migration on PC.
+  // This will migrate all catalog items from PE to PC but this will
+  // change ownership for catalog items from PE to PC for only those
+  // catalog items that were owner by PE.
+  rpc CatalogMigratePc(CatalogMigratePcArg)
+      returns (CatalogMigratePcRet);
 }

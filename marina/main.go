@@ -16,8 +16,8 @@ import (
 
 func main() {
 	initFlags()
-	initMarina()
 	initHostIP()
+	initMarina()
 	initOpenTelemetryTracing()
 	if traceProvider != nil {
 		defer traceProvider.Shutdown(nil)

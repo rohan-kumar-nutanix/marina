@@ -10,19 +10,19 @@
 package main
 
 import (
-	"github.com/nutanix-core/content-management-marina/common"
-	"github.com/nutanix-core/content-management-marina/task"
 	"net/http"
-
 	"strconv"
 	"sync"
 	"syscall"
 
+	log "k8s.io/klog/v2"
+
 	"github.com/nutanix-core/acs-aos-go/nutanix/util-go/net"
+	"github.com/nutanix-core/content-management-marina/common"
 	marinaGRPCServer "github.com/nutanix-core/content-management-marina/grpc"
 	"github.com/nutanix-core/content-management-marina/proxy"
+	"github.com/nutanix-core/content-management-marina/task"
 	util "github.com/nutanix-core/content-management-marina/util"
-	log "k8s.io/klog/v2"
 )
 
 // Marina service configurations.

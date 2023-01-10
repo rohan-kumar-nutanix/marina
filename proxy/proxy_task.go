@@ -19,8 +19,8 @@ import (
 	catalogClient "github.com/nutanix-core/acs-aos-go/catalog/client"
 	"github.com/nutanix-core/acs-aos-go/ergon"
 	"github.com/nutanix-core/acs-aos-go/nutanix/util-go/uuid4"
-	"github.com/nutanix-core/content-management-marina/common"
 	marinaError "github.com/nutanix-core/content-management-marina/errors"
+	"github.com/nutanix-core/content-management-marina/interface/external"
 	marinaProtos "github.com/nutanix-core/content-management-marina/protos/marina"
 	"github.com/nutanix-core/content-management-marina/task/base"
 	util "github.com/nutanix-core/content-management-marina/util"
@@ -244,7 +244,7 @@ func (t *ProxyTask) updateMarinaTask(ctx context.Context, retTask *ergon.Task, r
 
 // Enqueue added the task to serial executor.
 func (t *ProxyTask) Enqueue() {
-	se := common.Interfaces().SerialExecutor()
+	se := external.Interfaces().SerialExecutor()
 	se.SubmitJob(t)
 }
 

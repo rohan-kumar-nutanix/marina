@@ -10,16 +10,19 @@ package metadata
 
 import (
 	"context"
+	"errors"
+	"fmt"
 
 	"github.com/nutanix-core/acs-aos-go/insights/insights_interface"
 	. "github.com/nutanix-core/acs-aos-go/insights/insights_interface/query"
 	cpdb "github.com/nutanix-core/acs-aos-go/nusights/util/db"
 	"github.com/nutanix-core/acs-aos-go/nutanix/util-go/uuid4"
+	marinaError "github.com/nutanix-core/content-management-marina/errors"
 	"github.com/nutanix-core/content-management-marina/protos/marina"
 )
 
 const (
-	tableNames           = "abac_entity_capability"
+	tableName            = "abac_entity_capability"
 	kind                 = "kind"
 	kindID               = "kind_id"
 	ownerReference       = "owner_reference"
@@ -50,18 +53,20 @@ func (*EntityMetadataUtil) GetEntityMetadata(ctx context.Context, cpdbIfc cpdb.C
 
 	idfQuery, err := QUERY(queryName).
 		SELECT(entityMetadataAttribute...).
-		FROM(tableNames).
+		FROM(tableName).
 		WHERE(AND(
 			EQ(COL(kind), STR(idfKind)),
 			IN(COL(kindID), STR_LIST(kindIDs...)))).
 		Proto()
 	if err != nil {
-		return nil, err
+		errMsg := fmt.Sprintf("Failed to create the IDF query %s: %v", queryName, err)
+		return nil, marinaError.ErrInternalError().SetCauseAndLog(errors.New(errMsg))
 	}
 	idfQueryArg := &insights_interface.GetEntitiesWithMetricsArg{Query: idfQuery}
 	idfResponse, err := cpdbIfc.Query(idfQueryArg)
 	if err != nil {
-		return nil, err
+		errMsg := fmt.Sprintf("Failed to fetch the ecap entry for %s: %v", idfKind, err)
+		return nil, marinaError.ErrInternalError().SetCauseAndLog(errors.New(errMsg))
 	}
 
 	metadataByUuid := EntityMetadataByUuid{}

@@ -10,6 +10,8 @@ package protos.marina;
 
 option go_package = "protos/marina";
 
+import "protos/marina/marina_types.proto";
+
 message PcTaskWalRecordCatalogItemData {
   // Catalog item UUID.
   optional bytes catalog_item_uuid = 1;
@@ -31,12 +33,23 @@ message PcTaskWalRecordCatalogItemData {
   // New Catalog item UUID.
   optional bytes new_catalog_item_uuid = 6;
 
-}
+  // List of SourceGroupSpec.
+  repeated SourceGroupSpec add_source_group_list = 7;
 
+}
 
 message PcTaskWalRecordData {
   // WAL data for catalog item related tasks.
   optional PcTaskWalRecordCatalogItemData catalog_item = 1;
+
+  // WAL data for file repository related tasks.
+  // optional PcTaskWalRecordFileRepoData file_repo = 3;
+
+  // WAL data for the ForwardImageRpcTask.
+  // optional PcTaskWalRecordForwardImageTaskData forward_image = 4;
+
+  // List of catalog tasks created on PEs
+  repeated EndpointTask task_list = 5;
 }
 
 // Marina task WAL.

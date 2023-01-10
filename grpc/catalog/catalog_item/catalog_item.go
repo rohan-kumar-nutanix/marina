@@ -11,20 +11,25 @@ package catalog_item
 
 import (
 	"context"
+	"errors"
+	"fmt"
+
+	log "k8s.io/klog/v2"
 
 	"github.com/nutanix-core/acs-aos-go/insights/insights_interface"
 	. "github.com/nutanix-core/acs-aos-go/insights/insights_interface/query"
 	cpdb "github.com/nutanix-core/acs-aos-go/nusights/util/db"
 	"github.com/nutanix-core/acs-aos-go/nutanix/util-go/uuid4"
+	"github.com/nutanix-core/content-management-marina/db"
+	marinaError "github.com/nutanix-core/content-management-marina/errors"
 	marinaIfc "github.com/nutanix-core/content-management-marina/protos/marina"
 	utils "github.com/nutanix-core/content-management-marina/util"
 )
 
 const (
-	CatalogItemTable      = "catalog_item_info"
 	GlobalCatalogItemUuid = "global_catalog_item_uuid"
 	CatalogItemType       = "item_type"
-	CatalogVersion        = "version"
+	CatalogItemVersion    = "version"
 )
 
 var catalogItemAttributes = []interface{}{
@@ -36,9 +41,12 @@ type CatalogItemImpl struct {
 
 // GetCatalogItemsChan pushes catalog items and error object to respective channels.
 func (catalogItem *CatalogItemImpl) GetCatalogItemsChan(ctx context.Context, cpdbIfc cpdb.CPDBClientInterface,
-	catalogItemIdList []*marinaIfc.CatalogItemId, catalogItemTypeList []marinaIfc.CatalogItemInfo_CatalogItemType,
-	latest bool, catalogItemChan chan []*marinaIfc.CatalogItemInfo, errorChan chan error) {
-	catalogItemList, err := catalogItem.GetCatalogItems(ctx, cpdbIfc, catalogItemIdList, catalogItemTypeList, latest, "catalog_item_list")
+	uuidIfc utils.UuidUtilInterface, catalogItemIdList []*marinaIfc.CatalogItemId,
+	catalogItemTypeList []marinaIfc.CatalogItemInfo_CatalogItemType, latest bool,
+	catalogItemChan chan []*marinaIfc.CatalogItemInfo, errorChan chan error) {
+
+	catalogItemList, err := catalogItem.GetCatalogItems(ctx, cpdbIfc, uuidIfc, catalogItemIdList, catalogItemTypeList,
+		latest, "catalog_item_list")
 	catalogItemChan <- catalogItemList
 	errorChan <- err
 }
@@ -46,8 +54,10 @@ func (catalogItem *CatalogItemImpl) GetCatalogItemsChan(ctx context.Context, cpd
 // GetCatalogItems loads Catalog Items from IDF and returns a list of CatalogItem.
 // Returns ([]CatalogItem, nil) on success and (nil, error) on failure.
 func (*CatalogItemImpl) GetCatalogItems(ctx context.Context, cpdbIfc cpdb.CPDBClientInterface,
-	catalogItemIdList []*marinaIfc.CatalogItemId, catalogItemTypeList []marinaIfc.CatalogItemInfo_CatalogItemType,
-	latest bool, queryName string) ([]*marinaIfc.CatalogItemInfo, error) {
+	uuidIfc utils.UuidUtilInterface, catalogItemIdList []*marinaIfc.CatalogItemId,
+	catalogItemTypeList []marinaIfc.CatalogItemInfo_CatalogItemType, latest bool,
+	queryName string) ([]*marinaIfc.CatalogItemInfo, error) {
+
 	var predicateList []*insights_interface.BooleanExpression
 	var whereClause *insights_interface.BooleanExpression
 	if len(catalogItemIdList) > 0 {
@@ -55,16 +65,17 @@ func (*CatalogItemImpl) GetCatalogItems(ctx context.Context, cpdbIfc cpdb.CPDBCl
 		for _, catalogItemId := range catalogItemIdList {
 			gcUuid := catalogItemId.GetGlobalCatalogItemUuid()
 
-			if err := utils.ValidateUUID(gcUuid, "GlobalCatalogItemUUID"); err != nil {
+			gcUuidStr := uuid4.ToUuid4(gcUuid).UuidToString()
+			if err := uuidIfc.ValidateUUID(gcUuid, "GlobalCatalogItemUUID"); err != nil {
+				log.Errorf("Invalid UUID: %s", gcUuidStr)
 				return nil, err
 			}
 
-			gcUuidStr := uuid4.ToUuid4(gcUuid).UuidToString()
 			catalogItemUuidStrList = append(catalogItemUuidStrList, gcUuidStr)
 
 			if catalogItemId.Version != nil {
 				predicateList = append(predicateList, AND(EQ(COL(GlobalCatalogItemUuid), STR(gcUuidStr)),
-					EQ(COL(CatalogVersion), INT64(*catalogItemId.Version))))
+					EQ(COL(CatalogItemVersion), INT64(*catalogItemId.Version))))
 			} else {
 				predicateList = append(predicateList, EQ(COL(GlobalCatalogItemUuid), STR(gcUuidStr)))
 			}
@@ -88,18 +99,19 @@ func (*CatalogItemImpl) GetCatalogItems(ctx context.Context, cpdbIfc cpdb.CPDBCl
 		}
 	}
 
-	queryBuilder := QUERY(queryName).SELECT(catalogItemAttributes...).FROM(CatalogItemTable)
+	queryBuilder := QUERY(queryName).SELECT(catalogItemAttributes...).FROM(db.CatalogItem.ToString())
 	if whereClause != nil {
 		queryBuilder = queryBuilder.WHERE(whereClause)
 	}
 
 	if latest {
-		queryBuilder = queryBuilder.LIMIT(1).ORDER_BY(DESCENDING(CatalogVersion))
+		queryBuilder = queryBuilder.LIMIT(1).ORDER_BY(DESCENDING(CatalogItemVersion))
 	}
 
 	query, err := queryBuilder.Proto()
 	if err != nil {
-		return nil, err
+		errMsg := fmt.Sprintf("Error encountered while building the IDF query %s: %v", queryName, err)
+		return nil, marinaError.ErrInternalError().SetCauseAndLog(errors.New(errMsg))
 	}
 
 	arg := insights_interface.GetEntitiesWithMetricsArg{Query: query}
@@ -109,14 +121,16 @@ func (*CatalogItemImpl) GetCatalogItems(ctx context.Context, cpdbIfc cpdb.CPDBCl
 	if err == insights_interface.ErrNotFound {
 		return catalogItems, nil
 	} else if err != nil {
-		return nil, err
+		errMsg := fmt.Sprintf("Failed to fetch the catalog item(s): %v", err)
+		return nil, marinaError.ErrInternalError().SetCauseAndLog(errors.New(errMsg))
 	}
 
 	for _, entityWithMetric := range idfResponse {
 		catalogItem := &marinaIfc.CatalogItemInfo{}
 		err = entityWithMetric.DeserializeEntity(catalogItem)
 		if err != nil {
-			return nil, err
+			errMsg := fmt.Sprintf("Failed to deserialize catalog item IDF entry: %v", err)
+			return nil, marinaError.ErrInternalError().SetCauseAndLog(errors.New(errMsg))
 		}
 		catalogItems = append(catalogItems, catalogItem)
 	}
