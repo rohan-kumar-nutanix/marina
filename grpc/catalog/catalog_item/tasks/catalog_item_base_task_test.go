@@ -18,6 +18,7 @@ import (
 	"github.com/nutanix-core/acs-aos-go/zeus"
 	"github.com/nutanix-core/content-management-marina/interface/external"
 	internal "github.com/nutanix-core/content-management-marina/interface/local"
+	mockAuthz "github.com/nutanix-core/content-management-marina/mocks/authz"
 	mockDb "github.com/nutanix-core/content-management-marina/mocks/db"
 	mockCatalogItem "github.com/nutanix-core/content-management-marina/mocks/grpc/catalog/catalog_item"
 	mockMetadata "github.com/nutanix-core/content-management-marina/mocks/metadata"
@@ -27,6 +28,7 @@ import (
 )
 
 var (
+	authzIfc          = new(mockAuthz.AuthzInterface)
 	catalogItemIfc    = new(mockCatalogItem.CatalogItemInterface)
 	cpdbIfc           = new(mockCpdb.CPDBClientInterface)
 	ergonIfc          = new(mockErgon.Ergon)
@@ -47,7 +49,7 @@ func mockExternalInterfaces() external.MarinaExternalInterfaces {
 	return external.GetSingletonServiceWithParams(cpdbIfc, ergonIfc, idfIfc, serialExecutorIfc, configIfc, zkSession)
 }
 func mockInternalInterfaces() internal.MarinaInternalInterfaces {
-	return internal.GetSingletonServiceWithParams(catalogItemIfc, metadataIfc, fanoutIfc, protoIfc, uuidIfc)
+	return internal.GetSingletonServiceWithParams(authzIfc, catalogItemIfc, metadataIfc, fanoutIfc, protoIfc, uuidIfc)
 }
 
 func TestNewCatalogItemBaseTask(t *testing.T) {

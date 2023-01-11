@@ -10,13 +10,16 @@
 package local
 
 import (
+	"sync"
+
+	"github.com/nutanix-core/content-management-marina/authz"
 	"github.com/nutanix-core/content-management-marina/grpc/catalog/catalog_item"
 	"github.com/nutanix-core/content-management-marina/metadata"
 	utils "github.com/nutanix-core/content-management-marina/util"
-	"sync"
 )
 
 type MarinaInternalInterfaces interface {
+	AuthzService() authz.AuthzInterface
 	CatalogItemService() catalog_item.CatalogItemInterface
 	FanoutTaskPollerService() utils.FanoutTaskPollerInterface
 	MetadataService() metadata.EntityMetadataInterface
@@ -25,6 +28,7 @@ type MarinaInternalInterfaces interface {
 }
 
 type singletonObject struct {
+	authzService            authz.AuthzInterface
 	catalogItemService      catalog_item.CatalogItemInterface
 	fanoutTaskPollerService utils.FanoutTaskPollerInterface
 	metadataService         metadata.EntityMetadataInterface
@@ -41,6 +45,7 @@ var (
 func InitSingletonService() {
 	singletonServiceOnce.Do(func() {
 		singleton = &singletonObject{
+			authzService:            new(authz.AuthzUtil),
 			catalogItemService:      new(catalog_item.CatalogItemImpl),
 			fanoutTaskPollerService: new(utils.FanoutTaskPollerUtil),
 			metadataService:         new(metadata.EntityMetadataUtil),
@@ -51,11 +56,13 @@ func InitSingletonService() {
 }
 
 // GetSingletonServiceWithParams - Initialize a singleton Marina service with params. Should only be used in UTs
-func GetSingletonServiceWithParams(catalogItemService catalog_item.CatalogItemInterface,
-	metadataService metadata.EntityMetadataInterface, poller utils.FanoutTaskPollerInterface,
-	protoService utils.ProtoUtilInterface, uuidService utils.UuidUtilInterface) *singletonObject {
+func GetSingletonServiceWithParams(authzService authz.AuthzInterface,
+	catalogItemService catalog_item.CatalogItemInterface, metadataService metadata.EntityMetadataInterface,
+	poller utils.FanoutTaskPollerInterface, protoService utils.ProtoUtilInterface,
+	uuidService utils.UuidUtilInterface) *singletonObject {
 
 	return &singletonObject{
+		authzService:            authzService,
 		catalogItemService:      catalogItemService,
 		fanoutTaskPollerService: poller,
 		metadataService:         metadataService,
@@ -67,6 +74,11 @@ func GetSingletonServiceWithParams(catalogItemService catalog_item.CatalogItemIn
 // Interfaces - Returns the singleton for MarinaExternalInterfaces
 func Interfaces() MarinaInternalInterfaces {
 	return singleton
+}
+
+// AuthzService - Returns the singleton for Authz interface.
+func (s *singletonObject) AuthzService() authz.AuthzInterface {
+	return s.authzService
 }
 
 // CatalogItemService - Returns the singleton for CatalogItemInterface

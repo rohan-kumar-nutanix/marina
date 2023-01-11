@@ -27,4 +27,18 @@ var (
 		"Marina RPC service port to serve Proxy Requests for Legacy PC Catalog.")
 	CatalogPort = flag.Uint64("legacycatalog_port", 2007,
 		"Port on which legacy Catalog service is running.")
+
+	// IAM Client related flags.
+
+	MarinaServiceCertPath = flag.String("marina_cert_path",
+		"/home/certs/CatalogService/CatalogService.crt",
+		"Marina service cert absolute path on CVM.")
+	MarinaServiceKeyPath = flag.String("marina_key_path",
+		"/home/certs/CatalogService/CatalogService.key",
+		"Marina service private key absolute path on CVM.")
+	MarinaServiceCaChainPath = flag.String("ca_chain_path",
+		"/home/certs/ca.pem", "The root CA absolute path on container.")
+	MarinaServiceIcaPath = flag.String("ica_path",
+		"/home/certs/ica.crt",
+		"Path to intermediate CA cert for mutual TLS based authn with IAM")
 )

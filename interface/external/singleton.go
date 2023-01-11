@@ -19,8 +19,11 @@ import (
 	ergonClient "github.com/nutanix-core/acs-aos-go/ergon/client"
 	"github.com/nutanix-core/acs-aos-go/insights/insights_interface"
 	cpdb "github.com/nutanix-core/acs-aos-go/nusights/util/db"
+	"github.com/nutanix-core/acs-aos-go/nutanix/util-go/authz"
+	"github.com/nutanix-core/acs-aos-go/nutanix/util-go/authz/authz_cache"
 	"github.com/nutanix-core/acs-aos-go/nutanix/util-go/misc/serial_executor"
 	"github.com/nutanix-core/acs-aos-go/zeus"
+	"github.com/nutanix-core/content-management-marina/common"
 	"github.com/nutanix-core/content-management-marina/db"
 	utils "github.com/nutanix-core/content-management-marina/util"
 	marinaZeus "github.com/nutanix-core/content-management-marina/zeus"
@@ -29,6 +32,7 @@ import (
 type MarinaExternalInterfaces interface {
 	CPDBService() cpdb.CPDBClientInterface
 	ErgonService() ergonClient.Ergon
+	IamClient() authz_cache.IamClientIfc
 	IdfService() db.IdfClientInterface
 	SerialExecutor() serial_executor.SerialExecutorIfc
 	ZeusConfig() marinaZeus.ConfigCache
@@ -38,6 +42,7 @@ type MarinaExternalInterfaces interface {
 type singletonObject struct {
 	cpdbService    cpdb.CPDBClientInterface
 	ergonService   ergonClient.Ergon
+	iamClient      authz_cache.IamClientIfc
 	idfService     db.IdfClientInterface
 	serialExecutor serial_executor.SerialExecutorIfc
 	zeusConfig     marinaZeus.ConfigCache
@@ -62,6 +67,7 @@ func InitSingletonService() {
 		singleton = &singletonObject{
 			cpdbService:    cpdb.NewCPDBService(utils.HostAddr, uint16(*insights_interface.InsightsPort)),
 			ergonService:   ergonClient.NewErgonService(utils.HostAddr, ergonClient.DefaultErgonPort),
+			iamClient:      newIamClient(),
 			idfService:     db.IdfClientWithRetry(),
 			serialExecutor: serial_executor.NewSerialExecutor(),
 			zeusConfig:     marinaZeus.InitConfigCache(zkSession),
@@ -100,6 +106,11 @@ func (s *singletonObject) ErgonService() ergonClient.Ergon {
 	return s.ergonService
 }
 
+// IamClient returns the singleton Iam Client.
+func (s *singletonObject) IamClient() authz_cache.IamClientIfc {
+	return s.iamClient
+}
+
 // IdfService - Returns the singleton for IdfClientInterface
 func (s *singletonObject) IdfService() db.IdfClientInterface {
 	return s.idfService
@@ -118,6 +129,21 @@ func (s *singletonObject) ZeusConfig() marinaZeus.ConfigCache {
 // ZkSession returns the singleton ZK Session.
 func (s *singletonObject) ZkSession() *zeus.ZookeeperSession {
 	return s.zkSession
+}
+
+// Initialises a IamClient.
+func newIamClient() authz_cache.IamClientIfc {
+	authOptions := &authz.Options{Retry: false}
+	iamClient, err := authz.NewIamClient(
+		common.MarinaServiceCaChainPath,
+		common.MarinaServiceCertPath,
+		common.MarinaServiceKeyPath,
+		[]*string{common.MarinaServiceIcaPath},
+		authOptions)
+	if err != nil {
+		log.Fatalln("Failed to initialize Iam Client: ", err)
+	}
+	return iamClient
 }
 
 // Initialize Zk session for Marina service.
