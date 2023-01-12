@@ -2,17 +2,21 @@
 
 # Computes the overall test coverage of the project.
 COVERAGE_THRESHOLD=0
-COVFILE=coverage.out
+COVFILE=build/coverage.out
+COVHTMLFILE=build/coverage.html
 MODE=count
 
-# ensure mocks are generated
+# Ensure build/ directory is present
+mkdir -p build/
+
+# Ensure mocks are generated
 mockery --all --keeptree
 
 # Build the coverage profile
 go test -v -coverpkg=./db/...,./grpc/...,./metadata/...,./zeus/...,./config/...,./util/...,./authz/... -covermode=$MODE -coverprofile=${COVFILE} ./...
 
 # Get coverage report in HTML
-go tool cover -html=${COVFILE} -o coverage.html
+go tool cover -html=${COVFILE} -o ${COVHTMLFILE}
 
 # Output the percent
 COVERAGE_PERCENT=$(go tool cover -func=${COVFILE} | \

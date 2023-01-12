@@ -35,8 +35,8 @@ RUN --mount=type=secret,id=ssh,dst=/root/.ssh/id_rsa make server
 # Start a new image and copy the binary file.
 FROM docker.dyn.ntnxdpro.com/ntnx-general-docker/alpine:3.11.6
 
-COPY --from=build /go/src/github/marina/marina_server /usr/local/bin/marina
-COPY --from=build /go/src/github/marina/marina_client /usr/local/bin/marina_client
+COPY --from=build /go/src/github/marina/build/marina_server /usr/local/bin/marina
+COPY --from=build /go/src/github/marina/build/marina_client /usr/local/bin/marina_client
 WORKDIR /
 
 EXPOSE 9200 9201 9202
