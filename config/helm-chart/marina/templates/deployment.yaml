@@ -39,13 +39,6 @@ spec:
               name: {{ .Values.errorApiArtifacts.name }}
             - mountPath: {{ .Values.serviceCerts.path }}
               name: {{ .Values.serviceCerts.name }}
-          lifecycle:
-            postStart:
-              exec:
-                command:
-                  - sh
-                  - -c
-                  - "chmod 444 /home/private/gen_server.key; chmod -R 444 /home/certs"
           resources:
                {{- toYaml .Values.resources | nindent 12 }}
           # Source paths for volume mounts.
