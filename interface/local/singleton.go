@@ -19,21 +19,21 @@ import (
 )
 
 type MarinaInternalInterfaces interface {
-	AuthzService() authz.AuthzInterface
-	CatalogItemService() catalog_item.CatalogItemInterface
-	FanoutTaskPollerService() utils.FanoutTaskPollerInterface
-	MetadataService() metadata.EntityMetadataInterface
-	ProtoService() utils.ProtoUtilInterface
-	UuidService() utils.UuidUtilInterface
+	AuthzIfc() authz.AuthzInterface
+	CatalogItemIfc() catalog_item.CatalogItemInterface
+	FanoutTaskPollerIfc() utils.FanoutTaskPollerInterface
+	MetadataIfc() metadata.EntityMetadataInterface
+	ProtoIfc() utils.ProtoUtilInterface
+	UuidIfc() utils.UuidUtilInterface
 }
 
 type singletonObject struct {
-	authzService            authz.AuthzInterface
-	catalogItemService      catalog_item.CatalogItemInterface
-	fanoutTaskPollerService utils.FanoutTaskPollerInterface
-	metadataService         metadata.EntityMetadataInterface
-	protoService            utils.ProtoUtilInterface
-	uuidService             utils.UuidUtilInterface
+	authzIfc            authz.AuthzInterface
+	catalogItemIfc      catalog_item.CatalogItemInterface
+	fanoutTaskPollerIfc utils.FanoutTaskPollerInterface
+	metadataIfc         metadata.EntityMetadataInterface
+	protoIfc            utils.ProtoUtilInterface
+	uuidIfc             utils.UuidUtilInterface
 }
 
 var (
@@ -45,12 +45,12 @@ var (
 func InitSingletonService() {
 	singletonServiceOnce.Do(func() {
 		singleton = &singletonObject{
-			authzService:            new(authz.AuthzUtil),
-			catalogItemService:      new(catalog_item.CatalogItemImpl),
-			fanoutTaskPollerService: new(utils.FanoutTaskPollerUtil),
-			metadataService:         new(metadata.EntityMetadataUtil),
-			protoService:            new(utils.ProtoUtil),
-			uuidService:             new(utils.UuidUtil),
+			authzIfc:            new(authz.AuthzUtil),
+			catalogItemIfc:      new(catalog_item.CatalogItemImpl),
+			fanoutTaskPollerIfc: new(utils.FanoutTaskPollerUtil),
+			metadataIfc:         new(metadata.EntityMetadataUtil),
+			protoIfc:            new(utils.ProtoUtil),
+			uuidIfc:             new(utils.UuidUtil),
 		}
 	})
 }
@@ -62,12 +62,12 @@ func GetSingletonServiceWithParams(authzService authz.AuthzInterface,
 	uuidService utils.UuidUtilInterface) *singletonObject {
 
 	return &singletonObject{
-		authzService:            authzService,
-		catalogItemService:      catalogItemService,
-		fanoutTaskPollerService: poller,
-		metadataService:         metadataService,
-		protoService:            protoService,
-		uuidService:             uuidService,
+		authzIfc:            authzService,
+		catalogItemIfc:      catalogItemService,
+		fanoutTaskPollerIfc: poller,
+		metadataIfc:         metadataService,
+		protoIfc:            protoService,
+		uuidIfc:             uuidService,
 	}
 }
 
@@ -76,32 +76,32 @@ func Interfaces() MarinaInternalInterfaces {
 	return singleton
 }
 
-// AuthzService - Returns the singleton for Authz interface.
-func (s *singletonObject) AuthzService() authz.AuthzInterface {
-	return s.authzService
+// AuthzIfc - Returns the singleton for AuthzInterface
+func (s *singletonObject) AuthzIfc() authz.AuthzInterface {
+	return s.authzIfc
 }
 
-// CatalogItemService - Returns the singleton for CatalogItemInterface
-func (s *singletonObject) CatalogItemService() catalog_item.CatalogItemInterface {
-	return s.catalogItemService
+// CatalogItemIfc - Returns the singleton for CatalogItemInterface
+func (s *singletonObject) CatalogItemIfc() catalog_item.CatalogItemInterface {
+	return s.catalogItemIfc
 }
 
-// FanoutTaskPollerService returns the singleton for FanoutTaskPollerInterface.
-func (s *singletonObject) FanoutTaskPollerService() utils.FanoutTaskPollerInterface {
-	return s.fanoutTaskPollerService
+// FanoutTaskPollerIfc returns the singleton for FanoutTaskPollerInterface
+func (s *singletonObject) FanoutTaskPollerIfc() utils.FanoutTaskPollerInterface {
+	return s.fanoutTaskPollerIfc
 }
 
-// MetadataService - Returns the singleton for Metadata Interface.
-func (s *singletonObject) MetadataService() metadata.EntityMetadataInterface {
-	return s.metadataService
+// MetadataIfc - Returns the singleton for EntityMetadataInterface
+func (s *singletonObject) MetadataIfc() metadata.EntityMetadataInterface {
+	return s.metadataIfc
 }
 
-// ProtoService - Returns the singleton for ProtoUtilInterface
-func (s *singletonObject) ProtoService() utils.ProtoUtilInterface {
-	return s.protoService
+// ProtoIfc - Returns the singleton for ProtoUtilInterface
+func (s *singletonObject) ProtoIfc() utils.ProtoUtilInterface {
+	return s.protoIfc
 }
 
-// UuidService returns the singleton for UuidUtilInterface.
-func (s *singletonObject) UuidService() utils.UuidUtilInterface {
-	return s.uuidService
+// UuidIfc returns the singleton for UuidUtilInterface
+func (s *singletonObject) UuidIfc() utils.UuidUtilInterface {
+	return s.uuidIfc
 }

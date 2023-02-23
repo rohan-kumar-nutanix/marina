@@ -99,7 +99,7 @@ func NewMarinaBaseTask(taskProto *ergon.Task) *MarinaBaseTask {
 
 // Ergon returns an Ergon client.
 func (t *MarinaBaseTask) Ergon() ergonClient.Ergon {
-	return external.Interfaces().ErgonService()
+	return external.Interfaces().ErgonIfc()
 }
 
 // StartHook initializes for task execution. A Marina task that embeds

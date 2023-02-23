@@ -30,20 +30,20 @@ import (
 )
 
 type MarinaExternalInterfaces interface {
-	CPDBService() cpdb.CPDBClientInterface
-	ErgonService() ergonClient.Ergon
-	IamClient() authz_cache.IamClientIfc
-	IdfService() db.IdfClientInterface
+	CPDBIfc() cpdb.CPDBClientInterface
+	ErgonIfc() ergonClient.Ergon
+	IamIfc() authz_cache.IamClientIfc
+	IdfIfc() db.IdfClientInterface
 	SerialExecutor() serial_executor.SerialExecutorIfc
 	ZeusConfig() marinaZeus.ConfigCache
 	ZkSession() *zeus.ZookeeperSession
 }
 
 type singletonObject struct {
-	cpdbService    cpdb.CPDBClientInterface
-	ergonService   ergonClient.Ergon
-	iamClient      authz_cache.IamClientIfc
-	idfService     db.IdfClientInterface
+	cpdbIfc        cpdb.CPDBClientInterface
+	ergonIfc       ergonClient.Ergon
+	iamIfc         authz_cache.IamClientIfc
+	idfIfc         db.IdfClientInterface
 	serialExecutor serial_executor.SerialExecutorIfc
 	zeusConfig     marinaZeus.ConfigCache
 	zkSession      *zeus.ZookeeperSession
@@ -60,15 +60,15 @@ var (
 	singletonServiceOnce sync.Once
 )
 
-// InitSingletonService - Initialize a singleton Marina service.
+// InitSingletonService - Initialize a singleton Marina service
 func InitSingletonService() {
 	singletonServiceOnce.Do(func() {
 		zkSession := initZkSession()
 		singleton = &singletonObject{
-			cpdbService:    cpdb.NewCPDBService(utils.HostAddr, uint16(*insights_interface.InsightsPort)),
-			ergonService:   ergonClient.NewErgonService(utils.HostAddr, ergonClient.DefaultErgonPort),
-			iamClient:      newIamClient(),
-			idfService:     db.IdfClientWithRetry(),
+			cpdbIfc:        cpdb.NewCPDBService(utils.HostAddr, uint16(*insights_interface.InsightsPort)),
+			ergonIfc:       ergonClient.NewErgonService(utils.HostAddr, ergonClient.DefaultErgonPort),
+			iamIfc:         newIamClient(),
+			idfIfc:         db.IdfClientWithRetry(),
 			serialExecutor: serial_executor.NewSerialExecutor(),
 			zeusConfig:     marinaZeus.InitConfigCache(zkSession),
 			zkSession:      zkSession,
@@ -82,9 +82,9 @@ func GetSingletonServiceWithParams(cpdbService cpdb.CPDBClientInterface, ergonSe
 	zeusConfig marinaZeus.ConfigCache, zkSession *zeus.ZookeeperSession) *singletonObject {
 
 	return &singletonObject{
-		cpdbService:    cpdbService,
-		ergonService:   ergonService,
-		idfService:     idfService,
+		cpdbIfc:        cpdbService,
+		ergonIfc:       ergonService,
+		idfIfc:         idfService,
 		serialExecutor: serialExecutor,
 		zeusConfig:     zeusConfig,
 		zkSession:      zkSession,
@@ -96,42 +96,42 @@ func Interfaces() MarinaExternalInterfaces {
 	return singleton
 }
 
-// CPDBService - Returns the singleton for CPDB Service
-func (s *singletonObject) CPDBService() cpdb.CPDBClientInterface {
-	return s.cpdbService
+// CPDBIfc - Returns the singleton for CPDBClientInterface
+func (s *singletonObject) CPDBIfc() cpdb.CPDBClientInterface {
+	return s.cpdbIfc
 }
 
-// ErgonService returns the singleton Ergon service.
-func (s *singletonObject) ErgonService() ergonClient.Ergon {
-	return s.ergonService
+// ErgonIfc returns the singleton for Ergon Interface
+func (s *singletonObject) ErgonIfc() ergonClient.Ergon {
+	return s.ergonIfc
 }
 
-// IamClient returns the singleton Iam Client.
-func (s *singletonObject) IamClient() authz_cache.IamClientIfc {
-	return s.iamClient
+// IamIfc returns the singleton for IamClientIfc
+func (s *singletonObject) IamIfc() authz_cache.IamClientIfc {
+	return s.iamIfc
 }
 
-// IdfService - Returns the singleton for IdfClientInterface
-func (s *singletonObject) IdfService() db.IdfClientInterface {
-	return s.idfService
+// IdfIfc - Returns the singleton for IdfClientInterface
+func (s *singletonObject) IdfIfc() db.IdfClientInterface {
+	return s.idfIfc
 }
 
-// SerialExecutor returns the singleton Serial Executor.
+// SerialExecutor returns the singleton for Serial Executor
 func (s *singletonObject) SerialExecutor() serial_executor.SerialExecutorIfc {
 	return s.serialExecutor
 }
 
-// ZeusConfig returns the singleton Zeus config
+// ZeusConfig returns the singleton for Zeus config
 func (s *singletonObject) ZeusConfig() marinaZeus.ConfigCache {
 	return s.zeusConfig
 }
 
-// ZkSession returns the singleton ZK Session.
+// ZkSession returns the singleton for ZK Session
 func (s *singletonObject) ZkSession() *zeus.ZookeeperSession {
 	return s.zkSession
 }
 
-// Initialises a IamClient.
+// newIamClient - Initializes the IAM Interface
 func newIamClient() authz_cache.IamClientIfc {
 	authOptions := &authz.Options{Retry: false}
 	iamClient, err := authz.NewIamClient(
@@ -146,7 +146,7 @@ func newIamClient() authz_cache.IamClientIfc {
 	return iamClient
 }
 
-// Initialize Zk session for Marina service.
+// Initialize Zk session for Marina service
 func initZkSession() *zeus.ZookeeperSession {
 	zkServers := []string{utils.HostAddr + ":" + strconv.Itoa(zkPort)}
 	zkSession, err := zeus.NewZookeeperSession(zkServers, zkTimeOut)

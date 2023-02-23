@@ -110,7 +110,7 @@ func (m *MarinaTaskManager) StopTaskDispatcher() {
 
 // Ergon returns the ergon service.
 func (m *MarinaTaskManager) Ergon() ergonClient.Ergon {
-	return external.Interfaces().ErgonService()
+	return external.Interfaces().ErgonIfc()
 }
 
 // Component returns the Marina service name.

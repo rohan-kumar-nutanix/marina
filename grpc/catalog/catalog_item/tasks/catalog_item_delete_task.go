@@ -137,7 +137,7 @@ func (task *CatalogItemDeleteTask) Run() error {
 	}
 
 	ret := &marinaIfc.CatalogItemDeleteRet{}
-	retBytes, err := task.InternalInterfaces().ProtoService().Marshal(ret)
+	retBytes, err := task.InternalInterfaces().ProtoIfc().Marshal(ret)
 	if err != nil {
 		errMsg := fmt.Sprintf("Failed to serialize the return object: %v", err)
 		return marinaError.ErrInternalError().SetCauseAndLog(errors.New(errMsg))
@@ -183,7 +183,7 @@ func (task *CatalogItemDeleteTask) deleteCatalogItem(queryName string) error {
 		return marinaError.ErrInternalError().SetCauseAndLog(errors.New(errMsg))
 	}
 
-	cpdbIfc := task.ExternalInterfaces().CPDBService()
+	cpdbIfc := task.ExternalInterfaces().CPDBIfc()
 	arg := &insights_interface.GetEntitiesWithMetricsArg{Query: query}
 	entities, err := cpdbIfc.Query(arg)
 	if err == insights_interface.ErrNotFound {
@@ -200,7 +200,7 @@ func (task *CatalogItemDeleteTask) deleteCatalogItem(queryName string) error {
 		catalogItemUuidList = append(catalogItemUuidList, entity.GetEntityGuid().GetEntityId())
 	}
 
-	err = task.ExternalInterfaces().IdfService().DeleteEntities(context.Background(), cpdbIfc, db.CatalogItem,
+	err = task.ExternalInterfaces().IdfIfc().DeleteEntities(context.Background(), cpdbIfc, db.CatalogItem,
 		catalogItemUuidList, true)
 	if err == insights_interface.ErrNotFound {
 		log.Errorf("Provided catalog item(s) do not exist in IDF: %v", err)
@@ -234,7 +234,7 @@ func (task *CatalogItemDeleteTask) fanoutCatalogRequests(remoteEndpointList []ut
 			remoteTaskUuid = taskUuid
 
 		} else {
-			remoteTaskUuid, err = task.InternalInterfaces().UuidService().New()
+			remoteTaskUuid, err = task.InternalInterfaces().UuidIfc().New()
 			if err != nil {
 				return err
 			}
@@ -282,7 +282,7 @@ func (task *CatalogItemDeleteTask) fanoutCatalogRequests(remoteEndpointList []ut
 		return marinaError.ErrCatalogTaskForwardError.SetCauseAndLog(errors.New(errMsg))
 	}
 
-	task.InternalInterfaces().FanoutTaskPollerService().PollAllRemoteTasks(task.ExternalInterfaces().ZkSession(),
+	task.InternalInterfaces().FanoutTaskPollerIfc().PollAllRemoteTasks(task.ExternalInterfaces().ZkSession(),
 		&successTaskUuidByEndpoint)
 	return nil
 }

@@ -87,8 +87,8 @@ func (s *MarinaServer) CatalogItemGet(ctx context.Context, arg *marinaIfc.Catalo
 	span, ctx := tracer.StartSpan(ctx, "catalogitem-get")
 	defer span.Finish()
 
-	return catalog_item.CatalogItemGet(ctx, arg, internal.Interfaces().CatalogItemService(),
-		external.Interfaces().CPDBService(), internal.Interfaces().UuidService())
+	return catalog_item.CatalogItemGet(ctx, arg, internal.Interfaces().CatalogItemIfc(),
+		external.Interfaces().CPDBIfc(), internal.Interfaces().UuidIfc())
 }
 
 func (s *MarinaServer) CatalogItemDelete(ctx context.Context, arg *marinaIfc.CatalogItemDeleteArg) (
