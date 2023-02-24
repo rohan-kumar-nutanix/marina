@@ -11,12 +11,13 @@ package main
 
 import (
 	"fmt"
-	"github.com/nutanix-core/acs-aos-go/nutanix/util-go/uuid4"
 	"time"
 
-	catalogIfc "github.com/nutanix-core/acs-aos-go/catalog"
+	"github.com/nutanix-core/acs-aos-go/nutanix/util-go/uuid4"
+
 	catalogClient "github.com/nutanix-core/acs-aos-go/catalog/client"
-	//	"github.com/nutanix-core/acs-aos-go/nutanix/util-go/uuid4"
+	catalogIfc "github.com/nutanix-core/acs-aos-go/catalog_pc"
+
 	clientUtil "github.com/nutanix-core/content-management-marina/util/catalog/client"
 )
 
@@ -39,8 +40,8 @@ func testVmTemplates() {
 		fmt.Println("T_UUID                                   Name             ActiveVersion              No_Versions")
 		fmt.Println("-----------------------------------------------------------------------------------------------------")
 		for _, t := range vmTemplatesGetRet.TemplateDetailsList {
-			//uuid4.ToUuid4(t.TemplateInfo.TemplateUuid).UuidToString()
-			//fmt.Println(*t.TemplateInfo.Name, len(t.VersionInfoList))
+			// uuid4.ToUuid4(t.TemplateInfo.TemplateUuid).UuidToString()
+			// fmt.Println(*t.TemplateInfo.Name, len(t.VersionInfoList))
 			fmt.Println("***Template Object ***: ", t)
 			time.Sleep(1 * time.Second)
 		}
@@ -95,13 +96,13 @@ func catalogItemsGetWithSendMsg() {
 		fmt.Println("-----------------------------------------------------------------------------------------------------")
 		for _, item := range cItemGetRet.CatalogItemList {
 			fmt.Printf("%v\n", item)
-			//fmt.Println(uuid4.ToUuid4(item.GlobalCatalogItemUuid).UuidToString(), *item.Name, "\t", *item.ItemType, "\t", *item.Version)
+			// fmt.Println(uuid4.ToUuid4(item.GlobalCatalogItemUuid).UuidToString(), *item.Name, "\t", *item.ItemType, "\t", *item.Version)
 		}
 	}
 
 }
 
-func catalogItemsGet() {
+/*func catalogItemsGet() {
 	cItemGetArg := &catalogIfc.CatalogItemGetArg{}
 	cItemGetRet, err := catalogRpcClient.CatalogItemGet(cItemGetArg)
 	if err != nil {
@@ -114,11 +115,11 @@ func catalogItemsGet() {
 		fmt.Println("-----------------------------------------------------------------------------------------------------")
 		for _, item := range cItemGetRet.CatalogItemList {
 			fmt.Println(item)
-			//fmt.Println(uuid4.ToUuid4(item.GlobalCatalogItemUuid).UuidToString(), *item.Name, "\t", *item.ItemType, "\t", *item.Version)
+			// fmt.Println(uuid4.ToUuid4(item.GlobalCatalogItemUuid).UuidToString(), *item.Name, "\t", *item.ItemType, "\t", *item.Version)
 		}
 	}
 
-}
+}*/
 
 /*func catalogItemsCreate(name, desc , imageUrl *string, ) {
 	arg := &catalogIfc.CatalogItemCreateArg{}
@@ -158,7 +159,7 @@ func catalogItemsGet() {
 	}
 }*/
 
-func filesGet() {
+/*func filesGet() {
 	fmt.Println("\n\n\n-----------------------Fetching Files-------------------")
 	fmt.Println("-----------------------------------------------------------------------------------------------------")
 	filesGetArg := &catalogIfc.FileGetArg{}
@@ -169,31 +170,29 @@ func filesGet() {
 		fmt.Println("F_UUID                                   Name   ")
 		fmt.Println("-----------------------------------------------------------------------------------------------------")
 		for _, f := range filesGetRet.FileInfoList {
-			//uuid4.ToUuid4(t.TemplateInfo.TemplateUuid).UuidToString()
+			// uuid4.ToUuid4(t.TemplateInfo.TemplateUuid).UuidToString()
 			fmt.Println("***File Object Details ***: ", f)
 		}
 	}
 
-}
+}*/
 
 func main() {
 
-	catalogRpcClient = catalogClient.NewCatalogService("localhost", 9202)
 	catalogSvcUtil = clientUtil.NewCatalogService("localhost", 9202)
-
 	// Fetch CatalogItems.
 	fmt.Println("\n********************************************************")
 	fmt.Println("Fetching CatalogItems....")
-	catalogItemsGet()
-	//fmt.Println("Fetching CatalogItems using SendMsg method....")
+	// catalogItemsGet()
+	// fmt.Println("Fetching CatalogItems using SendMsg method....")
 	// catalogItemsGetWithSendMsg()
 
 	// Deleting CatalogItems.
-	//fmt.Println("Deleting CatalogItems....")
-	//catalogItemsDelete()
+	// fmt.Println("Deleting CatalogItems....")
+	// catalogItemsDelete()
 	var tname string = "temp1"
 	var desc string = "my Temp Desc"
-	//var vmUuid string = "1bbd7143-e127-4d17-bc52-b429d6e99ab4"
+	// var vmUuid string = "1bbd7143-e127-4d17-bc52-b429d6e99ab4"
 	fmt.Println("Cteating VMTemplate Shell......")
 	createTemplateShell(&tname, &desc)
 	/*fmt.Println("Cteating VMTemplate and Version vm uuid= ", vmUuid)
@@ -206,6 +205,6 @@ func main() {
 	/*	time.Sleep(3 * time.Second)
 		fmt.Println("\n********************************************************")
 		fmt.Println("Fetching FileItems....")*/
-	//filesGet()
+	// filesGet()
 
 }

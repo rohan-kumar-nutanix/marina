@@ -13,9 +13,11 @@ import (
 	"reflect"
 	"sync"
 
-	"github.com/nutanix-core/acs-aos-go/catalog"
-	marinaError "github.com/nutanix-core/content-management-marina/errors"
 	log "k8s.io/klog/v2"
+
+	catalog "github.com/nutanix-core/acs-aos-go/catalog_pc"
+
+	marinaError "github.com/nutanix-core/content-management-marina/errors"
 )
 
 // catalogServiceConfig specifies fields of Catalog RPCs that are needed for
@@ -65,44 +67,62 @@ var (
 		"VmTemplatesGet":                  syncRpc,
 		"VmTemplateVersionsGet":           syncRpc,
 		"CatalogRateLimitGet":             syncRpc,
-		// TODO: As of now only 5.19 release Catalog RPC's are available in github repo.
-		//"ResumableUploadStatusGet":        syncRpc,
-		//"ImageViewGet":                    syncRpc,
-
+		"GetMantleKeyId":                  syncRpc,
+		"CatalogEffectiveRateLimitGet":    syncRpc,
+		"BundleGet":                       syncRpc,
+		"BundleGetSupportedLocations":     syncRpc,
+		"GetCloudConfig":                  syncRpc,
+		"ResumableUploadStatusGet":        syncRpc,
+		"ImageViewGet":                    syncRpc,
 		// Catalog async RPCs.
 		"CatalogItemCreate":     asyncCatalogItemRpc,
 		"CatalogItemUpdate":     asyncCatalogItemRpc,
 		"CatalogItemDelete":     asyncCatalogItemRpc,
 		"CatalogItemCheckout":   asyncCatalogItemRpc,
 		"CatalogItemUncheckout": asyncCatalogItemRpc,
-		"CatalogItemRemove":     asyncCatalogItemRpc,
-		// "CatalogItemUpload": asyncCatalogItemRpc,
-		// "CatalogMigratePc": asyncCatalogItemRpc,
-		// "CatalogRemoteSeedingSourceArg": asyncCatalogItemRpc,
-		"CatalogClusterRegistration":   asyncCatalogItemRpc,
-		"CatalogClusterUnregistration": asyncCatalogItemRpc,
-		"ImageCreate":                  asyncCatalogItemRpc,
-		"ImageUpdate":                  asyncCatalogItemRpc,
-		"ImageDelete":                  asyncCatalogItemRpc,
-		"ImageUpload":                  asyncCatalogItemRpc,
-		"CatalogPlacementPolicyCreate": asyncCatalogItemRpc,
-		"CatalogPlacementPolicyUpdate": asyncCatalogItemRpc,
-		"CatalogPlacementPolicyDelete": asyncCatalogItemRpc,
-		"ImageCheckout":                asyncCatalogItemRpc,
-		"VmTemplateCreate":             asyncCatalogItemRpc,
-		"VmTemplateVersionCreate":      asyncCatalogItemRpc,
-		// "VmTemplateDeploy":             asyncCatalogItemRpc,
-		"VmTemplateVersionsDelete": asyncCatalogItemRpc,
-		// "VmTemplateVersionDeploy":      asyncCatalogItemRpc,
-		// "VmTemplateAndVersionCreate": asyncCatalogItemRpc,
-		// "VmTemplateInitiateGuestChanges": asyncCatalogItemRpc,
-		// "VmTemplateCompleteGuestChanges" : asyncCatalogItemRpc,
-		// "VmTemplateCancelGuestChanges": asyncCatalogItemRpc,
-		// "VmTemplateDelete": asyncCatalogItemRpc,
-		"CatalogRateLimitCreate": asyncCatalogItemRpc,
-		"CatalogRateLimitUpdate": asyncCatalogItemRpc,
-		"CatalogRateLimitDelete": asyncCatalogItemRpc,
-		// NOTE: RPC's which has parent_task_uuid are only supported, if not need to add it.
+		// "CatalogItemRemove":               asyncCatalogItemRpc,
+		"CatalogItemUpload":               asyncCatalogItemRpc,
+		"CatalogMigratePc":                asyncCatalogItemRpc,
+		"CatalogRemoteSeedingSource":      asyncCatalogItemRpc,
+		"CatalogClusterRegistration":      asyncCatalogItemRpc,
+		"CatalogItemUnregCleanup":         asyncCatalogItemRpc,
+		"CatalogClusterUnregistration":    asyncCatalogItemRpc,
+		"ImageCreate":                     asyncCatalogItemRpc,
+		"ImageUpdate":                     asyncCatalogItemRpc,
+		"ImageDelete":                     asyncCatalogItemRpc,
+		"ImageUpload":                     asyncCatalogItemRpc,
+		"CatalogPlacementPolicyCreate":    asyncCatalogItemRpc,
+		"CatalogPlacementPolicyUpdate":    asyncCatalogItemRpc,
+		"CatalogPlacementPolicyDelete":    asyncCatalogItemRpc,
+		"CatalogPlacementPolicySuspend":   asyncCatalogItemRpc,
+		"CatalogPlacementPolicyResume":    asyncCatalogItemRpc,
+		"ImageCheckout":                   asyncCatalogItemRpc,
+		"VmTemplateCreate":                asyncCatalogItemRpc,
+		"VmTemplateUpdate":                asyncCatalogItemRpc,
+		"VmTemplateVersionCreate":         asyncCatalogItemRpc,
+		"VmTemplateAndVersionCreate":      asyncCatalogItemRpc,
+		"VmTemplateDeploy":                asyncCatalogItemRpc,
+		"VmTemplateInitiateGuestChanges":  asyncCatalogItemRpc,
+		"VmTemplateCompleteGuestChanges":  asyncCatalogItemRpc,
+		"VmTemplateCancelGuestChanges":    asyncCatalogItemRpc,
+		"VmTemplateDelete":                asyncCatalogItemRpc,
+		"VmTemplateVersionsDelete":        asyncCatalogItemRpc,
+		"VmTemplateVersionDeploy":         asyncCatalogItemRpc,
+		"VmTemplateVersionReplicate":      asyncCatalogItemRpc,
+		"VmTemplateUpdateOrVersionCreate": asyncCatalogItemRpc,
+		"CatalogRateLimitCreate":          asyncCatalogItemRpc,
+		"CatalogRateLimitUpdate":          asyncCatalogItemRpc,
+		"CatalogRateLimitDelete":          asyncCatalogItemRpc,
+		"ImageConcatenate":                asyncCatalogItemRpc,
+		"ImageCreateWithMetadata":         asyncCatalogItemRpc,
+		"ImageUpdateWithMetadata":         asyncCatalogItemRpc,
+		"ImageDeleteWithMetadata":         asyncCatalogItemRpc,
+		"BundleCreate":                    asyncCatalogItemRpc,
+		"BundleUpdate":                    asyncCatalogItemRpc,
+		"BundleDelete":                    asyncCatalogItemRpc,
+		"PcLcmCatalogItemCreate":          asyncCatalogItemRpc,
+		"PcLcmCatalogItemDelete":          asyncCatalogItemRpc,
+		// NOTE: RPC's which has parent_task_uuid are only supported. if not, need to add it.
 	}
 
 	rpcServiceConfigOnce sync.Once
@@ -142,7 +162,7 @@ func InitRpcServiceConfig() {
 			CatalogRpcNames = append(CatalogRpcNames, rpcName)
 			// Replace RPC service specification with autofilled values.
 			log.Info("Fetching HandlerMethod for rpcName : ", rpcName)
-			handlerMethod := reflect.ValueOf(&catalog.CatalogExternalRpcClient{}).MethodByName(rpcName)
+			handlerMethod := reflect.ValueOf(&catalog.CatalogPcExternalRpcClient{}).MethodByName(rpcName)
 			if handlerMethod.IsZero() {
 				log.Errorf("Unsupported Catalog RPC in map :", rpcName)
 				log.Fatal("Unsupported Catalog RPC in map :", rpcName)

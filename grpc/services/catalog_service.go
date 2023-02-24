@@ -16,7 +16,9 @@ import (
 
 	"github.com/nutanix-core/acs-aos-go/ergon"
 	ergonTask "github.com/nutanix-core/acs-aos-go/ergon/task"
+	"github.com/nutanix-core/acs-aos-go/nutanix/util-go/tracer"
 	"github.com/nutanix-core/acs-aos-go/nutanix/util-go/uuid4"
+
 	marinaError "github.com/nutanix-core/content-management-marina/errors"
 	"github.com/nutanix-core/content-management-marina/grpc/catalog/catalog_item"
 	"github.com/nutanix-core/content-management-marina/grpc/catalog/catalog_item/tasks"
@@ -25,7 +27,6 @@ import (
 	marinaIfc "github.com/nutanix-core/content-management-marina/protos/marina"
 	"github.com/nutanix-core/content-management-marina/task/base"
 	util "github.com/nutanix-core/content-management-marina/util"
-	"github.com/nutanix-core/ntnx-api-utils-go/tracer"
 )
 
 const (

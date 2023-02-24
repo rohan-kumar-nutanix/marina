@@ -20,7 +20,7 @@ func main() {
 	initMarina()
 	initOpenTelemetryTracing()
 	if traceProvider != nil {
-		defer traceProvider.Shutdown(nil)
+		defer traceProvider.Close()
 	}
 	runRPCServer()
 	log.SetOutput(os.Stdout)

@@ -10,33 +10,39 @@
 package catalog_client
 
 import (
+	"context"
 	"time"
 
 	"github.com/golang/protobuf/proto"
 	log "k8s.io/klog/v2"
 
-	ntnx_errors "github.com/nutanix-core/acs-aos-go/nutanix/util-go/errors"
-	util_misc "github.com/nutanix-core/acs-aos-go/nutanix/util-go/misc"
-	util_net "github.com/nutanix-core/acs-aos-go/nutanix/util-go/net"
+	ntnxErrors "github.com/nutanix-core/acs-aos-go/nutanix/util-go/errors"
+	utilMisc "github.com/nutanix-core/acs-aos-go/nutanix/util-go/misc"
+	utilNet "github.com/nutanix-core/acs-aos-go/nutanix/util-go/net"
+	slbufsNet "github.com/nutanix-core/acs-aos-go/nutanix/util-slbufs/util/sl_bufs/net"
+
 	"github.com/nutanix-core/content-management-marina/common"
 	utils "github.com/nutanix-core/content-management-marina/util"
 )
 
 const (
-	catalogServiceName = "nutanix.catalog.CatalogRpcService"
+	catalogServiceName  = "nutanix.catalog.CatalogRpcService"
+	initialIntervalSecs = 1 * time.Second
+	maxIntervalSecs     = 30 * time.Second
+	maxRetries          = 10
 )
 
 // Catalog Error definition.
 type CatalogError_ struct {
-	*ntnx_errors.NtnxError
+	*ntnxErrors.NtnxError
 }
 
 func (e *CatalogError_) TypeOfError() int {
-	return ntnx_errors.CatalogErrorType
+	return ntnxErrors.CatalogErrorType
 }
 
 func (e *CatalogError_) SetCause(err error) error {
-	return ntnx_errors.NewNtnxErrorRef(err, e.GetErrorDetail(),
+	return ntnxErrors.NewNtnxErrorRef(err, e.GetErrorDetail(),
 		e.GetErrorCode(), e)
 }
 
@@ -48,7 +54,7 @@ func (e *CatalogError_) Equals(err interface{}) bool {
 }
 
 func CatalogError(errMsg string, errCode int) *CatalogError_ {
-	return &CatalogError_{ntnx_errors.NewNtnxError(errMsg, errCode)}
+	return &CatalogError_{ntnxErrors.NewNtnxError(errMsg, errCode)}
 }
 
 // The error code offsets are based on error codes defined in
@@ -120,7 +126,8 @@ var Errors = map[int]*CatalogError_{
 type Catalog struct {
 	serverIp   string
 	serverPort uint16
-	client     util_net.ProtobufRPCClientIfc
+	client     utilNet.ProtobufRPCClientIfc
+	timeoutSec int64
 }
 
 func DefaultCatalogService() *Catalog {
@@ -129,7 +136,7 @@ func DefaultCatalogService() *Catalog {
 
 func NewCatalogService(serviceIP string, servicePort uint16) *Catalog {
 	return &Catalog{
-		client:     util_net.NewProtobufRPCClient(serviceIP, servicePort),
+		client:     utilNet.NewProtobufRPCClient(serviceIP, servicePort),
 		serverIp:   serviceIP,
 		serverPort: servicePort,
 	}
@@ -143,10 +150,51 @@ func (svc *Catalog) SendMsg(
 	return svc.sendMsg(service, request, response)
 }
 
+func (svc *Catalog) SendMsgWithRequestContext(service string, request, response proto.Message,
+	requestContext *slbufsNet.RpcRequestContext, ctx context.Context) error {
+
+	return svc.sendRpcWithRetries(service, func() error {
+		return svc.client.CallMethodSyncWithRequestContextAndContext(ctx, catalogServiceName,
+			service, request, response, requestContext, svc.timeoutSec)
+	})
+}
+
+func (svc *Catalog) SetClientTimeout(timeoutSecs int64) {
+	svc.timeoutSec = timeoutSecs
+}
+
+func (svc *Catalog) sendRpcWithRetries(service string, rpcCall func() error) error {
+
+	retryWait := utilMisc.NewExponentialBackoff(initialIntervalSecs, maxIntervalSecs, maxRetries)
+
+	for {
+		err := rpcCall()
+		if err != nil {
+			if obj, ok := ntnxErrors.TypeAssert(err, ntnxErrors.RpcErrorType); ok {
+				if rpcErr, ok := obj.(*utilNet.RpcError_); ok {
+					errCode := rpcErr.GetErrorCode()
+					log.Errorf("RpcError in %s: %d", service, errCode)
+					if utilNet.ErrRpcTransport.Equals(rpcErr) {
+						log.Infof("Failure to send %s, will retry later", service)
+						waited := retryWait.Backoff()
+						if waited != utilMisc.Stop {
+							log.Infof("Retrying, msg: %s", service)
+							continue
+						} else {
+							return nil
+						}
+					}
+				}
+			}
+		}
+		return err
+	}
+}
+
 func (svc *Catalog) sendMsg(
 	service string, request, response proto.Message) error {
 
-	retryWait := util_misc.NewExponentialBackoff(1*time.Second, 30*time.Second,
+	retryWait := utilMisc.NewExponentialBackoff(1*time.Second, 30*time.Second,
 		10)
 	var done bool = false
 	for !done {
@@ -156,8 +204,8 @@ func (svc *Catalog) sendMsg(
 			// If App error is set in RPC - extract the code and get the relevant
 			// catalog error.
 
-			if obj, ok := ntnx_errors.TypeAssert(err, ntnx_errors.AppErrorType); ok {
-				if errObj, ok := obj.(*util_net.AppError_); ok {
+			if obj, ok := ntnxErrors.TypeAssert(err, ntnxErrors.AppErrorType); ok {
+				if errObj, ok := obj.(*utilNet.AppError_); ok {
 					errCode := errObj.GetErrorCode()
 					log.Errorf("AppError: %d", errCode)
 					return Errors[errCode]
@@ -166,14 +214,14 @@ func (svc *Catalog) sendMsg(
 				}
 			}
 
-			if obj, ok := ntnx_errors.TypeAssert(err, ntnx_errors.RpcErrorType); ok {
-				if rpcErr, ok := obj.(*util_net.RpcError_); ok {
+			if obj, ok := ntnxErrors.TypeAssert(err, ntnxErrors.RpcErrorType); ok {
+				if rpcErr, ok := obj.(*utilNet.RpcError_); ok {
 					errCode := rpcErr.GetErrorCode()
 					log.Errorf("RpcError: %d", errCode)
-					if util_net.ErrRpcTransport.Equals(rpcErr) {
+					if utilNet.ErrRpcTransport.Equals(rpcErr) {
 						log.Infof("Failure to send msg, will retry later")
 						waited := retryWait.Backoff()
-						if waited != util_misc.Stop {
+						if waited != utilMisc.Stop {
 							log.Infof("Retrying, msg: %s", service)
 							continue
 						} else {

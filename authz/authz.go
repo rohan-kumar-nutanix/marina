@@ -21,10 +21,11 @@ import (
 	cpdb "github.com/nutanix-core/acs-aos-go/nusights/util/db"
 	"github.com/nutanix-core/acs-aos-go/nutanix/util-go/authz"
 	"github.com/nutanix-core/acs-aos-go/nutanix/util-go/authz/authz_cache"
+	"github.com/nutanix-core/acs-aos-go/nutanix/util-go/tracer"
 	"github.com/nutanix-core/acs-aos-go/nutanix/util-go/uuid4"
 	"github.com/nutanix-core/acs-aos-go/nutanix/util-slbufs/util/sl_bufs/net"
+
 	marinaError "github.com/nutanix-core/content-management-marina/errors"
-	"github.com/nutanix-core/ntnx-api-utils-go/tracer"
 )
 
 const (

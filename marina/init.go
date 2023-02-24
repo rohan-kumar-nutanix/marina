@@ -13,19 +13,20 @@ Initialize Marian, including:
 package main
 
 import (
+	"io"
 	"net"
 
-	otelSdkTrace "go.opentelemetry.io/otel/sdk/trace"
 	log "k8s.io/klog/v2"
+
+	"github.com/nutanix-core/acs-aos-go/nutanix/util-go/tracer"
 
 	"github.com/nutanix-core/content-management-marina/common"
 	"github.com/nutanix-core/content-management-marina/interface/external"
 	internal "github.com/nutanix-core/content-management-marina/interface/local"
 	utils "github.com/nutanix-core/content-management-marina/util"
-	"github.com/nutanix-core/ntnx-api-utils-go/tracer"
 )
 
-var traceProvider *otelSdkTrace.TracerProvider
+var traceProvider io.Closer
 
 func initMarina() {
 	external.InitSingletonService()
@@ -49,7 +50,7 @@ func initHostIP() {
 
 func initOpenTelemetryTracing() {
 	var err error
-	traceProvider, err = tracer.InitTracer(utils.ServiceName)
+	traceProvider := tracer.InitTracer(utils.ServiceName)
 	if err != nil {
 		log.Errorf("Error while initializing tracer: %v ", err.Error())
 

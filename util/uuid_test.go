@@ -10,7 +10,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	
+
 	"github.com/nutanix-core/acs-aos-go/nutanix/util-go/uuid4"
 	marinaError "github.com/nutanix-core/content-management-marina/errors"
 )

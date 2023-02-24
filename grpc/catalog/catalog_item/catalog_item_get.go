@@ -14,9 +14,10 @@ import (
 	log "k8s.io/klog/v2"
 
 	cpdb "github.com/nutanix-core/acs-aos-go/nusights/util/db"
+	"github.com/nutanix-core/acs-aos-go/nutanix/util-go/tracer"
+
 	marinaIfc "github.com/nutanix-core/content-management-marina/protos/marina"
 	utils "github.com/nutanix-core/content-management-marina/util"
-	"github.com/nutanix-core/ntnx-api-utils-go/tracer"
 )
 
 // CatalogItemGet implements the CatalogItemGet RPC.

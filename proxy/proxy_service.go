@@ -12,6 +12,7 @@
 package proxy
 
 import (
+	"context"
 	"fmt"
 	"reflect"
 
@@ -21,7 +22,9 @@ import (
 	"github.com/nutanix-core/acs-aos-go/ergon"
 	"github.com/nutanix-core/acs-aos-go/nutanix/util-go/net"
 	"github.com/nutanix-core/acs-aos-go/nutanix/util-go/uuid4"
+
 	slbufsNet "github.com/nutanix-core/acs-aos-go/nutanix/util-slbufs/util/sl_bufs/net"
+
 	"github.com/nutanix-core/content-management-marina/common"
 	marinaError "github.com/nutanix-core/content-management-marina/errors"
 	"github.com/nutanix-core/content-management-marina/task/base"
@@ -80,6 +83,7 @@ func rpcHandler(rpc *net.ProtobufRpc, handlers interface{}) error {
 	// Retrieve the request and response argument type based on request name.
 	rpcName := *rpc.RequestHeader.MethodName
 	request, response, err := proxyConfig.getRequestResponseValues(rpcName)
+
 	if err != nil {
 		return marinaError.ErrInternal.SetCauseAndLog(
 			fmt.Errorf("failed to get request/response type: %v", err))
@@ -156,6 +160,7 @@ func syncRpcHandler(rpc *net.ProtobufRpc, request reflect.Value,
 	response reflect.Value) error {
 
 	rpcName := rpc.RequestHeader.GetMethodName()
+	// ctx := context.Background()
 	// Unmarshal the RPC payload into request argument for the given RPC name.
 	if err := unmarshalRequestPayload(rpc, request, rpcName); err != nil {
 		return err
@@ -165,10 +170,12 @@ func syncRpcHandler(rpc *net.ProtobufRpc, request reflect.Value,
 	reflectName := reflect.ValueOf(rpcName)
 	var rpcHandler reflect.Value
 	var args []reflect.Value
-
+	reflectRequestCtx := reflect.ValueOf(rpc.RequestHeader.GetRequestContext())
+	reflectCtx := reflect.ValueOf(context.Background())
+	log.V(2).Info("Request Context %v", reflectRequestCtx)
 	// Make request to Catalog service
-	rpcHandler = reflect.ValueOf(catalogService.SendMsg)
-	args = []reflect.Value{reflectName, request, response}
+	rpcHandler = reflect.ValueOf(catalogService.SendMsgWithRequestContext)
+	args = []reflect.Value{reflectName, request, response, reflectRequestCtx, reflectCtx}
 
 	// Make the sync RPC call to Catalog.
 	if err := rpcHandler.Call(args)[0]; !err.IsNil() {
@@ -180,7 +187,7 @@ func syncRpcHandler(rpc *net.ProtobufRpc, request reflect.Value,
 // asyncRpcHandler creates a new proxy task for handling async Catalog RPCs.
 func asyncRpcHandler(rpc *net.ProtobufRpc, request reflect.Value,
 	response reflect.Value) error {
-	//ctx := context.TODO()
+	// ctx := context.TODO()
 	rpcName := rpc.RequestHeader.GetMethodName()
 	// Create a new task proto for the task to proxy RPCs.
 	taskProto := &ergon.Task{
@@ -191,7 +198,11 @@ func asyncRpcHandler(rpc *net.ProtobufRpc, request reflect.Value,
 			},
 		},
 	}
-	taskProto.RequestContext = &slbufsNet.RpcRequestContext{}
+	taskProto.RequestContext = rpc.RequestHeader.GetRequestContext()
+	if taskProto.RequestContext == nil {
+		taskProto.RequestContext = &slbufsNet.RpcRequestContext{}
+	}
+
 	// If request specifies a task UUID for idempotent, set it in Marina task.
 	if err := maybeSetRequestTaskUuid(rpcName, rpc.RequestPayload, taskProto); err != nil {
 		return marinaError.ErrInternal.SetCause(

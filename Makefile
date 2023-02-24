@@ -25,6 +25,10 @@ server:
 	env GOOS=linux GOARCH=amd64 go build -o build/marina_server marina/*.go
 	env GOOS=linux GOARCH=amd64 go build -o build/marina_client client/*.go
 
+build-debug-server:
+	$(info Building binary at the project root with gcflags "all=-N -l")
+	env GOOS=linux GOARCH=amd64 go build -o build/marina_server_debug -gcflags "all=-N -l" marina/*.go
+
 unit-tests:
 	rm -rf ./mocks/
 	bash hooks/test-services-finalize.sh

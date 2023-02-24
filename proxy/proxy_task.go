@@ -18,13 +18,14 @@ import (
 
 	catalogClient "github.com/nutanix-core/acs-aos-go/catalog/client"
 	"github.com/nutanix-core/acs-aos-go/ergon"
+	"github.com/nutanix-core/acs-aos-go/nutanix/util-go/tracer"
 	"github.com/nutanix-core/acs-aos-go/nutanix/util-go/uuid4"
+
 	marinaError "github.com/nutanix-core/content-management-marina/errors"
 	"github.com/nutanix-core/content-management-marina/interface/external"
 	marinaProtos "github.com/nutanix-core/content-management-marina/protos/marina"
 	"github.com/nutanix-core/content-management-marina/task/base"
 	util "github.com/nutanix-core/content-management-marina/util"
-	"github.com/nutanix-core/ntnx-api-utils-go/tracer"
 )
 
 // ProxyTask is the task to handle Catalog RPC proxy.

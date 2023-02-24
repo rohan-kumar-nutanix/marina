@@ -18,9 +18,10 @@ import (
 
 	grpcMiddleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpcPrometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
+	"github.com/nutanix-core/acs-aos-go/nutanix/util-go/tracer"
+
 	"github.com/nutanix-core/content-management-marina/grpc/services"
 	marinaIfc "github.com/nutanix-core/content-management-marina/protos/marina"
-	"github.com/nutanix-core/ntnx-api-utils-go/tracer"
 
 	"google.golang.org/grpc"
 	log "k8s.io/klog/v2"
