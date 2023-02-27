@@ -15,7 +15,6 @@ import (
 
 	cpdb "github.com/nutanix-core/acs-aos-go/nusights/util/db"
 	"github.com/nutanix-core/acs-aos-go/nutanix/util-go/tracer"
-
 	marinaIfc "github.com/nutanix-core/content-management-marina/protos/marina"
 	utils "github.com/nutanix-core/content-management-marina/util"
 )
@@ -27,16 +26,16 @@ func CatalogItemGet(ctx context.Context, arg *marinaIfc.CatalogItemGetArg, catal
 	span, ctx := tracer.StartSpan(ctx, "CatalogItemGet")
 	defer span.Finish()
 
-	var catalogItemList []*marinaIfc.CatalogItemInfo
-	catalogItemIdList := arg.GetCatalogItemIdList()
-	catalogItemIdListSize := len(catalogItemIdList)
+	var catalogItems []*marinaIfc.CatalogItemInfo
+	catalogItemIds := arg.GetCatalogItemIdList()
+	catalogItemIdsSize := len(catalogItemIds)
 	catalogItemChan := make(chan []*marinaIfc.CatalogItemInfo)
 	catalogItemErrChan := make(chan error)
-	if catalogItemIdListSize <= *CatalogIdfQueryChunkSize {
-		go catalogItemIfc.GetCatalogItemsChan(ctx, cpdbIfc, uuidIfc, catalogItemIdList, arg.GetCatalogItemTypeList(),
+	if catalogItemIdsSize <= *CatalogIdfQueryChunkSize {
+		go catalogItemIfc.GetCatalogItemsChan(ctx, cpdbIfc, uuidIfc, catalogItemIds, arg.GetCatalogItemTypeList(),
 			arg.GetLatest(), catalogItemChan, catalogItemErrChan)
 
-		catalogItemList = <-catalogItemChan
+		catalogItems = <-catalogItemChan
 		err := <-catalogItemErrChan
 
 		if err != nil {
@@ -46,20 +45,20 @@ func CatalogItemGet(ctx context.Context, arg *marinaIfc.CatalogItemGetArg, catal
 
 	} else {
 		count := 0
-		for start := 0; start < catalogItemIdListSize; start += *CatalogIdfQueryChunkSize {
+		for start := 0; start < catalogItemIdsSize; start += *CatalogIdfQueryChunkSize {
 			count++
 			end := start + *CatalogIdfQueryChunkSize
-			if end > catalogItemIdListSize {
-				end = catalogItemIdListSize
+			if end > catalogItemIdsSize {
+				end = catalogItemIdsSize
 			}
 
 			log.Infof("Fetching catalog items from index %v to %v", start, end)
-			go catalogItemIfc.GetCatalogItemsChan(ctx, cpdbIfc, uuidIfc, catalogItemIdList[start:end],
+			go catalogItemIfc.GetCatalogItemsChan(ctx, cpdbIfc, uuidIfc, catalogItemIds[start:end],
 				arg.GetCatalogItemTypeList(), arg.GetLatest(), catalogItemChan, catalogItemErrChan)
 		}
 
 		for i := 0; i < count; i++ {
-			catalogItemList = append(catalogItemList, <-catalogItemChan...)
+			catalogItems = append(catalogItems, <-catalogItemChan...)
 			err := <-catalogItemErrChan
 
 			if err != nil {
@@ -69,7 +68,7 @@ func CatalogItemGet(ctx context.Context, arg *marinaIfc.CatalogItemGetArg, catal
 		}
 	}
 
-	ret := &marinaIfc.CatalogItemGetRet{CatalogItemList: catalogItemList}
+	ret := &marinaIfc.CatalogItemGetRet{CatalogItemList: catalogItems}
 	log.V(2).Info("CatalogItemGet RPC finished.")
 	return ret, nil
 }

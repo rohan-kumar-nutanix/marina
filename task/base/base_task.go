@@ -62,6 +62,7 @@ type MarinaBaseTaskInterface interface {
 	Proto() *ergon.Task
 	Wal() *marinaProtos.PcTaskWalRecord
 	SetWal(wal *marinaProtos.PcTaskWalRecord) error
+	SetPercentage(percent int32)
 }
 
 // MarinaBaseTask defines a common interface for all Marina tasks. BaseTask is
@@ -154,4 +155,8 @@ func (t *MarinaBaseTaskUtil) SetWal(wal *marinaProtos.PcTaskWalRecord) error {
 	}
 	t.proto.InternalOpaque = data
 	return nil
+}
+
+func (t *MarinaBaseTaskUtil) SetPercentage(percent int32) {
+	t.proto.PercentageComplete = proto.Int32(percent)
 }

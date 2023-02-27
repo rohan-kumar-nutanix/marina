@@ -16,6 +16,7 @@ import (
 	"github.com/golang/protobuf/proto"
 	log "k8s.io/klog/v2"
 
+	"github.com/nutanix-core/acs-aos-go/ergon"
 	"github.com/nutanix-core/acs-aos-go/insights/insights_interface"
 	. "github.com/nutanix-core/acs-aos-go/insights/insights_interface/query"
 	"github.com/nutanix-core/acs-aos-go/nutanix/util-go/uuid4"
@@ -24,10 +25,7 @@ import (
 	"github.com/nutanix-core/content-management-marina/grpc/catalog/catalog_item"
 	marinaIfc "github.com/nutanix-core/content-management-marina/protos/marina"
 	utils "github.com/nutanix-core/content-management-marina/util"
-	catalogClient "github.com/nutanix-core/content-management-marina/util/catalog/client"
 )
-
-var remoteCatalogService = catalogClient.NewRemoteCatalogService
 
 var catalogItemDeleteAttributes = []interface{}{
 	"uuid",
@@ -94,12 +92,11 @@ func (task *CatalogItemDeleteTask) Run() error {
 	wal := task.Wal()
 	catalogItemWal := wal.GetData().GetCatalogItem()
 
-	var peUuidList []*uuid4.Uuid
+	// Save the cluster UUIDs we are acting on, in the case that a PE is registered in the middle of a task execution.
+	var clusterUuids []*uuid4.Uuid
 	if len(catalogItemWal.GetClusterUuidList()) == 0 {
-		// Save the cluster UUIDs we are acting on, in the case that a PE
-		// is registered in the middle of a task execution.
-		peUuidList = task.ExternalInterfaces().ZeusConfig().PeClusterUuids()
-		for _, peUuid := range peUuidList {
+		clusterUuids = task.ExternalInterfaces().ZeusConfig().PeClusterUuids()
+		for _, peUuid := range clusterUuids {
 			catalogItemWal.ClusterUuidList = append(catalogItemWal.GetClusterUuidList(), peUuid.RawBytes())
 		}
 		err := task.SetWal(wal)
@@ -111,21 +108,12 @@ func (task *CatalogItemDeleteTask) Run() error {
 
 	} else {
 		for _, peUuidBytes := range catalogItemWal.GetClusterUuidList() {
-			peUuidList = append(peUuidList, uuid4.ToUuid4(peUuidBytes))
+			clusterUuids = append(clusterUuids, uuid4.ToUuid4(peUuidBytes))
 		}
 	}
 
-	sourceClusterUuid := task.ExternalInterfaces().ZeusConfig().ClusterUuid()
-	var remoteEndpointList []utils.RemoteEndpoint
-	for _, peUuid := range peUuidList {
-		remoteEndpointList = append(remoteEndpointList, utils.RemoteEndpoint{
-			RemoteClusterUuid: *peUuid,
-			SourceClusterUuid: *sourceClusterUuid,
-		})
-	}
-
-	if len(remoteEndpointList) > 0 {
-		err := task.fanoutCatalogRequests(remoteEndpointList, sourceClusterUuid)
+	if len(clusterUuids) > 0 {
+		err := task.fanoutCatalogRequests(clusterUuids)
 		if err != nil {
 			return err
 		}
@@ -195,13 +183,13 @@ func (task *CatalogItemDeleteTask) deleteCatalogItem(queryName string) error {
 		return marinaError.ErrInternalError().SetCauseAndLog(errors.New(errMsg))
 	}
 
-	var catalogItemUuidList []string
+	var catalogItemUuids []string
 	for _, entity := range entities {
-		catalogItemUuidList = append(catalogItemUuidList, entity.GetEntityGuid().GetEntityId())
+		catalogItemUuids = append(catalogItemUuids, entity.GetEntityGuid().GetEntityId())
 	}
 
 	err = task.ExternalInterfaces().IdfIfc().DeleteEntities(context.Background(), cpdbIfc, db.CatalogItem,
-		catalogItemUuidList, true)
+		catalogItemUuids, true)
 	if err == insights_interface.ErrNotFound {
 		log.Errorf("Provided catalog item(s) do not exist in IDF: %v", err)
 		return nil
@@ -213,25 +201,24 @@ func (task *CatalogItemDeleteTask) deleteCatalogItem(queryName string) error {
 	return nil
 }
 
-func (task *CatalogItemDeleteTask) fanoutCatalogRequests(remoteEndpointList []utils.RemoteEndpoint,
-	sourceClusterUuid *uuid4.Uuid) error {
-	taskUuidByEndpoint := make(map[utils.RemoteEndpoint]*uuid4.Uuid)
+func (task *CatalogItemDeleteTask) fanoutCatalogRequests(remoteClusters []*uuid4.Uuid) error {
+	taskUuidByEndpoint := make(map[uuid4.Uuid]uuid4.Uuid)
 	wal := task.Wal()
-	taskList := wal.GetData().GetTaskList()
-	for _, taskObj := range taskList {
-		remoteEndpoint := utils.RemoteEndpoint{SourceClusterUuid: *sourceClusterUuid}
+	tasks := wal.GetData().GetTaskList()
+	for _, taskObj := range tasks {
+		var remoteClusterUuid uuid4.Uuid
 		if clusterUuid := taskObj.GetClusterUuid(); clusterUuid != nil {
-			remoteEndpoint.RemoteClusterUuid = *uuid4.ToUuid4(clusterUuid)
+			remoteClusterUuid = *uuid4.ToUuid4(clusterUuid)
 		}
-		taskUuidByEndpoint[remoteEndpoint] = uuid4.ToUuid4(taskObj.GetTaskUuid())
+		taskUuidByEndpoint[remoteClusterUuid] = *uuid4.ToUuid4(taskObj.GetTaskUuid())
 	}
 
-	successTaskUuidByEndpoint := make(map[utils.RemoteEndpoint]*uuid4.Uuid)
-	for _, remoteEndpoint := range remoteEndpointList {
+	var successTaskUuids []*uuid4.Uuid
+	for _, clusterUuid := range remoteClusters {
 		var remoteTaskUuid *uuid4.Uuid
 		var err error
-		if taskUuid, ok := taskUuidByEndpoint[remoteEndpoint]; ok {
-			remoteTaskUuid = taskUuid
+		if taskUuid, ok := taskUuidByEndpoint[*clusterUuid]; ok {
+			remoteTaskUuid = &taskUuid
 
 		} else {
 			remoteTaskUuid, err = task.InternalInterfaces().UuidIfc().New()
@@ -240,7 +227,7 @@ func (task *CatalogItemDeleteTask) fanoutCatalogRequests(remoteEndpointList []ut
 			}
 
 			endpointTask := &marinaIfc.EndpointTask{TaskUuid: remoteTaskUuid.RawBytes()}
-			if clusterUuid := remoteEndpoint.RemoteClusterUuid; clusterUuid != utils.NilUuid {
+			if *clusterUuid != utils.NilUuid {
 				endpointTask.ClusterUuid = clusterUuid.RawBytes()
 			}
 
@@ -251,7 +238,7 @@ func (task *CatalogItemDeleteTask) fanoutCatalogRequests(remoteEndpointList []ut
 				return marinaError.ErrInternalError().SetCauseAndLog(errors.New(errMsg))
 			}
 			task.Save(task)
-			taskUuidByEndpoint[remoteEndpoint] = remoteTaskUuid
+			taskUuidByEndpoint[*clusterUuid] = *remoteTaskUuid
 		}
 
 		fanoutArg := proto.Clone(task.arg).(*marinaIfc.CatalogItemDeleteArg)
@@ -259,30 +246,58 @@ func (task *CatalogItemDeleteTask) fanoutCatalogRequests(remoteEndpointList []ut
 		fanoutArg.ParentTaskUuid = task.Proto().Uuid
 		fanoutRet := &marinaIfc.CatalogItemDeleteRet{}
 		client := remoteCatalogService(task.ExternalInterfaces().ZkSession(), task.ExternalInterfaces().ZeusConfig(),
-			&remoteEndpoint.RemoteClusterUuid, nil, nil, nil)
+			clusterUuid, nil, nil, nil)
 		err = client.SendMsg("CatalogItemDelete", fanoutArg, fanoutRet)
 		if err != nil {
-			endpointName := remoteEndpoint.GetUserVisibleId(task.ExternalInterfaces().ZeusConfig())
-
-			if endpointName == nil {
-				log.Errorf("Failed to fanout CatalogItemDelete request (task %s): %s",
-					remoteTaskUuid.String(), err)
-			} else {
-				log.Errorf("Failed to fanout CatalogItemDelete request (task %s) to %s : %s",
-					remoteTaskUuid.String(), *endpointName, err)
-			}
+			endpointName := utils.GetUserVisibleId(task.ExternalInterfaces().ZeusConfig(), *clusterUuid)
+			log.Errorf("Failed to fanout CatalogItemDelete request (task %s) to %s : %s",
+				remoteTaskUuid.String(), endpointName, err)
 
 		} else {
-			successTaskUuidByEndpoint[remoteEndpoint] = remoteTaskUuid
+			successTaskUuids = append(successTaskUuids, remoteTaskUuid)
 		}
 	}
 
-	if len(successTaskUuidByEndpoint) <= 0 {
+	if len(successTaskUuids) <= 0 {
 		errMsg := fmt.Sprintf("Failed to fanout CatalogItemDelete request to all remote clusters")
 		return marinaError.ErrCatalogTaskForwardError.SetCauseAndLog(errors.New(errMsg))
 	}
 
-	task.InternalInterfaces().FanoutTaskPollerIfc().PollAllRemoteTasks(task.ExternalInterfaces().ZkSession(),
-		&successTaskUuidByEndpoint)
+	err := task.pollTasks(successTaskUuids)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (task *CatalogItemDeleteTask) pollTasks(taskUuids []*uuid4.Uuid) error {
+	taskMap := make(map[string]bool)
+	for _, uuid := range taskUuids {
+		taskMap[uuid.String()] = true
+	}
+
+	tasks, err := task.PollAll(task, taskMap)
+	if err != nil {
+		errMsg := fmt.Sprintf("Failed to poll for tasks")
+		return marinaError.ErrInternalError().SetCauseAndLog(errors.New(errMsg))
+	}
+
+	if len(tasks) != len(taskUuids) {
+		errMsg := fmt.Sprintf("Failed to poll completion for tasks")
+		return marinaError.ErrInternalError().SetCauseAndLog(errors.New(errMsg))
+	}
+
+	for _, taskObj := range tasks {
+		response := taskObj.GetResponse()
+		if response == nil {
+			errMsg := fmt.Sprintf("Failed to retrieve task response")
+			return marinaError.ErrInternalError().SetCauseAndLog(errors.New(errMsg))
+		}
+
+		if taskObj.GetStatus() != ergon.Task_kSucceeded {
+			log.Errorf("Polled task failed: error code = %d, detail = %s", response.GetErrorCode(),
+				response.GetErrorDetail())
+		}
+	}
 	return nil
 }

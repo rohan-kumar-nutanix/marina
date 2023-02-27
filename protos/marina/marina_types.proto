@@ -149,6 +149,70 @@ message Source {
 
 //-----------------------------------------------------------------------------
 
+message FileInfo {
+  // File UUID.
+  optional bytes uuid = 1;
+
+  // File checksum.
+  optional bytes checksum = 2;
+
+  enum ChecksumType {
+    // SHA-1 checksum.
+    kSha1 = 1;
+    // SHA-256 checksum.
+    kSha256 = 2;
+  }
+
+  // File checksum type.
+  optional ChecksumType checksum_type = 3;
+
+  // List of locations where the file resides.
+  repeated FileLocation location_list = 4;
+
+  // Logical timestamp for the file.
+  optional int64 logical_timestamp = 5;
+
+  // File size
+  optional int64 file_size = 6;
+
+  // Source URL of the file
+  optional string source_url = 7;
+
+  // Source authentication credentials
+  optional AuthenticationCredentials source_auth_cred = 8;
+
+  // The hash of the File to be used for Content Addressable Storage. As of now
+  // it is the SHA256 checksum of the file. This is not to be confused with
+  // 'checksum' field which is only used for checking data integrity.
+  optional string digest = 9;
+}
+
+message FileLocation {
+  // Cluster UUID.
+  optional bytes cluster_uuid = 1;
+
+  // Availability zone logical id.
+  optional string availability_zone_logical_id = 2;
+
+  // Container UUID.
+  optional bytes container_uuid = 3;
+
+  // List of URLs that can be used to access the file.
+  repeated string url_list = 4;
+
+  // File UUID. Should only be specified from PC where the file UUID points at
+  // a file repository entry on a PE.
+  optional bytes file_uuid = 5;
+
+  // Relative path to file inside the container specified by container_uuid.
+  optional string adsf_relative_path = 6;
+
+  // Get absolute file path.
+  optional string adsf_absolute_path = 7;
+}
+
+//-----------------------------------------------------------------------------
+
 message CatalogItemCreateSpec {
   // Catalog item UUID for idempotence.
   optional bytes uuid = 1;

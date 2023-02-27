@@ -12,35 +12,30 @@ import (
 	marinaZeus "github.com/nutanix-core/content-management-marina/zeus"
 )
 
-type RemoteEndpoint struct {
-	SourceClusterUuid uuid4.Uuid
-	RemoteClusterUuid uuid4.Uuid
-}
-
 type RemoteEndpointInterface interface {
 	IsPE() bool
 	GetUserVisibleId(zeusConfig marinaZeus.ConfigCache) *string
 }
 
-func (remoteEndpoint *RemoteEndpoint) IsPE() bool {
-	return remoteEndpoint.RemoteClusterUuid != NilUuid
+func IsPE(remoteClusterUuid uuid4.Uuid) bool {
+	return remoteClusterUuid != NilUuid
 }
 
-func (remoteEndpoint *RemoteEndpoint) GetUserVisibleId(zeusConfig marinaZeus.ConfigCache) *string {
-	if remoteEndpoint.IsPE() {
-		peUuid := remoteEndpoint.RemoteClusterUuid
+func GetUserVisibleId(zeusConfig marinaZeus.ConfigCache, remoteClusterUuid uuid4.Uuid) string {
+	if IsPE(remoteClusterUuid) {
+		peUuid := remoteClusterUuid
 		userVisibleId := zeusConfig.PeClusterName(&peUuid)
 		if userVisibleId != nil {
-			return userVisibleId
+			return *userVisibleId
 		}
 
 		ip := zeusConfig.ClusterExternalIps(&peUuid)
 		if len(ip) > 0 {
-			return &ip[0]
+			return ip[0]
 		}
 
 		peUuidStr := peUuid.String()
-		return &peUuidStr
+		return peUuidStr
 	}
-	return nil
+	return ""
 }

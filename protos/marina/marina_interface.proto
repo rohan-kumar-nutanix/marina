@@ -188,6 +188,36 @@ message CatalogMigratePcTaskRet {
 
 //-----------------------------------------------------------------------------
 
+// Defines the arguments for an internal file import task. This task is not
+// exposed externally.
+
+message FileImportArg {
+  // Spec that describes how to import a file into the file repository.
+  optional FileImportSpec spec = 1;
+
+  // Task UUID. This is used as an idempotence token.
+  optional bytes task_uuid = 2;
+
+  // Parent task.
+  optional bytes parent_task_uuid = 3;
+
+  // Only set when parent_task_uuid is set. Sequence ID of this child
+  // among all the children of the parent task.
+  optional uint64 subtask_sequence_id = 4;
+}
+
+message FileImportRet {
+  // A task to poll for completion. On success, the task will contain a
+  // FileImportTaskRet.
+  optional bytes task_uuid = 1;
+}
+
+message FileImportTaskRet {
+  optional bytes file_uuid = 1;
+}
+
+//-----------------------------------------------------------------------------
+
 service Marina {
   // Returns information about a set of catalog items.
   rpc CatalogItemGet(CatalogItemGetArg)
@@ -219,4 +249,8 @@ service Marina {
   // catalog items that were owner by PE.
   rpc CatalogMigratePc(CatalogMigratePcArg)
       returns (CatalogMigratePcRet);
+
+  // Imports a source and creates a new file in the file repository.
+  rpc FileImport(FileImportArg)
+      returns (FileImportRet);
 }

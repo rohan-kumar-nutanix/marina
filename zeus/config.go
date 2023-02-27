@@ -148,13 +148,13 @@ func (config *configCache) updatePeConfig(conn ZookeeperConnInterface, clusterUu
 			continue
 		}
 
-		var externalIpList []string
+		var externalIps []string
 		for _, node := range configProto.GetNodeList() {
 			if node.GetServiceVmExternalIp() != "" {
-				externalIpList = append(externalIpList, node.GetServiceVmExternalIp())
+				externalIps = append(externalIps, node.GetServiceVmExternalIp())
 			}
 		}
-		clusterExternalIps[*clusterUuid] = externalIpList
+		clusterExternalIps[*clusterUuid] = externalIps
 		clusterNames[*clusterUuid] = configProto.GetClusterName()
 		if configProto.DefaultSspContainerId != nil {
 			for _, container := range configProto.GetContainerList() {
@@ -233,11 +233,11 @@ func (config *configCache) PeClusterUuids() []*uuid4.Uuid {
 	config.maybeInitPeConfigWatcher()
 	config.RLock()
 	defer config.RUnlock()
-	peList := make([]*uuid4.Uuid, 0)
+	pes := make([]*uuid4.Uuid, 0)
 	for peUuid := range config.peConfig.clusterNames {
-		peList = append(peList, uuid4.ToUuid4(peUuid.RawBytes()))
+		pes = append(pes, uuid4.ToUuid4(peUuid.RawBytes()))
 	}
-	return peList
+	return pes
 }
 
 // ClusterExternalIps returns the CVM IPs for the PE with given UUID.
@@ -245,8 +245,8 @@ func (config *configCache) ClusterExternalIps(peUuid *uuid4.Uuid) []string {
 	config.maybeInitPeConfigWatcher()
 	config.RLock()
 	defer config.RUnlock()
-	if ipList, ok := config.peConfig.clusterExternalIps[*peUuid]; ok {
-		return ipList
+	if ips, ok := config.peConfig.clusterExternalIps[*peUuid]; ok {
+		return ips
 	}
 	return nil
 }

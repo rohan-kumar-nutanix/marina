@@ -23,6 +23,10 @@ var NilUuid uuid4.Uuid
 type UuidUtilInterface interface {
 	New() (*uuid4.Uuid, error)
 	ValidateUUID(uuidValue []byte, fieldName string) error
+	StringFromUuids(uuids []uuid4.Uuid) string
+	StringFromUuidPointers(uuids []*uuid4.Uuid) string
+	UuidPointersToUuids(uuids []*uuid4.Uuid) []uuid4.Uuid
+	UuidBytesToUuidPointers(uuids [][]byte) []*uuid4.Uuid
 }
 
 type UuidUtil struct {
@@ -44,4 +48,44 @@ func (*UuidUtil) ValidateUUID(uuidValue []byte, fieldName string) error {
 		return marinaError.ErrMarinaInvalidUuid(string(uuidValue)).SetCauseAndLog(errors.New(errMsg))
 	}
 	return nil
+}
+
+func (*UuidUtil) StringFromUuids(uuids []uuid4.Uuid) string {
+	var uuidsStr string
+	for i, uuid := range uuids {
+		if i == len(uuids)-1 {
+			uuidsStr += uuid.String()
+		} else {
+			uuidsStr += uuid.String() + ", "
+		}
+	}
+	return uuidsStr
+}
+
+func (*UuidUtil) StringFromUuidPointers(uuids []*uuid4.Uuid) string {
+	var uuidsStr string
+	for i, uuid := range uuids {
+		if i == len(uuids)-1 {
+			uuidsStr += uuid.String()
+		} else {
+			uuidsStr += uuid.String() + ", "
+		}
+	}
+	return uuidsStr
+}
+
+func (*UuidUtil) UuidPointersToUuids(uuids []*uuid4.Uuid) []uuid4.Uuid {
+	var ret []uuid4.Uuid
+	for _, uuid := range uuids {
+		ret = append(ret, *uuid)
+	}
+	return ret
+}
+
+func (*UuidUtil) UuidBytesToUuidPointers(uuids [][]byte) []*uuid4.Uuid {
+	var ret []*uuid4.Uuid
+	for _, uuid := range uuids {
+		ret = append(ret, uuid4.ToUuid4(uuid))
+	}
+	return ret
 }

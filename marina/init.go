@@ -19,7 +19,6 @@ import (
 	log "k8s.io/klog/v2"
 
 	"github.com/nutanix-core/acs-aos-go/nutanix/util-go/tracer"
-
 	"github.com/nutanix-core/content-management-marina/common"
 	"github.com/nutanix-core/content-management-marina/interface/external"
 	internal "github.com/nutanix-core/content-management-marina/interface/local"
@@ -48,9 +47,10 @@ func initHostIP() {
 	log.Info("Setting HostAddr to : ", utils.HostAddr)
 }
 
+// TODO: ENG-538562: Use OpenTelemetry instead of OpenTracing
 func initOpenTelemetryTracing() {
 	var err error
-	traceProvider := tracer.InitTracer(utils.ServiceName)
+	traceProvider = tracer.InitTracer(utils.ServiceName)
 	if err != nil {
 		log.Errorf("Error while initializing tracer: %v ", err.Error())
 

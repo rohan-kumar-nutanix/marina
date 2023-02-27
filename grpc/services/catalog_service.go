@@ -30,7 +30,9 @@ import (
 )
 
 const (
+	CatalogItemCreate = "CatalogItemCreate"
 	CatalogItemDelete = "CatalogItemDelete"
+	CatalogItemUpdate = "CatalogItemUpdate"
 )
 
 type MarinaServer struct {
@@ -40,6 +42,8 @@ type MarinaServer struct {
 type MarinaServiceInterface interface {
 	CatalogItemGet(ctx context.Context, arg *marinaIfc.CatalogItemGetArg) (*marinaIfc.CatalogItemGetRet, error)
 	CatalogItemDelete(ctx context.Context, arg *marinaIfc.CatalogItemDeleteArg) (*marinaIfc.CatalogItemDeleteRet, error)
+	CatalogItemCreate(ctx context.Context, arg *marinaIfc.CatalogItemCreateArg) (*marinaIfc.CatalogItemCreateRet, error)
+	CatalogItemUpdate(ctx context.Context, arg *marinaIfc.CatalogItemUpdateArg) (*marinaIfc.CatalogItemUpdateRet, error)
 }
 
 func GetTaskByRPC(catalogItemBaseTask *tasks.CatalogItemBaseTask) ergonTask.FullTask {
@@ -47,6 +51,10 @@ func GetTaskByRPC(catalogItemBaseTask *tasks.CatalogItemBaseTask) ergonTask.Full
 	switch taskProto.Request.GetMethodName() {
 	case CatalogItemDelete:
 		return tasks.NewCatalogItemDeleteTask(catalogItemBaseTask)
+	case CatalogItemCreate:
+		return tasks.NewCatalogItemCreateTask(catalogItemBaseTask)
+	case CatalogItemUpdate:
+		return tasks.NewCatalogItemUpdateTask(catalogItemBaseTask)
 	default:
 		log.Errorf("Unknown gRPC method %s received", taskProto.Request.GetMethodName())
 	}
@@ -101,6 +109,34 @@ func (s *MarinaServer) CatalogItemDelete(ctx context.Context, arg *marinaIfc.Cat
 	}
 
 	ret := &marinaIfc.CatalogItemDeleteRet{
+		TaskUuid: taskUuid,
+	}
+	return ret, nil
+}
+
+func (s *MarinaServer) CatalogItemCreate(ctx context.Context, arg *marinaIfc.CatalogItemCreateArg) (
+	*marinaIfc.CatalogItemCreateRet, error) {
+
+	taskUuid, err := s.asyncHandler(ctx, arg, CatalogItemCreate)
+	if err != nil {
+		return nil, err
+	}
+
+	ret := &marinaIfc.CatalogItemCreateRet{
+		TaskUuid: taskUuid,
+	}
+	return ret, nil
+}
+
+func (s *MarinaServer) CatalogItemUpdate(ctx context.Context, arg *marinaIfc.CatalogItemUpdateArg) (
+	*marinaIfc.CatalogItemUpdateRet, error) {
+
+	taskUuid, err := s.asyncHandler(ctx, arg, CatalogItemUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	ret := &marinaIfc.CatalogItemUpdateRet{
 		TaskUuid: taskUuid,
 	}
 	return ret, nil

@@ -19,7 +19,7 @@ import (
 
 type IdfClientInterface interface {
 	DeleteEntities(ctx context.Context, cpdbIfc cpdb.CPDBClientInterface, entityType EntityType,
-		entityUuidList []string, isCasEnabled bool) error
+		entityUuids []string, isCasEnabled bool) error
 }
 
 func newIdfClientWithRetry() *IdfClient {

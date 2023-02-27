@@ -3,6 +3,7 @@ module github.com/nutanix-core/content-management-marina
 go 1.19
 
 require (
+	github.com/deckarep/golang-set/v2 v2.1.0
 	github.com/golang/glog v1.0.0
 	github.com/golang/protobuf v1.5.2
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0

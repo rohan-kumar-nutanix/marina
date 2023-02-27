@@ -14,6 +14,7 @@ import (
 
 	"github.com/nutanix-core/content-management-marina/authz"
 	"github.com/nutanix-core/content-management-marina/grpc/catalog/catalog_item"
+	"github.com/nutanix-core/content-management-marina/grpc/catalog/file_repo"
 	"github.com/nutanix-core/content-management-marina/metadata"
 	utils "github.com/nutanix-core/content-management-marina/util"
 )
@@ -21,19 +22,19 @@ import (
 type MarinaInternalInterfaces interface {
 	AuthzIfc() authz.AuthzInterface
 	CatalogItemIfc() catalog_item.CatalogItemInterface
-	FanoutTaskPollerIfc() utils.FanoutTaskPollerInterface
+	FileRepoIfc() file_repo.FileRepoInterface
 	MetadataIfc() metadata.EntityMetadataInterface
 	ProtoIfc() utils.ProtoUtilInterface
 	UuidIfc() utils.UuidUtilInterface
 }
 
 type singletonObject struct {
-	authzIfc            authz.AuthzInterface
-	catalogItemIfc      catalog_item.CatalogItemInterface
-	fanoutTaskPollerIfc utils.FanoutTaskPollerInterface
-	metadataIfc         metadata.EntityMetadataInterface
-	protoIfc            utils.ProtoUtilInterface
-	uuidIfc             utils.UuidUtilInterface
+	authzIfc       authz.AuthzInterface
+	catalogItemIfc catalog_item.CatalogItemInterface
+	fileRepoIfc    file_repo.FileRepoInterface
+	metadataIfc    metadata.EntityMetadataInterface
+	protoIfc       utils.ProtoUtilInterface
+	uuidIfc        utils.UuidUtilInterface
 }
 
 var (
@@ -45,29 +46,28 @@ var (
 func InitSingletonService() {
 	singletonServiceOnce.Do(func() {
 		singleton = &singletonObject{
-			authzIfc:            new(authz.AuthzUtil),
-			catalogItemIfc:      new(catalog_item.CatalogItemImpl),
-			fanoutTaskPollerIfc: new(utils.FanoutTaskPollerUtil),
-			metadataIfc:         new(metadata.EntityMetadataUtil),
-			protoIfc:            new(utils.ProtoUtil),
-			uuidIfc:             new(utils.UuidUtil),
+			authzIfc:       new(authz.AuthzUtil),
+			catalogItemIfc: new(catalog_item.CatalogItemImpl),
+			fileRepoIfc:    new(file_repo.FileRepoImpl),
+			metadataIfc:    new(metadata.EntityMetadataUtil),
+			protoIfc:       new(utils.ProtoUtil),
+			uuidIfc:        new(utils.UuidUtil),
 		}
 	})
 }
 
 // GetSingletonServiceWithParams - Initialize a singleton Marina service with params. Should only be used in UTs
-func GetSingletonServiceWithParams(authzService authz.AuthzInterface,
-	catalogItemService catalog_item.CatalogItemInterface, metadataService metadata.EntityMetadataInterface,
-	poller utils.FanoutTaskPollerInterface, protoService utils.ProtoUtilInterface,
-	uuidService utils.UuidUtilInterface) *singletonObject {
+func GetSingletonServiceWithParams(authzIfc authz.AuthzInterface, catalogItemIfc catalog_item.CatalogItemInterface,
+	fileRepoIfc file_repo.FileRepoInterface, metadataIfc metadata.EntityMetadataInterface,
+	protoIfc utils.ProtoUtilInterface, uuidIfc utils.UuidUtilInterface) *singletonObject {
 
 	return &singletonObject{
-		authzIfc:            authzService,
-		catalogItemIfc:      catalogItemService,
-		fanoutTaskPollerIfc: poller,
-		metadataIfc:         metadataService,
-		protoIfc:            protoService,
-		uuidIfc:             uuidService,
+		authzIfc:       authzIfc,
+		catalogItemIfc: catalogItemIfc,
+		fileRepoIfc:    fileRepoIfc,
+		metadataIfc:    metadataIfc,
+		protoIfc:       protoIfc,
+		uuidIfc:        uuidIfc,
 	}
 }
 
@@ -86,9 +86,9 @@ func (s *singletonObject) CatalogItemIfc() catalog_item.CatalogItemInterface {
 	return s.catalogItemIfc
 }
 
-// FanoutTaskPollerIfc returns the singleton for FanoutTaskPollerInterface
-func (s *singletonObject) FanoutTaskPollerIfc() utils.FanoutTaskPollerInterface {
-	return s.fanoutTaskPollerIfc
+// FileRepoIfc - Returns the singleton for FileRepoInterface
+func (s *singletonObject) FileRepoIfc() file_repo.FileRepoInterface {
+	return s.fileRepoIfc
 }
 
 // MetadataIfc - Returns the singleton for EntityMetadataInterface

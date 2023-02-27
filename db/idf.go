@@ -29,12 +29,15 @@ type EntityType int64
 
 const (
 	CatalogItem EntityType = iota
+	File
 )
 
 func (entityType EntityType) ToString() string {
 	switch entityType {
 	case CatalogItem:
 		return "catalog_item_info"
+	case File:
+		return "file_info"
 	}
 	return "unknown"
 }
@@ -51,20 +54,20 @@ type IdfClient struct {
 }
 
 func (idf *IdfClient) DeleteEntities(ctx context.Context, cpdbIfc cpdb.CPDBClientInterface, entityType EntityType,
-	entityUuidList []string, isCasEnabled bool) error {
+	entityUuids []string, isCasEnabled bool) error {
 
 	typeName := entityType.ToString()
-	var guidList []*insights_interface.EntityGuid
-	for _, uuid := range entityUuidList {
-		guidList = append(guidList, &insights_interface.EntityGuid{
+	var guids []*insights_interface.EntityGuid
+	for _, uuid := range entityUuids {
+		guids = append(guids, &insights_interface.EntityGuid{
 			EntityTypeName: proto.String(typeName),
 			EntityId:       proto.String(uuid),
 		})
 	}
 
-	entities, err := cpdbIfc.GetEntities(guidList, false)
+	entities, err := cpdbIfc.GetEntities(guids, false)
 	if err != nil {
-		log.Errorf("Getting entities for %v failed with error: %v", entityUuidList, err)
+		log.Errorf("Getting entities for %v failed with error: %v", entityUuids, err)
 		return err
 	}
 

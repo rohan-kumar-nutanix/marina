@@ -17,59 +17,53 @@ import (
 )
 
 func TestIsPE(t *testing.T) {
-	endpoint := RemoteEndpoint{}
-	assert.False(t, endpoint.IsPE())
+	assert.False(t, IsPE(NilUuid))
 
 	uuid, _ := uuid4.New()
-	endpoint = RemoteEndpoint{RemoteClusterUuid: *uuid}
-	assert.True(t, endpoint.IsPE())
+	assert.True(t, IsPE(*uuid))
 }
 
 func TestGetUserVisibleIdClusterName(t *testing.T) {
 	uuid, _ := uuid4.New()
-	endpoint := RemoteEndpoint{RemoteClusterUuid: *uuid}
 	clusterName := "Foo"
 	mockCache := &mockZeus.ConfigCache{}
 	mockCache.On("PeClusterName", mock.Anything).Return(&clusterName).Once()
 
-	id := endpoint.GetUserVisibleId(mockCache)
+	id := GetUserVisibleId(mockCache, *uuid)
 
-	assert.Equal(t, *id, clusterName)
+	assert.Equal(t, id, clusterName)
 	mockCache.AssertExpectations(t)
 }
 
 func TestGetUserVisibleIdIP(t *testing.T) {
 	uuid, _ := uuid4.New()
-	endpoint := RemoteEndpoint{RemoteClusterUuid: *uuid}
 	ips := []string{"127.0.0.1"}
 	mockCache := &mockZeus.ConfigCache{}
 	mockCache.On("PeClusterName", mock.Anything).Return(nil).Once()
 	mockCache.On("ClusterExternalIps", mock.Anything).Return(ips).Once()
 
-	id := endpoint.GetUserVisibleId(mockCache)
+	id := GetUserVisibleId(mockCache, *uuid)
 
-	assert.Equal(t, *id, ips[0])
+	assert.Equal(t, id, ips[0])
 	mockCache.AssertExpectations(t)
 }
 
 func TestGetUserVisibleIdUuid(t *testing.T) {
 	uuid, _ := uuid4.New()
-	endpoint := RemoteEndpoint{RemoteClusterUuid: *uuid}
 	mockCache := &mockZeus.ConfigCache{}
 	mockCache.On("PeClusterName", mock.Anything).Return(nil).Once()
 	mockCache.On("ClusterExternalIps", mock.Anything).Return(nil).Once()
 
-	id := endpoint.GetUserVisibleId(mockCache)
+	id := GetUserVisibleId(mockCache, *uuid)
 
-	assert.Equal(t, *id, uuid.String())
+	assert.Equal(t, id, uuid.String())
 	mockCache.AssertExpectations(t)
 }
 
 func TestGetUserVisibleIdNotPe(t *testing.T) {
-	endpoint := RemoteEndpoint{}
 	mockCache := &mockZeus.ConfigCache{}
 
-	id := endpoint.GetUserVisibleId(mockCache)
+	id := GetUserVisibleId(mockCache, NilUuid)
 
-	assert.Nil(t, id)
+	assert.Equal(t, id, "")
 }
