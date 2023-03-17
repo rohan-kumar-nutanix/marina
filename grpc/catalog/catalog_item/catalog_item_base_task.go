@@ -24,6 +24,7 @@ import (
 	marinaError "github.com/nutanix-core/content-management-marina/errors"
 	"github.com/nutanix-core/content-management-marina/grpc/catalog/file_repo"
 	"github.com/nutanix-core/content-management-marina/grpc/catalog/image"
+
 	marinaIfc "github.com/nutanix-core/content-management-marina/protos/marina"
 	"github.com/nutanix-core/content-management-marina/task/base"
 	catalogClient "github.com/nutanix-core/content-management-marina/util/catalog/client"

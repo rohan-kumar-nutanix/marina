@@ -42,6 +42,7 @@ var once sync.Once
 var catalogItemAttributes = []interface{}{
 	insights_interface.COMPRESSED_PROTOBUF_ATTR,
 }
+var catalogItemInterface CatalogItemInterface = nil
 
 var catalogItemImpl CatalogItemInterface
 

@@ -45,7 +45,6 @@ func NewFileRepoImpl() FileRepoInterface {
 
 func (*FileRepoImpl) GetFile(ctx context.Context, cpdbIfc cpdb.CPDBClientInterface, fileUuid *uuid4.Uuid) (
 	*marinaIfc.FileInfo, error) {
-
 	entity, err := cpdbIfc.GetEntity(db.File.ToString(), fileUuid.String(), false)
 	if err == insights_interface.ErrNotFound || entity == nil {
 		log.Errorf("File %s not found", fileUuid.String())
