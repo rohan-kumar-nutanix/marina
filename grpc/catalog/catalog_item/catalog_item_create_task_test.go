@@ -11,6 +11,7 @@ package catalog_item
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/golang/protobuf/proto"
@@ -108,11 +109,15 @@ func TestCatalogItemCreateTask_checkCatalogItemComplete(t *testing.T) {
 	catalogItems := []*marinaIfc.CatalogItemInfo{catalogItemInfo}
 	citemCreateTask.catalogItemUuid = testCatalogItemUuid
 
+<<<<<<< HEAD
 	// Case 1: IDF Error
+=======
+>>>>>>> cbc434a (UT)
 	citemIfc.On("GetCatalogItems",
 		context.TODO(), mock.Anything, mock.Anything, mock.Anything, mock.Anything,
 		mock.Anything, mock.Anything).Return(
 		nil, marinaErrors.ErrInternal).Once()
+<<<<<<< HEAD
 	// Run Case 1
 	exists, err := citemCreateTask.checkCatalogItemExists(ret)
 	assert.Error(t, err)
@@ -146,4 +151,22 @@ func TestCatalogItemCreateTask_checkCatalogItemComplete(t *testing.T) {
 	assert.Error(t, marinaErrors.ErrInternalError(), err)
 	assert.False(t, exists)
 	citemIfc.AssertExpectations(t)
+=======
+
+	citemIfc.On("GetCatalogItems",
+		context.TODO(), cpdbIfc, uuidIfc, mock.Anything, mock.Anything,
+		mock.Anything, mock.Anything).Return(
+		catalogItems, nil)
+	citemIfc.On("GetCatalogItem", mock.Anything, mock.Anything,
+		mock.Anything).Return(catalogItemInfo, nil)
+
+	exists, err := citemCreateTask.checkCatalogItemExists(ret)
+	assert.Error(t, err)
+
+	exists, err = citemCreateTask.checkCatalogItemExists(ret)
+	fmt.Print("values ::", exists, err)
+	assert.Nil(t, err)
+	assert.True(t, exists)
+	citemIfc.AssertExpectations(t)
+>>>>>>> cbc434a (UT)
 }
