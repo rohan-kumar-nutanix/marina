@@ -110,4 +110,8 @@ func startGRPCServer() {
 	log.Infof("Starting GRPC on port %v", *common.MarinaGRPCPort)
 	svcConfig.grpcServer = marinaGRPCServer.NewServer(*common.MarinaGRPCPort)
 	svcConfig.grpcServer.Start(&waitGroup)
+
+	// TODO: Enable mTLS mode for gRPC server. Security Team suggestion.
+	// Check with msp team for certs generation, istio or genesis .
+
 }

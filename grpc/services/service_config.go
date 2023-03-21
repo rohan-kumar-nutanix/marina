@@ -7,6 +7,7 @@ import (
 	ergonTask "github.com/nutanix-core/acs-aos-go/ergon/task"
 
 	"github.com/nutanix-core/content-management-marina/grpc/catalog/catalog_item"
+	"github.com/nutanix-core/content-management-marina/grpc/warehouse"
 	"github.com/nutanix-core/content-management-marina/task/base"
 )
 
@@ -40,6 +41,9 @@ func GetErgonFullTaskByProto(taskProto *ergon.Task) ergonTask.FullTask {
 	// case CreateWarehouse:
 	// 	return tasks.NewMarinaWarehouseCreateTask(
 	// 		tasks.NewMarinaBaseWarehouseTask(base.NewMarinaBaseTask(taskProto)))
+	case CreateWarehouse:
+		return warehouse.NewMarinaWarehouseCreateTask(
+			warehouse.NewMarinaBaseWarehouseTask(base.NewMarinaBaseTask(taskProto)))
 	default:
 		log.Errorf("Unknown gRPC method %s received", taskProto.Request.GetMethodName())
 	}

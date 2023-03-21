@@ -11,7 +11,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/golang/protobuf/proto"
+	"google.golang.org/protobuf/proto"
 	log "k8s.io/klog/v2"
 
 	"github.com/nutanix-core/acs-aos-go/ergon"

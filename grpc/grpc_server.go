@@ -19,11 +19,14 @@ import (
 	grpcMiddleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpcPrometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/nutanix-core/acs-aos-go/nutanix/util-go/tracer"
-	"github.com/nutanix-core/content-management-marina/grpc/services"
-	marinaIfc "github.com/nutanix-core/content-management-marina/protos/marina"
 
 	"google.golang.org/grpc"
 	log "k8s.io/klog/v2"
+
+	"github.com/nutanix-core/content-management-marina/protos/apis/cms/v4/content"
+
+	"github.com/nutanix-core/content-management-marina/grpc/services"
+	marinaIfc "github.com/nutanix-core/content-management-marina/protos/marina"
 )
 
 // Server encapsulates the grpc server.
@@ -81,6 +84,7 @@ func NewServer(port uint64) (server Server) {
 func (server *ServerImpl) registerServices(s *grpc.Server) {
 	log.Info("Registering services...")
 	marinaIfc.RegisterMarinaServer(server.gserver, &services.MarinaServer{})
+	content.RegisterWarehouseServiceServer(server.gserver, &services.WarehouseServer{})
 }
 
 // Start listening and serve. Errors are fatal (todo).

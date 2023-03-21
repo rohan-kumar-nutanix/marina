@@ -94,6 +94,12 @@ message PcTaskWalRecord {
 
   // The proxy task WAL.
   optional ProxyTaskWal proxy_task_wal = 4;
+<<<<<<< HEAD
+=======
+
+  // The WarehouseWal
+  optional WarehouseWal warehouse_wal = 5;
+>>>>>>> 59d0ea6 (Warehouse Create draft)
 }
 
 // Proxy task WAL.
@@ -103,4 +109,18 @@ message ProxyTaskWal {
 
   // The serialization token of the task.
   optional string serialization_token = 2;
+}
+
+// Warehouse task WAL.
+message WarehouseWal {
+  // Warehouse UUID
+  optional bytes warehouse_uuid = 1;
+
+  // WarehouseItem UUID
+  optional string warehouse_item_uuid = 2;
+
+  // Warehouse logical timestamp for the request.
+  optional int64 logical_timestamp = 3;
+
+  // TODO: Add Warehouse field.
 }

@@ -34,6 +34,7 @@ const (
 	Image
 	RateLimit
 	EntityCapability
+	Warehouse
 )
 
 func (entityType EntityType) ToString() string {
@@ -48,6 +49,8 @@ func (entityType EntityType) ToString() string {
 		return "catalog_rate_limit_info"
 	case EntityCapability:
 		return "abac_entity_capability"
+	case Warehouse:
+		return "warehouse"
 	}
 	return "unknown"
 }

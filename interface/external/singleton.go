@@ -25,6 +25,7 @@ import (
 	"github.com/nutanix-core/acs-aos-go/nutanix/util-go/authz/authz_cache"
 	"github.com/nutanix-core/acs-aos-go/nutanix/util-go/misc/serial_executor"
 	"github.com/nutanix-core/acs-aos-go/zeus"
+
 	"github.com/nutanix-core/content-management-marina/common"
 	"github.com/nutanix-core/content-management-marina/db"
 	utils "github.com/nutanix-core/content-management-marina/util"
@@ -144,7 +145,7 @@ func (s *singletonObject) SerialExecutor() serial_executor.SerialExecutorIfc {
 	return s.serialExecutor
 }
 
-// ZeusConfig returns the singleton for Zeus config
+// ZeusConfig returns the singleton for Zeus service_config
 func (s *singletonObject) ZeusConfig() marinaZeus.ConfigCache {
 	return s.zeusConfig
 }

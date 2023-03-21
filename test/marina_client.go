@@ -13,10 +13,11 @@ import (
 	"time"
 
 	"github.com/nutanix-core/acs-aos-go/nutanix/util-go/uuid4"
-	marina "github.com/nutanix-core/content-management-marina/protos/marina"
 	glog "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/status"
+
+	marina "github.com/nutanix-core/content-management-marina/protos/marina"
 )
 
 func init() {
@@ -24,9 +25,9 @@ func init() {
 }
 
 func marinaClient(port uint) (*grpc.ClientConn, marina.MarinaClient) {
-	//address := fmt.Sprintf("127.0.0.1:%d", port)
+	// address := fmt.Sprintf("127.0.0.1:%d", port)
 	// address := fmt.Sprintf("10.37.161.66:%d", port)
-	pcIp := "localhost" //"10.96.16.100" // "0.0.0.0" //"10.33.33.78"
+	pcIp := "localhost" // "10.96.16.100" // "0.0.0.0" //"10.33.33.78"
 	port = 9200
 	address := fmt.Sprintf("%s:%d", pcIp, port)
 	fmt.Println("Connecting to GRPC server at ", address)
@@ -74,8 +75,25 @@ func GetAllCatalogItems(client marina.MarinaClient, ctx context.Context) {
 	// fmt.Printf("Response	 received \n Catalog Items :%s  \n Description", response)
 	for i, item := range response.CatalogItemList {
 		// fmt.Printf("Catalog Item %v: %v\n", i, item)
-		fmt.Printf("%v: %v\n", i, item)
+		fmt.Printf("%v: %v\n", i, uuid4.ToUuid4(item.GlobalCatalogItemUuid).String())
 	}
+
+}
+
+func DeleteCatalogItem(client marina.MarinaClient, ctx context.Context) {
+	guuid, _ := uuid4.StringToUuid4("5bad7353-1986-4f59-921a-3770134a3613")
+
+	arg := &marina.CatalogItemDeleteArg{CatalogItemId: &marina.CatalogItemId{GlobalCatalogItemUuid: guuid.RawBytes()}}
+	response, err := client.CatalogItemDelete(ctx, arg)
+	if err != nil {
+		fmt.Println("Marina request error:", err)
+		glog.Errorf("Marina request error: %s", err)
+		return
+	}
+
+	fmt.Println("***********Response received from server*******")
+	fmt.Println("-----------------------------------------------")
+	fmt.Printf("%v\n", response)
 
 }
 
@@ -107,7 +125,7 @@ func GetCatalogItemsById(client marina.MarinaClient, ctx context.Context, uuids 
 
 	arg := &marina.CatalogItemGetArg{
 		CatalogItemIdList: items,
-		//CatalogItemTypeList: itemTypes,
+		// CatalogItemTypeList: itemTypes,
 	}
 	// response, err := client.CatalogItemGet(ctx, &marina.CatalogItemGetArg{})
 	fmt.Println("Fetching CatalogItems by UUIDs")
@@ -134,8 +152,8 @@ func GetCatalogItemsById(client marina.MarinaClient, ctx context.Context, uuids 
 func main() {
 	// TODO: Consider moving these to init().
 	var grpcServerPort uint
-	grpcServerPort = 9200 //32391 //9200 //30188 //9200
-	//glog.Infof("gRPC server port to connect: %v", grpcServerPort)
+	grpcServerPort = 9200 // 32391 //9200 //30188 //9200
+	// glog.Infof("gRPC server port to connect: %v", grpcServerPort)
 	// fmt.Println("gRPC server port to connect: ", grpcServerPort)
 	conn, mclient := marinaClient(grpcServerPort)
 	defer conn.Close()
@@ -146,10 +164,13 @@ func main() {
 	// fmt.Println("Making echo server request.")
 	// testEcho(client, ctx)
 
-	fmt.Println("Making Marina server request CatalogItemGet.")
-	GetAllCatalogItems(mclient, ctx)
-	fmt.Println("-----------------------------------------------")
+	// fmt.Println("Making Marina server request CatalogItemGet.")
+	// GetAllCatalogItems(mclient, ctx)
+
+	fmt.Println("Deleting CatalogItem RPC call")
+	DeleteCatalogItem(mclient, ctx)
+	/*fmt.Println("-----------------------------------------------")
 	fmt.Println("Fetching CatalogItemGet by UUID's:")
-	fmt.Println("-----------------------------------------------")
-	GetCatalogItemsById(mclient, ctx, nil)
+	fmt.Println("-----------------------------------------------")*/
+	// GetCatalogItemsById(mclient, ctx, nil)
 }

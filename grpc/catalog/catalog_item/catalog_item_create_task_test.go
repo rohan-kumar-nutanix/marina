@@ -11,6 +11,7 @@ package catalog_item
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/golang/protobuf/proto"
@@ -22,6 +23,7 @@ import (
 	marinaErrors "github.com/nutanix-core/content-management-marina/errors"
 	mockCatalogItem "github.com/nutanix-core/content-management-marina/mocks/grpc/catalog/catalog_item"
 	mockFile "github.com/nutanix-core/content-management-marina/mocks/grpc/catalog/file_repo"
+
 	marinaIfc "github.com/nutanix-core/content-management-marina/protos/marina"
 	"github.com/nutanix-core/content-management-marina/task/base"
 )
@@ -32,6 +34,13 @@ var (
 		Version:               proto.Int64(0),
 	}
 )
+
+func setup() {
+	fmt.Println("Setting up  for the UT.")
+}
+func teardown() {
+	fmt.Println("Tear downing after UT.")
+}
 
 func TestCatalogItemCreateTask_checkCatalogItemExistsError(t *testing.T) {
 	baseTask := &base.MarinaBaseTask{

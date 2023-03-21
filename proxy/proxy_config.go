@@ -149,7 +149,7 @@ func asyncRpc(requestTaskUuid string, serializationFunc func(reflect.Value) (
 }
 
 func init() {
-	log.Info("Initializing rpcServiceConfig to build supportedCatalogRpcs config map")
+	log.Info("Initializing rpcServiceConfig to build supportedCatalogRpcs service_config map")
 	InitRpcServiceConfig()
 }
 
@@ -161,7 +161,7 @@ func InitRpcServiceConfig() {
 		for rpcName, rpcService := range supportedCatalogRpcs {
 			CatalogRpcNames = append(CatalogRpcNames, rpcName)
 			// Replace RPC service specification with autofilled values.
-			log.Info("Fetching HandlerMethod for rpcName : ", rpcName)
+			log.V(1).Infof("Fetching HandlerMethod for rpcName : ", rpcName)
 			handlerMethod := reflect.ValueOf(&catalog.CatalogPcExternalRpcClient{}).MethodByName(rpcName)
 			if handlerMethod.IsZero() {
 				log.Errorf("Unsupported Catalog RPC in map :", rpcName)
