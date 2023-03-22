@@ -22,7 +22,7 @@ import (
 	ergonClient "github.com/nutanix-core/acs-aos-go/ergon/client"
 	ergonTask "github.com/nutanix-core/acs-aos-go/ergon/task"
 	"github.com/nutanix-core/acs-aos-go/nutanix/util-go/misc"
-	"github.com/nutanix-core/content-management-marina/grpc/catalog/catalog_item/tasks"
+
 	"github.com/nutanix-core/content-management-marina/grpc/services"
 	"github.com/nutanix-core/content-management-marina/interface/external"
 	"github.com/nutanix-core/content-management-marina/proxy"
@@ -140,9 +140,9 @@ func (m *MarinaTaskManager) hydrateTask(taskProto *ergon.Task) ergonTask.FullTas
 	}
 	methodName := taskProto.GetOperationType()
 	log.Info("HydrateTask RPC methodName :", methodName)
-	fullTask := services.GetTaskByRPC(tasks.NewCatalogItemBaseTask(base.NewMarinaBaseTask(taskProto)))
+	fullTask := services.GetErgonFullTaskByProto(taskProto)
 	if fullTask == nil {
-		log.Warning("Proxying task to catalog service")
+		log.Warning("Proxying task to Legacy Catalog Service")
 		fullTask = proxy.NewProxyTask(base.NewMarinaBaseTask(taskProto))
 	}
 	return fullTask

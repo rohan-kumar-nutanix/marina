@@ -21,6 +21,7 @@ import (
 	"github.com/nutanix-core/acs-aos-go/insights/insights_interface"
 	cpdb "github.com/nutanix-core/acs-aos-go/nusights/util/db"
 	"github.com/nutanix-core/acs-aos-go/nutanix/util-go/misc"
+
 	marinaError "github.com/nutanix-core/content-management-marina/errors"
 )
 
@@ -110,7 +111,7 @@ func (idf *IdfClient) DeleteEntities(ctx context.Context, cpdbIfc cpdb.CPDBClien
 		}
 
 		if len(failedEntities) == 0 {
-			errMsg := fmt.Sprintf("Partial failure occurred but could not find entities to delete")
+			errMsg := "Partial failure occurred but could not find entities to delete"
 			return marinaError.ErrInternalError().SetCauseAndLog(errors.New(errMsg))
 		}
 

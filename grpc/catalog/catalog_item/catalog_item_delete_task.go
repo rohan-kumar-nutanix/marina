@@ -6,7 +6,7 @@
 * The implementation for CatalogItemDelete RPC
  */
 
-package tasks
+package catalog_item
 
 import (
 	"context"
@@ -20,9 +20,9 @@ import (
 	"github.com/nutanix-core/acs-aos-go/insights/insights_interface"
 	. "github.com/nutanix-core/acs-aos-go/insights/insights_interface/query"
 	"github.com/nutanix-core/acs-aos-go/nutanix/util-go/uuid4"
+
 	"github.com/nutanix-core/content-management-marina/db"
 	marinaError "github.com/nutanix-core/content-management-marina/errors"
-	"github.com/nutanix-core/content-management-marina/grpc/catalog/catalog_item"
 	marinaIfc "github.com/nutanix-core/content-management-marina/protos/marina"
 	utils "github.com/nutanix-core/content-management-marina/util"
 )
@@ -156,9 +156,9 @@ func (task *CatalogItemDeleteTask) getCatalogItemDeleteArg() (*marinaIfc.Catalog
 
 func (task *CatalogItemDeleteTask) deleteCatalogItem(queryName string) error {
 	version := task.arg.GetCatalogItemId().Version
-	where := EQ(COL(catalog_item.GlobalCatalogItemUuid), STR(task.globalCatalogItemUuid.String()))
+	where := EQ(COL(GlobalCatalogItemUuid), STR(task.globalCatalogItemUuid.String()))
 	if version != nil {
-		where = AND(where, EQ(COL(catalog_item.CatalogItemVersion), INT64(*version)))
+		where = AND(where, EQ(COL(CatalogItemVersion), INT64(*version)))
 	}
 
 	query, err := QUERY(queryName).

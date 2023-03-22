@@ -3,12 +3,13 @@
 *
 * Author: rishabh.gupta@nutanix.com
 *
-* The implementation for CatalogItemUpdate RPC
+* The implementation for CatalogItemCreate RPC
  */
 
-package tasks
+package catalog_item
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
@@ -19,29 +20,30 @@ import (
 	"github.com/nutanix-core/acs-aos-go/ergon"
 	taskUtil "github.com/nutanix-core/acs-aos-go/ergon/task"
 	"github.com/nutanix-core/acs-aos-go/nutanix/util-go/uuid4"
+
 	marinaError "github.com/nutanix-core/content-management-marina/errors"
 	marinaIfc "github.com/nutanix-core/content-management-marina/protos/marina"
 	utils "github.com/nutanix-core/content-management-marina/util"
 )
 
-type CatalogItemUpdateTask struct {
+type CatalogItemCreateTask struct {
 	*CatalogItemBaseTask
-	arg                   *marinaIfc.CatalogItemUpdateArg
-	spec                  *marinaIfc.CatalogItemUpdateSpec
+	arg                   *marinaIfc.CatalogItemCreateArg
+	spec                  *marinaIfc.CatalogItemCreateSpec
+	catalogItemUuid       *uuid4.Uuid
 	version               int64
-	catalogItem           *marinaIfc.CatalogItemInfo
 	errReasons            []string
 	fanoutSuccessClusters []*uuid4.Uuid
 }
 
-func NewCatalogItemUpdateTask(catalogItemBaseTask *CatalogItemBaseTask) *CatalogItemUpdateTask {
-	return &CatalogItemUpdateTask{
+func NewCatalogItemCreateTask(catalogItemBaseTask *CatalogItemBaseTask) *CatalogItemCreateTask {
+	return &CatalogItemCreateTask{
 		CatalogItemBaseTask: catalogItemBaseTask,
 	}
 }
 
-func (task *CatalogItemUpdateTask) StartHook() error {
-	arg, err := task.getCatalogItemUpdateArg()
+func (task *CatalogItemCreateTask) StartHook() error {
+	arg, err := task.getCatalogItemCreateArg()
 	if err != nil {
 		return err
 	}
@@ -49,37 +51,57 @@ func (task *CatalogItemUpdateTask) StartHook() error {
 
 	spec := arg.GetSpec()
 	if spec == nil {
-		errMsg := fmt.Sprintf("Spec is missing from the arguments")
+		errMsg := "Spec is missing from the arguments"
 		return marinaError.ErrInvalidArgument.SetCauseAndLog(errors.New(errMsg))
 	}
 	task.spec = spec
 
-	if arg.GlobalCatalogItemUuid == nil {
-		errMsg := fmt.Sprintf("Update arg is missing Global Catalog Item UUID")
+	if catalogItemUuid := spec.GetUuid(); catalogItemUuid != nil {
+		task.catalogItemUuid = uuid4.ToUuid4(catalogItemUuid)
+
+	} else {
+		uuid, err := task.InternalInterfaces().UuidIfc().New()
+		if err != nil {
+			return err
+		}
+		task.catalogItemUuid = uuid
+	}
+
+	if globalCatalogItemUuid := spec.GetGlobalCatalogItemUuid(); globalCatalogItemUuid != nil {
+		task.globalCatalogItemUuid = uuid4.ToUuid4(globalCatalogItemUuid)
+
+	} else {
+		uuid, err := task.InternalInterfaces().UuidIfc().New()
+		if err != nil {
+			return err
+		}
+		task.globalCatalogItemUuid = uuid
+	}
+
+	if len(spec.GetSourceGroupSpecList()) > 1 {
+		errMsg := fmt.Sprintf("Multiple sources are not supported for creating catalog item")
 		return marinaError.ErrInvalidArgument.SetCauseAndLog(errors.New(errMsg))
 	}
-	task.globalCatalogItemUuid = uuid4.ToUuid4(arg.GetGlobalCatalogItemUuid())
 
-	task.version = -1
-	if spec.Version != nil {
-		task.version = spec.GetVersion()
+	task.version = spec.GetVersion()
+	if spec.GetOwnerClusterUuid() == nil {
+		spec.OwnerClusterUuid = task.ExternalInterfaces().ZeusConfig().ClusterUuid().RawBytes()
 	}
 
-	if len(spec.GetAddSourceGroupList()) > 1 {
-		errMsg := fmt.Sprintf("Multiple sources are not supported for updating catalog item")
-		return marinaError.ErrInvalidArgument.SetCauseAndLog(errors.New(errMsg))
-	}
+	task.addCatalogItemEntity(task.catalogItemUuid)
 
 	wal := task.Wal()
 	wal.Data = &marinaIfc.PcTaskWalRecordData{
 		CatalogItem: &marinaIfc.PcTaskWalRecordCatalogItemData{
+			CatalogItemUuid:       task.catalogItemUuid.RawBytes(),
 			GlobalCatalogItemUuid: task.globalCatalogItemUuid.RawBytes(),
 		},
 	}
 	return task.SetWal(wal)
 }
-func (task *CatalogItemUpdateTask) RecoverHook() error {
-	arg, err := task.getCatalogItemUpdateArg()
+
+func (task *CatalogItemCreateTask) RecoverHook() error {
+	arg, err := task.getCatalogItemCreateArg()
 	if err != nil {
 		return err
 	}
@@ -93,59 +115,46 @@ func (task *CatalogItemUpdateTask) RecoverHook() error {
 	task.spec = spec
 
 	wal := task.Wal().GetData().GetCatalogItem()
+	task.catalogItemUuid = uuid4.ToUuid4(wal.GetCatalogItemUuid())
 	task.globalCatalogItemUuid = uuid4.ToUuid4(wal.GetGlobalCatalogItemUuid())
-
-	task.version = -1
-	if spec.Version != nil {
-		task.version = spec.GetVersion()
+	task.spec.GlobalCatalogItemUuid = wal.GetGlobalCatalogItemUuid()
+	task.version = task.spec.GetVersion()
+	if task.spec.GetOwnerClusterUuid() == nil {
+		task.spec.OwnerClusterUuid = task.ExternalInterfaces().ZeusConfig().ClusterUuid().RawBytes()
 	}
 	return nil
 }
 
-func (task *CatalogItemUpdateTask) Enqueue() {
+func (task *CatalogItemCreateTask) Enqueue() {
 	serialExecutor := task.ExternalInterfaces().SerialExecutor()
 	serialExecutor.SubmitJob(task)
 }
 
-func (task *CatalogItemUpdateTask) Execute() {
+func (task *CatalogItemCreateTask) Execute() {
 	task.Resume(task)
 }
 
-func (task *CatalogItemUpdateTask) SerializationID() string {
+func (task *CatalogItemCreateTask) SerializationID() string {
 	return task.globalCatalogItemUuid.String()
 }
 
-func (task *CatalogItemUpdateTask) Run() error {
+func (task *CatalogItemCreateTask) Run() error {
 	task.taskUuid = uuid4.ToUuid4(task.Proto().Uuid)
 
-	// Get the latest catalog item for the provided global catalog item
-	catalogItems, err := task.getLatestCatalogItem()
-	if err != nil {
-		return err
-	}
-
-	if len(catalogItems) > 1 {
-		// Ensure there are no more than 1 latest versions of the catalog item
-		errMsg := fmt.Sprintf("More than 1 latest version found for catalog item %s",
-			task.globalCatalogItemUuid.String())
-		return marinaError.ErrInternalError().SetCauseAndLog(errors.New(errMsg))
-
-	} else if len(catalogItems) == 0 {
-		// Ensure there exists at least 1 version of the catalog item
-		errMsg := fmt.Sprintf("Trying to update a non existing or already deleted catalog item %s",
-			task.globalCatalogItemUuid.String())
-		return marinaError.ErrNotFound.SetCauseAndLog(errors.New(errMsg))
-	}
-	task.catalogItem = catalogItems[0]
-
 	// Assign UUIDs to source specs
-	err = task.assignSourceGroupSpecUuid()
+	err := task.assignSourceGroupSpecUuid()
 	if err != nil {
 		return err
 	}
 
-	// Create a map with CatalogItemUpdate arg for each target cluster
-	argByCluster, err := task.prepareFanoutArgs()
+	// Create the list of target clusters for creating catalog item
+	targetClusters, err := task.targetClusterList()
+	if err != nil {
+		return err
+	}
+
+	// Create a map with CatalogItemCreate arg for each target cluster
+	argByCluster, err := task.prepareFanoutArgs(targetClusters)
 	if err != nil {
 		return err
 	}
@@ -156,116 +165,74 @@ func (task *CatalogItemUpdateTask) Run() error {
 		return err
 	}
 
-	if task.version >= 0 && task.version != *task.catalogItem.Version {
-		errMsg := fmt.Sprintf("Update arg version does not match current catalog item version")
-		return marinaError.ErrInvalidArgument.SetCauseAndLog(errors.New(errMsg))
-
-	} else {
-		// If version is not provided in arg, add the expected latest version of catalog item to the arg
-		task.arg.Version = task.catalogItem.Version
-	}
-
-	// Store the catalog item version to WAL
-	wal := task.Wal()
-	catalogWal := wal.GetData().GetCatalogItem()
-	if catalogWal.Version == nil {
-		catalogWal.Version = task.catalogItem.Version
-		err = task.SetWal(wal)
-		if err != nil {
-			errMsg := fmt.Sprintf("Failed to set the task WAL: %v", err)
-			return marinaError.ErrInternalError().SetCauseAndLog(errors.New(errMsg))
-		}
-		task.Save(task)
-	}
-
-	var finalClusters []uuid4.Uuid
-	task.fanoutSuccessClusters = walClusters
-	if catalogWal.NewCatalogItemUuid == nil {
-		// Fanout the request to target clusters
-		taskByCluster, err := task.fanoutCatalogRequests(walClusters, argByCluster)
-		if err != nil {
-			task.errReasons = append(task.errReasons, fmt.Sprintf("Catalog item update failed: %v", err))
-			err = task.handleCleanup(task.InternalInterfaces().UuidIfc().UuidPointersToUuids(task.fanoutSuccessClusters))
-			if err != nil {
-				return err
-			}
-		}
-
-		// Get the clusters where the fanout task succeeded
-		finalClusters, err = task.processFanoutResult(taskByCluster)
-		if err != nil {
-			task.errReasons = append(task.errReasons, fmt.Sprintf("Catalog item create failed: %v", err))
-			err = task.handleCleanup(task.InternalInterfaces().UuidIfc().UuidPointersToUuids(task.fanoutSuccessClusters))
-			if err != nil {
-				return err
-			}
-		}
-
-		uuid, err := task.InternalInterfaces().UuidIfc().New()
-		if err != nil {
-			return err
-		}
-		catalogWal.NewCatalogItemUuid = uuid.RawBytes()
-		err = task.SetWal(wal)
-		if err != nil {
-			errMsg := fmt.Sprintf("Failed to set the task WAL: %v", err)
-			return marinaError.ErrInternalError().SetCauseAndLog(errors.New(errMsg))
-		}
-		task.Save(task)
-	}
-
-	// Check if the new (updated) catalog item exists
-	newCatalogItemUuid := uuid4.ToUuid4(catalogWal.NewCatalogItemUuid)
-	_, err = task.InternalInterfaces().CatalogItemIfc().GetCatalogItem(nil,
-		task.ExternalInterfaces().CPDBIfc(), newCatalogItemUuid)
-	if err != nil && err != marinaError.ErrNotFound {
+	// Check if the catalog item already exists
+	ret := &marinaIfc.CatalogItemCreateTaskRet{}
+	exists, err := task.checkCatalogItemExists(ret)
+	if err != nil {
 		return err
 	}
 
-	// Create the new (updated) catalog item
-	if err == marinaError.ErrNotFound {
-		if len(finalClusters) == 0 {
-			finalClusters = task.InternalInterfaces().UuidIfc().UuidPointersToUuids(task.fanoutSuccessClusters)
-		}
-
-		// Create PC file repo entries
-		sourceGroups, err := task.createFileRepoEntries()
-		if err != nil {
-			task.errReasons = append(task.errReasons, fmt.Sprintf("Catalog item create failed: %v", err))
-			err = task.handleCleanup(finalClusters)
-			if err != nil {
-				return err
-			}
-		}
-
-		// Create PC CatalogItem IDF entry
-		err = task.InternalInterfaces().CatalogItemIfc().CreateCatalogItemFromUpdateSpec(nil,
-			task.ExternalInterfaces().CPDBIfc(), task.InternalInterfaces().ProtoIfc(), task.catalogItem,
-			newCatalogItemUuid, task.spec, finalClusters, sourceGroups)
-		if err != nil {
-			task.errReasons = append(task.errReasons, fmt.Sprintf("Catalog item create failed: %v", err))
-			err = task.handleCleanup(finalClusters)
-			if err != nil {
-				return err
-			}
-		}
-	}
-
-	// TODO: Add code to invoke placement policy early enforcement
-
-	ret := &marinaIfc.CatalogItemUpdateTaskRet{}
 	retBytes, err := task.InternalInterfaces().ProtoIfc().Marshal(ret)
 	if err != nil {
 		errMsg := fmt.Sprintf("Failed to serialize the return object: %v", err)
 		return marinaError.ErrInternalError().SetCauseAndLog(errors.New(errMsg))
 	}
+
+	if exists {
+		task.Complete(task, retBytes, nil)
+	}
+
+	// Fanout the request to target clusters
+	task.fanoutSuccessClusters = walClusters
+	taskByCluster, err := task.fanoutCreateRequests(walClusters, argByCluster)
+	if err != nil {
+		task.errReasons = append(task.errReasons, fmt.Sprintf("Catalog item create failed: %v", err))
+		err = task.handleCleanup(task.InternalInterfaces().UuidIfc().UuidPointersToUuids(task.fanoutSuccessClusters))
+		if err != nil {
+			return err
+		}
+	}
+
+	// Get the clusters where the fanout task succeeded
+	var finalClusters []uuid4.Uuid
+	finalClusters, err = task.processFanoutResult(taskByCluster)
+	if err != nil {
+		task.errReasons = append(task.errReasons, fmt.Sprintf("Catalog item create failed: %v", err))
+		err = task.handleCleanup(task.InternalInterfaces().UuidIfc().UuidPointersToUuids(task.fanoutSuccessClusters))
+		if err != nil {
+			return err
+		}
+	}
+
+	// Create PC file repo entries
+	sourceGroups, err := task.createFileRepoEntries()
+	if err != nil {
+		task.errReasons = append(task.errReasons, fmt.Sprintf("Catalog item create failed: %v", err))
+		err = task.handleCleanup(finalClusters)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Create PC CatalogItem IDF entry
+	err = task.catalogItemIfc.CreateCatalogItemFromCreateSpec(context.TODO(),
+		task.ExternalInterfaces().CPDBIfc(), task.InternalInterfaces().ProtoIfc(), task.catalogItemUuid,
+		task.spec, finalClusters, sourceGroups)
+	if err != nil {
+		task.errReasons = append(task.errReasons, fmt.Sprintf("Catalog item create failed: %v", err))
+		err = task.handleCleanup(finalClusters)
+		if err != nil {
+			return err
+		}
+	}
+
 	task.Complete(task, retBytes, nil)
 	return nil
 }
 
-func (task *CatalogItemUpdateTask) getCatalogItemUpdateArg() (*marinaIfc.CatalogItemUpdateArg, error) {
+func (task *CatalogItemCreateTask) getCatalogItemCreateArg() (*marinaIfc.CatalogItemCreateArg, error) {
 	embedded := task.Proto().GetRequest().GetArg().GetEmbedded()
-	arg := &marinaIfc.CatalogItemUpdateArg{}
+	arg := &marinaIfc.CatalogItemCreateArg{}
 	if err := proto.Unmarshal(embedded, arg); err != nil {
 		errMsg := fmt.Sprintf("Failed to unmarshal the RPC arguments: %v", err)
 		return nil, marinaError.ErrInvalidArgument.SetCauseAndLog(errors.New(errMsg))
@@ -273,19 +240,11 @@ func (task *CatalogItemUpdateTask) getCatalogItemUpdateArg() (*marinaIfc.Catalog
 	return arg, nil
 }
 
-func (task *CatalogItemUpdateTask) getLatestCatalogItem() ([]*marinaIfc.CatalogItemInfo, error) {
-	catalogItems, err := task.InternalInterfaces().CatalogItemIfc().GetCatalogItems(nil,
-		task.ExternalInterfaces().CPDBIfc(), task.InternalInterfaces().UuidIfc(),
-		[]*marinaIfc.CatalogItemId{{GlobalCatalogItemUuid: task.globalCatalogItemUuid.RawBytes()}},
-		[]marinaIfc.CatalogItemInfo_CatalogItemType{}, true, "CatalogItemUpdate:GetCatalogItems")
-	return catalogItems, err
-}
-
-func (task *CatalogItemUpdateTask) assignSourceGroupSpecUuid() error {
+func (task *CatalogItemCreateTask) assignSourceGroupSpecUuid() error {
 	wal := task.Wal()
 	catalogWal := wal.GetData().GetCatalogItem()
 	if len(catalogWal.AddSourceGroupList) == 0 {
-		for _, spec := range task.spec.AddSourceGroupList {
+		for _, spec := range task.spec.SourceGroupSpecList {
 			if spec.Uuid == nil {
 				specUuid, err := task.InternalInterfaces().UuidIfc().New()
 				if err != nil {
@@ -305,96 +264,86 @@ func (task *CatalogItemUpdateTask) assignSourceGroupSpecUuid() error {
 		task.Save(task)
 
 	} else {
-		task.spec.AddSourceGroupList = nil
+		task.spec.SourceGroupSpecList = nil
 		for _, spec := range catalogWal.GetAddSourceGroupList() {
-			task.spec.AddSourceGroupList = append(task.spec.AddSourceGroupList, spec)
+			task.spec.SourceGroupSpecList = append(task.spec.SourceGroupSpecList, spec)
 		}
 	}
 	return nil
 }
 
-func (task *CatalogItemUpdateTask) prepareFanoutArgs() (map[uuid4.Uuid]*marinaIfc.CatalogItemUpdateArg, error) {
-	// For the file uuid's to be removed from catalog item, find the file uuid on respective PEs and update the
-	// arg corresponding to each PE.
-	fileUuidsByCluster := make(map[uuid4.Uuid][][]byte)
-	argTemplate := proto.Clone(task.arg).(*marinaIfc.CatalogItemUpdateArg)
-	argByCluster := make(map[uuid4.Uuid]*marinaIfc.CatalogItemUpdateArg)
-	if len(task.spec.RemoveFileUuidList) > 0 {
-		fileUuids := task.InternalInterfaces().UuidIfc().UuidBytesToUuidPointers(task.spec.GetRemoveFileUuidList())
-		files, err := task.InternalInterfaces().FileRepoIfc().GetFiles(task.ExternalInterfaces().CPDBIfc(),
-			task.InternalInterfaces().UuidIfc(), fileUuids)
-		if err != nil {
-			return nil, err
+func (task *CatalogItemCreateTask) targetClusterList() ([]uuid4.Uuid, error) {
+	var finalClusters []uuid4.Uuid
+	if len(task.spec.InitialClusterUuidList) == 0 {
+		for _, uuid := range task.ExternalInterfaces().ZeusConfig().PeClusterUuids() {
+			finalClusters = append(finalClusters, *uuid)
 		}
 
-		for _, file := range files {
-			for _, location := range file.LocationList {
-				if location.ClusterUuid == nil {
-					continue
-				}
-
-				clusterUuid := uuid4.ToUuid4(location.ClusterUuid)
-				fileUuids, ok := fileUuidsByCluster[*clusterUuid]
-				if ok {
-					fileUuids = append(fileUuids, location.FileUuid)
-					fileUuidsByCluster[*clusterUuid] = fileUuids
-
-				} else {
-					fileUuidsByCluster[*clusterUuid] = [][]byte{location.FileUuid}
-				}
-			}
+	} else {
+		remoteClusters := set.NewSet[uuid4.Uuid]()
+		initialClusters := set.NewSet[uuid4.Uuid]()
+		for _, uuid := range task.ExternalInterfaces().ZeusConfig().PeClusterUuids() {
+			remoteClusters.Add(*uuid)
+		}
+		for _, uuidBytes := range task.spec.InitialClusterUuidList {
+			initialClusters.Add(*uuid4.ToUuid4(uuidBytes))
 		}
 
-		argTemplate.GetSpec().RemoveFileUuidList = nil
-		for clusterUuid, fileUuids := range fileUuidsByCluster {
-			arg := proto.Clone(argTemplate).(*marinaIfc.CatalogItemUpdateArg)
-			arg.GetSpec().RemoveFileUuidList = fileUuids
-			argByCluster[clusterUuid] = arg
+		finalClusters = remoteClusters.Intersect(initialClusters).ToSlice()
+
+		if finalClusters == nil {
+			initialClustersStr := task.InternalInterfaces().UuidIfc().StringFromUuids(initialClusters.ToSlice())
+			errMsg := fmt.Sprintf("Invalid clusters uuids provided in initial_cluster_uuid_list %s", initialClustersStr)
+			return nil, marinaError.ErrInvalidArgument.SetCauseAndLog(errors.New(errMsg))
 		}
+
+		clustersStr := task.InternalInterfaces().UuidIfc().StringFromUuids(finalClusters)
+		log.Infof("[%s] Creating catalog item %s on remote endpoints: %s.", task.taskUuid.String(),
+			task.globalCatalogItemUuid.String(), clustersStr)
 	}
 
-	// Update the container uuid in arg for new source groups for each PE. Update the file uuid in local import for
-	// each source group for each PE.
-	fileUuidMap, err := task.getClusterFileUuidMap(argTemplate.GetSpec().AddSourceGroupList)
+	return finalClusters, nil
+}
+
+func (task *CatalogItemCreateTask) prepareFanoutArgs(targetClusters []uuid4.Uuid) (
+	map[uuid4.Uuid]*marinaIfc.CatalogItemCreateArg, error) {
+
+	// It's possible that the creation arg has either remote or local imports or both. For remote source we need
+	// to modify the arg sent to each PE to point to the correct container UUID. We don't need to so for local
+	// source where the source of the file is an ADSF file or another catalog file object, in such cases we expect
+	// the arg to already have correct container info.
+	containerByCluster := task.ExternalInterfaces().ZeusConfig().ClusterSSPContainerUuidMap()
+	fileUuidMap, err := task.getClusterFileUuidMap(task.spec.SourceGroupSpecList)
 	if err != nil {
 		return nil, err
 	}
 
-	containerByCluster := task.ExternalInterfaces().ZeusConfig().ClusterSSPContainerUuidMap()
-	if len(argTemplate.GetSpec().GetAddSourceGroupList()) > 0 {
-		for _, clusterUuid := range task.ExternalInterfaces().ZeusConfig().PeClusterUuids() {
-			clusterUuid := *uuid4.ToUuid4(clusterUuid.RawBytes())
-			var containerUuid *uuid4.Uuid
-			if container, ok := containerByCluster[clusterUuid]; ok && container.GetContainerUuid() != "" {
-				containerUuid, err = uuid4.StringToUuid4(container.GetContainerUuid())
-				if err != nil {
-					errMsg := fmt.Sprintf("Error encountered while creating container UUID: %v", err)
-					return nil, marinaError.ErrInternal.SetCauseAndLog(errors.New(errMsg))
-				}
+	argByCluster := make(map[uuid4.Uuid]*marinaIfc.CatalogItemCreateArg)
+	for _, clusterUuid := range targetClusters {
+		var containerUuid *uuid4.Uuid
+		if container, ok := containerByCluster[clusterUuid]; ok && container.GetContainerUuid() != "" {
+			containerUuid, err = uuid4.StringToUuid4(container.GetContainerUuid())
+			if err != nil {
+				errMsg := fmt.Sprintf("Error encountered while creating container UUID: %v", err)
+				return nil, marinaError.ErrInternal.SetCauseAndLog(errors.New(errMsg))
 			}
-
-			var newArg *marinaIfc.CatalogItemUpdateArg
-			if arg, ok := argByCluster[clusterUuid]; ok {
-				newArg = arg
-			} else {
-				newArg = proto.Clone(argTemplate).(*marinaIfc.CatalogItemUpdateArg)
-			}
-
-			for _, sourceGroupSpec := range newArg.GetSpec().AddSourceGroupList {
-				task.adjustSourceGroupSpec(sourceGroupSpec, fileUuidMap, containerUuid, clusterUuid)
-			}
-
-			argByCluster[clusterUuid] = newArg
 		}
+
+		arg := proto.Clone(task.arg).(*marinaIfc.CatalogItemCreateArg)
+		arg.GetSpec().GlobalCatalogItemUuid = task.globalCatalogItemUuid.RawBytes()
+		for _, spec := range arg.GetSpec().SourceGroupSpecList {
+			task.adjustSourceGroupSpec(spec, fileUuidMap, containerUuid, clusterUuid)
+		}
+		argByCluster[clusterUuid] = arg
 	}
 
 	task.purgeArgWithoutImport(argByCluster)
 	return argByCluster, nil
 }
 
-func (task *CatalogItemUpdateTask) purgeArgWithoutImport(argByCluster map[uuid4.Uuid]*marinaIfc.CatalogItemUpdateArg) {
+func (task *CatalogItemCreateTask) purgeArgWithoutImport(argByCluster map[uuid4.Uuid]*marinaIfc.CatalogItemCreateArg) {
 	for clusterUuid, arg := range argByCluster {
-		for _, sourceGroupSpec := range arg.GetSpec().AddSourceGroupList {
+		for _, sourceGroupSpec := range arg.GetSpec().SourceGroupSpecList {
 			for _, sourceSpec := range sourceGroupSpec.SourceSpecList {
 				if len(sourceSpec.GetImportSpec().LocalImportList) == 0 && len(
 					sourceSpec.GetImportSpec().RemoteImportList) == 0 {
@@ -405,7 +354,7 @@ func (task *CatalogItemUpdateTask) purgeArgWithoutImport(argByCluster map[uuid4.
 	}
 }
 
-func (task *CatalogItemUpdateTask) walTargetClusters(argByCluster map[uuid4.Uuid]*marinaIfc.CatalogItemUpdateArg) (
+func (task *CatalogItemCreateTask) walTargetClusters(argByCluster map[uuid4.Uuid]*marinaIfc.CatalogItemCreateArg) (
 	[]*uuid4.Uuid, error) {
 
 	wal := task.Wal()
@@ -419,14 +368,20 @@ func (task *CatalogItemUpdateTask) walTargetClusters(argByCluster map[uuid4.Uuid
 		}
 
 	} else {
+		// In case there is no source (remote or local) provided for catalog item creation, i.e. it's an empty catalog
+		// item then fanout the request to all registered PEs.
 		if len(argByCluster) == 0 {
-			for _, location := range task.catalogItem.GetLocationList() {
-				clusterUuids = append(clusterUuids, uuid4.ToUuid4(location.ClusterUuid))
-			}
+			clusterUuids = task.ExternalInterfaces().ZeusConfig().PeClusterUuids()
+
 		} else {
 			for clusterUuid := range argByCluster {
 				clusterUuids = append(clusterUuids, uuid4.ToUuid4(clusterUuid.RawBytes()))
 			}
+		}
+
+		if len(clusterUuids) == 0 {
+			errMsg := fmt.Sprintf("No registered clusters found which can be used to create catalog items")
+			return nil, marinaError.ErrNotFound.SetCauseAndLog(errors.New(errMsg))
 		}
 
 		for i := range clusterUuids {
@@ -443,8 +398,49 @@ func (task *CatalogItemUpdateTask) walTargetClusters(argByCluster map[uuid4.Uuid
 	return clusterUuids, nil
 }
 
-func (task *CatalogItemUpdateTask) fanoutCatalogRequests(remoteClusters []*uuid4.Uuid,
-	argByCluster map[uuid4.Uuid]*marinaIfc.CatalogItemUpdateArg) (map[uuid4.Uuid]*ergon.Task, error) {
+func (task *CatalogItemCreateTask) checkCatalogItemExists(ret *marinaIfc.CatalogItemCreateTaskRet) (bool, error) {
+	catalogItems, err := task.catalogItemIfc.GetCatalogItems(
+		context.TODO(), task.ExternalInterfaces().CPDBIfc(), task.InternalInterfaces().UuidIfc(),
+		[]*marinaIfc.CatalogItemId{{
+			GlobalCatalogItemUuid: task.globalCatalogItemUuid.RawBytes(),
+			Version:               proto.Int64(task.version),
+		}},
+		nil, false, "CatalogItemCreate:GetCatalogItems")
+	if err != nil {
+		return false, err
+	}
+
+	catalogItem, err := task.catalogItemIfc.GetCatalogItem(context.TODO(),
+		task.ExternalInterfaces().CPDBIfc(), task.catalogItemUuid)
+	if err != nil && err != marinaError.ErrNotFound {
+		return false, err
+	}
+
+	if len(catalogItems) > 0 {
+		if len(catalogItems) != 1 {
+			errMsg := fmt.Sprintf("More than 1 version of catalog item %s exists",
+				task.globalCatalogItemUuid.String())
+			return false, marinaError.ErrInternalError().SetCauseAndLog(errors.New(errMsg))
+		}
+
+		if catalogItem != nil &&
+			!task.globalCatalogItemUuid.Equals(uuid4.ToUuid4(catalogItems[0].GlobalCatalogItemUuid)) {
+
+			gcUuid := uuid4.ToUuid4(catalogItems[0].GlobalCatalogItemUuid)
+			errMsg := fmt.Sprintf("Catalog Item UUID mismatch between the args (%s) and IDF entry (%s",
+				task.globalCatalogItemUuid.String(), gcUuid.String())
+			return false, marinaError.ErrInternalError().SetCauseAndLog(errors.New(errMsg))
+		}
+	}
+
+	ret.CatalogItemUuid = task.catalogItemUuid.RawBytes()
+	ret.GlobalCatalogItemUuid = task.globalCatalogItemUuid.RawBytes()
+
+	return catalogItem != nil || len(catalogItems) != 0, nil
+}
+
+func (task *CatalogItemCreateTask) fanoutCreateRequests(remoteClusters []*uuid4.Uuid,
+	argByCluster map[uuid4.Uuid]*marinaIfc.CatalogItemCreateArg) (map[uuid4.Uuid]*ergon.Task, error) {
 
 	taskUuidByEndpoint := make(map[uuid4.Uuid]uuid4.Uuid)
 	wal := task.Wal()
@@ -486,20 +482,16 @@ func (task *CatalogItemUpdateTask) fanoutCatalogRequests(remoteClusters []*uuid4
 			taskUuidByEndpoint[*clusterUuid] = *remoteTaskUuid
 		}
 
-		fanoutArg, ok := argByCluster[*clusterUuid]
-		if !ok {
-			fanoutArg = proto.Clone(task.arg).(*marinaIfc.CatalogItemUpdateArg)
-		}
-
+		fanoutArg := argByCluster[*clusterUuid]
 		fanoutArg.TaskUuid = remoteTaskUuid.RawBytes()
 		fanoutArg.ParentTaskUuid = task.Proto().Uuid
-		fanoutRet := &marinaIfc.CatalogItemUpdateRet{}
+		fanoutRet := &marinaIfc.CatalogItemCreateRet{}
 		client := remoteCatalogService(task.ExternalInterfaces().ZkSession(), task.ExternalInterfaces().ZeusConfig(),
 			clusterUuid, nil, nil, nil)
-		err = client.SendMsg("CatalogItemUpdate", fanoutArg, fanoutRet)
+		err = client.SendMsg("CatalogItemCreate", fanoutArg, fanoutRet)
 		if err != nil {
 			endpointName := utils.GetUserVisibleId(task.ExternalInterfaces().ZeusConfig(), *clusterUuid)
-			log.Errorf("[%s] Failed to fanout CatalogItemUpdate request (task %s) to %s : %s", task.taskUuid.String(),
+			log.Errorf("[%s] Failed to fanout CatalogItemCreate request (task %s) to %s : %s", task.taskUuid.String(),
 				remoteTaskUuid.String(), endpointName, err)
 			failureClusters = append(failureClusters, clusterUuid)
 			task.errReasons = append(task.errReasons, fmt.Sprintf("%s : %v", endpointName, err))
@@ -524,7 +516,7 @@ func (task *CatalogItemUpdateTask) fanoutCatalogRequests(remoteClusters []*uuid4
 	task.fanoutSuccessClusters = successClusters
 
 	if len(successTaskToCluster) <= 0 {
-		errMsg := fmt.Sprintf("Failed to fanout CatalogItemUpdate request to all remote clusters")
+		errMsg := fmt.Sprintf("Failed to fanout CatalogItemCreate request to all remote clusters")
 		return nil, marinaError.ErrCatalogTaskForwardError.SetCauseAndLog(errors.New(errMsg))
 	}
 
@@ -535,7 +527,7 @@ func (task *CatalogItemUpdateTask) fanoutCatalogRequests(remoteClusters []*uuid4
 	return taskByCluster, nil
 }
 
-func (task *CatalogItemUpdateTask) pollTasks(successTaskToCluster map[uuid4.Uuid]uuid4.Uuid) (map[uuid4.Uuid]*ergon.Task, error) {
+func (task *CatalogItemCreateTask) pollTasks(successTaskToCluster map[uuid4.Uuid]uuid4.Uuid) (map[uuid4.Uuid]*ergon.Task, error) {
 	taskMap := make(map[string]bool)
 	for taskUuid := range successTaskToCluster {
 		taskMap[taskUuid.String()] = true
@@ -560,7 +552,7 @@ func (task *CatalogItemUpdateTask) pollTasks(successTaskToCluster map[uuid4.Uuid
 	return taskByCluster, nil
 }
 
-func (task *CatalogItemUpdateTask) processFanoutResult(taskByCluster map[uuid4.Uuid]*ergon.Task) ([]uuid4.Uuid, error) {
+func (task *CatalogItemCreateTask) processFanoutResult(taskByCluster map[uuid4.Uuid]*ergon.Task) ([]uuid4.Uuid, error) {
 	var abortedCLusters, successfulCLusters []uuid4.Uuid
 	for clusterUuid, taskObj := range taskByCluster {
 		var errMsg string
@@ -588,7 +580,7 @@ func (task *CatalogItemUpdateTask) processFanoutResult(taskByCluster map[uuid4.U
 		}
 
 		if len(abortedCLusters) == len(taskByCluster) {
-			task.AbortTask(nil, task, nil, nil)
+			task.AbortTask(context.TODO(), task, nil, nil)
 		}
 	}
 
@@ -600,7 +592,7 @@ func (task *CatalogItemUpdateTask) processFanoutResult(taskByCluster map[uuid4.U
 	return successfulCLusters, nil
 }
 
-func (task *CatalogItemUpdateTask) createFileRepoEntries() ([]*marinaIfc.SourceGroup, error) {
+func (task *CatalogItemCreateTask) createFileRepoEntries() ([]*marinaIfc.SourceGroup, error) {
 	isContentAddressable := false
 	wal := task.Wal()
 	catalogWal := wal.GetData().GetCatalogItem()
@@ -610,12 +602,12 @@ func (task *CatalogItemUpdateTask) createFileRepoEntries() ([]*marinaIfc.SourceG
 		isContentAddressable = sourceGroupSpecs[0].GetSourceSpecList()[0].GetImportSpec().GetIsRequestContentAddressable()
 	}
 
-	catalogItemByCluster, err := task.clusterCatalogItemMap()
+	catalogItemByCLuster, err := task.clusterCatalogItemMap()
 	if err != nil {
 		return nil, err
 	}
 
-	newSourceGroupSpecs := task.generateSourceGroupSpecs(sourceGroupSpecs, catalogItemByCluster, isContentAddressable)
+	newSourceGroupSpecs := task.generateSourceGroupSpecs(sourceGroupSpecs, catalogItemByCLuster, isContentAddressable)
 
 	var fileUuids []*uuid4.Uuid
 	for _, fileUuid := range catalogWal.FileUuidList {
@@ -779,7 +771,7 @@ func (task *CatalogItemUpdateTask) createFileRepoEntries() ([]*marinaIfc.SourceG
 	return sourceGroups, nil
 }
 
-func (task *CatalogItemUpdateTask) clusterCatalogItemMap() (map[uuid4.Uuid]*marinaIfc.CatalogItemInfo, error) {
+func (task *CatalogItemCreateTask) clusterCatalogItemMap() (map[uuid4.Uuid]*marinaIfc.CatalogItemInfo, error) {
 	arg := &marinaIfc.CatalogItemGetArg{
 		CatalogItemIdList: []*marinaIfc.CatalogItemId{{GlobalCatalogItemUuid: task.globalCatalogItemUuid.RawBytes()}},
 		Latest:            proto.Bool(true),
@@ -808,7 +800,7 @@ func (task *CatalogItemUpdateTask) clusterCatalogItemMap() (map[uuid4.Uuid]*mari
 	return catalogItemByCluster, nil
 }
 
-func (task *CatalogItemUpdateTask) cleanupCatalogFanout(finalClusters []uuid4.Uuid, version int64) error {
+func (task *CatalogItemCreateTask) cleanupCatalogFanout(finalClusters []uuid4.Uuid) error {
 	log.Infof("[%s] Clean-up of %s in progress", task.taskUuid.String(), task.globalCatalogItemUuid.String())
 	wal := task.Wal()
 	wal.GetData().TaskList = nil
@@ -824,7 +816,7 @@ func (task *CatalogItemUpdateTask) cleanupCatalogFanout(finalClusters []uuid4.Uu
 	arg := &marinaIfc.CatalogItemDeleteArg{
 		CatalogItemId: &marinaIfc.CatalogItemId{
 			GlobalCatalogItemUuid: task.globalCatalogItemUuid.RawBytes(),
-			Version:               proto.Int64(version),
+			Version:               proto.Int64(task.version),
 		},
 	}
 
@@ -834,7 +826,7 @@ func (task *CatalogItemUpdateTask) cleanupCatalogFanout(finalClusters []uuid4.Uu
 		clusterUuids = append(clusterUuids, &clusterUuid)
 	}
 
-	taskByCluster, err := task.fanoutCatalogDeleteRequests(clusterUuids, argByCluster)
+	taskByCluster, err := task.fanoutDeleteRequests(clusterUuids, argByCluster)
 	if err != nil {
 		return err
 	}
@@ -855,7 +847,7 @@ func (task *CatalogItemUpdateTask) cleanupCatalogFanout(finalClusters []uuid4.Uu
 	return nil
 }
 
-func (task *CatalogItemUpdateTask) fanoutCatalogDeleteRequests(remoteClusters []*uuid4.Uuid,
+func (task *CatalogItemCreateTask) fanoutDeleteRequests(remoteClusters []*uuid4.Uuid,
 	argByCluster map[uuid4.Uuid]*marinaIfc.CatalogItemDeleteArg) (map[uuid4.Uuid]*ergon.Task, error) {
 
 	taskUuidByEndpoint := make(map[uuid4.Uuid]uuid4.Uuid)
@@ -943,9 +935,8 @@ func (task *CatalogItemUpdateTask) fanoutCatalogDeleteRequests(remoteClusters []
 	return taskByCluster, nil
 }
 
-func (task *CatalogItemUpdateTask) handleCleanup(finalClusters []uuid4.Uuid) error {
-	version := task.Wal().GetData().GetCatalogItem().GetVersion() + 1
-	err := task.cleanupCatalogFanout(finalClusters, version)
+func (task *CatalogItemCreateTask) handleCleanup(finalClusters []uuid4.Uuid) error {
+	err := task.cleanupCatalogFanout(finalClusters)
 	if err != nil {
 		return err
 	}

@@ -6,9 +6,10 @@
 * The implementation for CatalogItem Base Task
  */
 
-package tasks
+package catalog_item
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
@@ -18,8 +19,10 @@ import (
 	"github.com/nutanix-core/acs-aos-go/ergon"
 	"github.com/nutanix-core/acs-aos-go/insights/insights_interface"
 	"github.com/nutanix-core/acs-aos-go/nutanix/util-go/uuid4"
+
 	"github.com/nutanix-core/content-management-marina/db"
 	marinaError "github.com/nutanix-core/content-management-marina/errors"
+	"github.com/nutanix-core/content-management-marina/grpc/catalog/file_repo"
 	marinaIfc "github.com/nutanix-core/content-management-marina/protos/marina"
 	"github.com/nutanix-core/content-management-marina/task/base"
 	catalogClient "github.com/nutanix-core/content-management-marina/util/catalog/client"
@@ -31,11 +34,16 @@ type CatalogItemBaseTask struct {
 	*base.MarinaBaseTask
 	globalCatalogItemUuid *uuid4.Uuid
 	taskUuid              *uuid4.Uuid
+	catalogItemIfc        CatalogItemInterface
+	// TODO: Remove FileRepoInterface once File Entity is added.
+	fileRepoIfc file_repo.FileRepoInterface
 }
 
 func NewCatalogItemBaseTask(marinaBaseTask *base.MarinaBaseTask) *CatalogItemBaseTask {
 	return &CatalogItemBaseTask{
 		MarinaBaseTask: marinaBaseTask,
+		catalogItemIfc: newCatalogItemImpl(),
+		fileRepoIfc:    file_repo.NewFileRepoImpl(),
 	}
 }
 
@@ -65,7 +73,7 @@ func (task *CatalogItemBaseTask) getClusterFileUuidMap(sourceGroupSpecs []*marin
 
 					fileUuid := uuid4.ToUuid4(localImport.GetFileUuid())
 					clusterFileUuidMap[*fileUuid] = make(map[uuid4.Uuid]uuid4.Uuid)
-					file, err := task.InternalInterfaces().FileRepoIfc().GetFile(
+					file, err := task.fileRepoIfc.GetFile(
 						task.ExternalInterfaces().CPDBIfc(), fileUuid)
 					if err != nil {
 						return nil, err
@@ -212,7 +220,7 @@ func (task *CatalogItemBaseTask) cleanupFileRepoEntries() error {
 		fileUuids = append(fileUuids, uuid4.ToUuid4(fileUuid).String())
 	}
 
-	err := task.ExternalInterfaces().IdfIfc().DeleteEntities(nil, task.ExternalInterfaces().CPDBIfc(),
+	err := task.ExternalInterfaces().IdfIfc().DeleteEntities(context.TODO(), task.ExternalInterfaces().CPDBIfc(),
 		db.File, fileUuids, true)
 	if err == insights_interface.ErrNotFound {
 		log.Errorf("[%s] Provided file(s) do not exist in IDF: %v", task.taskUuid.String(), err)

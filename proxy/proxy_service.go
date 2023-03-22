@@ -210,8 +210,7 @@ func asyncRpcHandler(rpc *net.ProtobufRpc, request reflect.Value,
 	}
 	// Create a new Marina proxy task. Start() will save the task to Ergon.
 	proxyTask := NewProxyTask(base.NewMarinaBaseTask(taskProto))
-	var operationType string
-	operationType = rpcName
+	var operationType = rpcName
 	err := proxyTask.Start(proxyTask, proto.String(marinaUtil.ServiceName), &operationType)
 	if err != nil {
 		return marinaError.ErrInternal.SetCause(

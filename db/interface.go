@@ -11,9 +11,12 @@ package db
 import (
 	"context"
 
+	log "k8s.io/klog/v2"
+
 	"github.com/nutanix-core/acs-aos-go/insights/insights_interface"
 	cpdb "github.com/nutanix-core/acs-aos-go/nusights/util/db"
 	"github.com/nutanix-core/acs-aos-go/nutanix/util-go/misc"
+
 	utils "github.com/nutanix-core/content-management-marina/util"
 )
 
@@ -27,7 +30,10 @@ func newIdfClientWithRetry() *IdfClient {
 		utils.HostAddr,
 		uint16(*insights_interface.InsightsPort))
 
-	insightsSvc.SetRequestTimeout(utils.IdfRpcTimeOut)
+	err := insightsSvc.SetRequestTimeout(utils.IdfRpcTimeOut)
+	if err != nil {
+		log.Fatalf("Error occurred while setting IdfRpcTimeOut : %v", err)
+	}
 	idfClient := IdfClient{IdfSvc: insightsSvc}
 	return &idfClient
 }

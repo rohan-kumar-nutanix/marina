@@ -12,6 +12,7 @@ package file_repo
 import (
 	"errors"
 	"fmt"
+	"sync"
 
 	"github.com/golang/protobuf/proto"
 	log "k8s.io/klog/v2"
@@ -19,13 +20,24 @@ import (
 	"github.com/nutanix-core/acs-aos-go/insights/insights_interface"
 	cpdb "github.com/nutanix-core/acs-aos-go/nusights/util/db"
 	"github.com/nutanix-core/acs-aos-go/nutanix/util-go/uuid4"
+
 	"github.com/nutanix-core/content-management-marina/db"
 	marinaError "github.com/nutanix-core/content-management-marina/errors"
 	marinaIfc "github.com/nutanix-core/content-management-marina/protos/marina"
 	utils "github.com/nutanix-core/content-management-marina/util"
 )
 
+var fileRepoInterface FileRepoInterface = nil
+var once sync.Once
+
 type FileRepoImpl struct {
+}
+
+func NewFileRepoImpl() FileRepoInterface {
+	once.Do(func() {
+		fileRepoInterface = new(FileRepoImpl)
+	})
+	return fileRepoInterface
 }
 
 func (*FileRepoImpl) GetFile(cpdbIfc cpdb.CPDBClientInterface, fileUuid *uuid4.Uuid) (*marinaIfc.FileInfo, error) {

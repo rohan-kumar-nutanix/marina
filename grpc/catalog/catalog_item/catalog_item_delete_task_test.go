@@ -4,7 +4,7 @@
 * Author: rishabh.gupta@nutanix.com
  */
 
-package tasks
+package catalog_item
 
 import (
 	"errors"
@@ -19,6 +19,7 @@ import (
 	"github.com/nutanix-core/acs-aos-go/insights/insights_interface"
 	"github.com/nutanix-core/acs-aos-go/nutanix/util-go/uuid4"
 	"github.com/nutanix-core/acs-aos-go/zeus"
+
 	marinaError "github.com/nutanix-core/content-management-marina/errors"
 	mockBase "github.com/nutanix-core/content-management-marina/mocks/task/base"
 	mockClient "github.com/nutanix-core/content-management-marina/mocks/util/catalog/client"

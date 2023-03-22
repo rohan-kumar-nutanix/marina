@@ -15,6 +15,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sync"
 
 	set "github.com/deckarep/golang-set/v2"
 	"github.com/golang/protobuf/proto"
@@ -24,6 +25,7 @@ import (
 	. "github.com/nutanix-core/acs-aos-go/insights/insights_interface/query"
 	cpdb "github.com/nutanix-core/acs-aos-go/nusights/util/db"
 	"github.com/nutanix-core/acs-aos-go/nutanix/util-go/uuid4"
+
 	"github.com/nutanix-core/content-management-marina/db"
 	marinaError "github.com/nutanix-core/content-management-marina/errors"
 	marinaIfc "github.com/nutanix-core/content-management-marina/protos/marina"
@@ -36,11 +38,22 @@ const (
 	CatalogItemVersion    = "version"
 )
 
+var once sync.Once
 var catalogItemAttributes = []interface{}{
 	insights_interface.COMPRESSED_PROTOBUF_ATTR,
 }
 
+var catalogItemImpl CatalogItemInterface
+
 type CatalogItemImpl struct {
+}
+
+// newCatalogItemImpl creates and returns Singleton for CatalogItemImpl which implements CatalogItemInterface
+func newCatalogItemImpl() CatalogItemInterface {
+	once.Do(func() {
+		catalogItemImpl = &CatalogItemImpl{}
+	})
+	return catalogItemImpl
 }
 
 // GetCatalogItemsChan pushes catalog items and error object to respective channels.

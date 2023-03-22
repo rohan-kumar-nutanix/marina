@@ -4,7 +4,7 @@
 * Author: rishabh.gupta@nutanix.com
  */
 
-package tasks
+package catalog_item
 
 import (
 	"testing"
@@ -16,6 +16,7 @@ import (
 	mockSerialExecutor "github.com/nutanix-core/acs-aos-go/nutanix/util-go/misc/serial_executor/mocks"
 	"github.com/nutanix-core/acs-aos-go/nutanix/util-go/uuid4"
 	"github.com/nutanix-core/acs-aos-go/zeus"
+
 	"github.com/nutanix-core/content-management-marina/interface/external"
 	internal "github.com/nutanix-core/content-management-marina/interface/local"
 	mockAuthz "github.com/nutanix-core/content-management-marina/mocks/authz"
@@ -50,12 +51,15 @@ func mockExternalInterfaces() external.MarinaExternalInterfaces {
 	return external.GetSingletonServiceWithParams(cpdbIfc, ergonIfc, idfIfc, serialExecutorIfc, configIfc, zkSession)
 }
 func mockInternalInterfaces() internal.MarinaInternalInterfaces {
-	return internal.GetSingletonServiceWithParams(authzIfc, catalogItemIfc, fileRepoIfc, metadataIfc, protoIfc, uuidIfc)
+	return internal.GetSingletonServiceWithParams(authzIfc, metadataIfc, protoIfc, uuidIfc)
 }
 
 func TestNewCatalogItemBaseTask(t *testing.T) {
 	baseTask := &base.MarinaBaseTask{}
 	catalogItemBaseTask := NewCatalogItemBaseTask(baseTask)
+	catalogItemBaseTask.catalogItemIfc = catalogItemIfc
 	assert.NotNil(t, catalogItemBaseTask)
+	assert.NotNil(t, catalogItemBaseTask.catalogItemIfc)
 	assert.Equal(t, catalogItemBaseTask.MarinaBaseTask, baseTask)
+
 }
