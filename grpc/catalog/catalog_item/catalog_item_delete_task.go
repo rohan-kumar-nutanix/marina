@@ -113,7 +113,7 @@ func (task *CatalogItemDeleteTask) Run() error {
 	}
 
 	if len(clusterUuids) > 0 {
-		err := task.fanoutCatalogRequests(clusterUuids)
+		err := task.fanoutDeleteRequests(clusterUuids)
 		if err != nil {
 			return err
 		}
@@ -201,7 +201,7 @@ func (task *CatalogItemDeleteTask) deleteCatalogItem(queryName string) error {
 	return nil
 }
 
-func (task *CatalogItemDeleteTask) fanoutCatalogRequests(remoteClusters []*uuid4.Uuid) error {
+func (task *CatalogItemDeleteTask) fanoutDeleteRequests(remoteClusters []*uuid4.Uuid) error {
 	taskUuidByEndpoint := make(map[uuid4.Uuid]uuid4.Uuid)
 	wal := task.Wal()
 	tasks := wal.GetData().GetTaskList()

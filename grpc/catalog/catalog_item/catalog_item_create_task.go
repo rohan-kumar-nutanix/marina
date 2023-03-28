@@ -320,6 +320,7 @@ func (task *CatalogItemCreateTask) prepareFanoutArgs(targetClusters []uuid4.Uuid
 
 	argByCluster := make(map[uuid4.Uuid]*marinaIfc.CatalogItemCreateArg)
 	for _, clusterUuid := range targetClusters {
+		clusterUuid := clusterUuid
 		var containerUuid *uuid4.Uuid
 		if container, ok := containerByCluster[clusterUuid]; ok && container.GetContainerUuid() != "" {
 			containerUuid, err = uuid4.StringToUuid4(container.GetContainerUuid())
@@ -343,6 +344,7 @@ func (task *CatalogItemCreateTask) prepareFanoutArgs(targetClusters []uuid4.Uuid
 
 func (task *CatalogItemCreateTask) purgeArgWithoutImport(argByCluster map[uuid4.Uuid]*marinaIfc.CatalogItemCreateArg) {
 	for clusterUuid, arg := range argByCluster {
+		clusterUuid := clusterUuid
 		for _, sourceGroupSpec := range arg.GetSpec().SourceGroupSpecList {
 			for _, sourceSpec := range sourceGroupSpec.SourceSpecList {
 				if len(sourceSpec.GetImportSpec().LocalImportList) == 0 && len(
@@ -375,6 +377,7 @@ func (task *CatalogItemCreateTask) walTargetClusters(argByCluster map[uuid4.Uuid
 
 		} else {
 			for clusterUuid := range argByCluster {
+				clusterUuid := clusterUuid
 				clusterUuids = append(clusterUuids, uuid4.ToUuid4(clusterUuid.RawBytes()))
 			}
 		}
@@ -530,6 +533,7 @@ func (task *CatalogItemCreateTask) fanoutCreateRequests(remoteClusters []*uuid4.
 func (task *CatalogItemCreateTask) pollTasks(successTaskToCluster map[uuid4.Uuid]uuid4.Uuid) (map[uuid4.Uuid]*ergon.Task, error) {
 	taskMap := make(map[string]bool)
 	for taskUuid := range successTaskToCluster {
+		taskUuid := taskUuid
 		taskMap[taskUuid.String()] = true
 	}
 
@@ -553,8 +557,9 @@ func (task *CatalogItemCreateTask) pollTasks(successTaskToCluster map[uuid4.Uuid
 }
 
 func (task *CatalogItemCreateTask) processFanoutResult(taskByCluster map[uuid4.Uuid]*ergon.Task) ([]uuid4.Uuid, error) {
-	var abortedCLusters, successfulCLusters []uuid4.Uuid
+	var abortedClusters, successfulClusters []uuid4.Uuid
 	for clusterUuid, taskObj := range taskByCluster {
+		clusterUuid := clusterUuid
 		var errMsg string
 		endpointName := utils.GetUserVisibleId(task.ExternalInterfaces().ZeusConfig(), clusterUuid)
 		taskUuid := uuid4.ToUuid4(taskObj.Uuid)
@@ -564,14 +569,14 @@ func (task *CatalogItemCreateTask) processFanoutResult(taskByCluster map[uuid4.U
 
 		} else if taskObj.GetStatus() == ergon.Task_kAborted {
 			log.Infof("[%s] Aborted task %s on %s", task.taskUuid.String(), taskUuid.String(), endpointName)
-			abortedCLusters = append(abortedCLusters, clusterUuid)
+			abortedClusters = append(abortedClusters, clusterUuid)
 
 		} else if taskObj.GetStatus() != ergon.Task_kSucceeded {
 			errMsg = fmt.Sprintf("Polled task %s (%s) failed: error code = %d, detail = %s",
 				taskUuid.String(), endpointName, response.GetErrorCode(), response.GetErrorDetail())
 
 		} else {
-			successfulCLusters = append(successfulCLusters, clusterUuid)
+			successfulClusters = append(successfulClusters, clusterUuid)
 		}
 
 		if errMsg != "" {
@@ -579,17 +584,17 @@ func (task *CatalogItemCreateTask) processFanoutResult(taskByCluster map[uuid4.U
 			task.errReasons = append(task.errReasons, errMsg)
 		}
 
-		if len(abortedCLusters) == len(taskByCluster) {
+		if len(abortedClusters) == len(taskByCluster) {
 			task.AbortTask(context.TODO(), task, nil, nil)
 		}
 	}
 
-	if len(successfulCLusters) == 0 {
+	if len(successfulClusters) == 0 {
 		errMsg := fmt.Sprintf("Request failed on all registered AHV clusters")
 		return nil, marinaError.ErrCatalogTaskForwardError.SetCauseAndLog(errors.New(errMsg))
 	}
 
-	return successfulCLusters, nil
+	return successfulClusters, nil
 }
 
 func (task *CatalogItemCreateTask) createFileRepoEntries() ([]*marinaIfc.SourceGroup, error) {
@@ -708,6 +713,7 @@ func (task *CatalogItemCreateTask) createFileRepoEntries() ([]*marinaIfc.SourceG
 	}
 
 	for fileUuid, importSpec := range fileImportSpecByFile {
+		fileUuid := fileUuid
 		if startedImportFileUuids.Contains(fileUuid) {
 			continue
 		}
@@ -822,6 +828,7 @@ func (task *CatalogItemCreateTask) cleanupCatalogFanout(finalClusters []uuid4.Uu
 
 	var clusterUuids []*uuid4.Uuid
 	for _, clusterUuid := range finalClusters {
+		clusterUuid := clusterUuid
 		argByCluster[clusterUuid] = arg
 		clusterUuids = append(clusterUuids, &clusterUuid)
 	}
@@ -833,6 +840,7 @@ func (task *CatalogItemCreateTask) cleanupCatalogFanout(finalClusters []uuid4.Uu
 
 	var failedClusters string
 	for clusterUuid, taskObj := range taskByCluster {
+		clusterUuid := clusterUuid
 		if taskObj == nil || *taskObj.Status != ergon.Task_kSucceeded {
 			endpointName := utils.GetUserVisibleId(task.ExternalInterfaces().ZeusConfig(), clusterUuid)
 			failedClusters += endpointName + ", "

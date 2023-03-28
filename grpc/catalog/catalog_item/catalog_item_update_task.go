@@ -323,7 +323,7 @@ func (task *CatalogItemUpdateTask) prepareFanoutArgs() (map[uuid4.Uuid]*marinaIf
 	argByCluster := make(map[uuid4.Uuid]*marinaIfc.CatalogItemUpdateArg)
 	if len(task.spec.RemoveFileUuidList) > 0 {
 		fileUuids := task.InternalInterfaces().UuidIfc().UuidBytesToUuidPointers(task.spec.GetRemoveFileUuidList())
-		files, err := task.fileRepoIfc.GetFiles(task.ExternalInterfaces().CPDBIfc(),
+		files, err := task.fileRepoIfc.GetFiles(context.TODO(), task.ExternalInterfaces().CPDBIfc(),
 			task.InternalInterfaces().UuidIfc(), fileUuids)
 		if err != nil {
 			return nil, err
@@ -920,18 +920,7 @@ func (task *CatalogItemUpdateTask) fanoutCatalogDeleteRequests(remoteClusters []
 	}
 
 	// Finding the clusters where the fanout was successful
-	failedClusters := set.NewSet[uuid4.Uuid]()
-	for _, clusterUuid := range failureClusters {
-		failedClusters.Add(*clusterUuid)
-	}
-
-	var successClusters []*uuid4.Uuid
-	for _, clusterUuid := range remoteClusters {
-		if !failedClusters.Contains(*clusterUuid) {
-			successClusters = append(successClusters, clusterUuid)
-		}
-	}
-	task.fanoutSuccessClusters = successClusters
+	task.fanoutSuccessClusters = task.InternalInterfaces().UuidIfc().Difference(remoteClusters, failureClusters)
 
 	if len(successTaskToCluster) <= 0 {
 		errMsg := fmt.Sprintf("Failed to fanout CatalogItemDelete request to all remote clusters")

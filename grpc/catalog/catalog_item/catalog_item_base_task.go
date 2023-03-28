@@ -23,6 +23,7 @@ import (
 	"github.com/nutanix-core/content-management-marina/db"
 	marinaError "github.com/nutanix-core/content-management-marina/errors"
 	"github.com/nutanix-core/content-management-marina/grpc/catalog/file_repo"
+	"github.com/nutanix-core/content-management-marina/grpc/catalog/image"
 	marinaIfc "github.com/nutanix-core/content-management-marina/protos/marina"
 	"github.com/nutanix-core/content-management-marina/task/base"
 	catalogClient "github.com/nutanix-core/content-management-marina/util/catalog/client"
@@ -35,8 +36,9 @@ type CatalogItemBaseTask struct {
 	globalCatalogItemUuid *uuid4.Uuid
 	taskUuid              *uuid4.Uuid
 	catalogItemIfc        CatalogItemInterface
-	// TODO: Remove FileRepoInterface once File Entity is added.
+	// TODO: Remove fileRepoIfc & imageIfc once File Entity is added.
 	fileRepoIfc file_repo.FileRepoInterface
+	imageIfc    image.ImageInterface
 }
 
 func NewCatalogItemBaseTask(marinaBaseTask *base.MarinaBaseTask) *CatalogItemBaseTask {
@@ -44,6 +46,7 @@ func NewCatalogItemBaseTask(marinaBaseTask *base.MarinaBaseTask) *CatalogItemBas
 		MarinaBaseTask: marinaBaseTask,
 		catalogItemIfc: newCatalogItemImpl(),
 		fileRepoIfc:    file_repo.NewFileRepoImpl(),
+		imageIfc:       image.NewImageInterface(),
 	}
 }
 
@@ -73,8 +76,7 @@ func (task *CatalogItemBaseTask) getClusterFileUuidMap(sourceGroupSpecs []*marin
 
 					fileUuid := uuid4.ToUuid4(localImport.GetFileUuid())
 					clusterFileUuidMap[*fileUuid] = make(map[uuid4.Uuid]uuid4.Uuid)
-					file, err := task.fileRepoIfc.GetFile(
-						task.ExternalInterfaces().CPDBIfc(), fileUuid)
+					file, err := task.fileRepoIfc.GetFile(context.TODO(), task.ExternalInterfaces().CPDBIfc(), fileUuid)
 					if err != nil {
 						return nil, err
 					}

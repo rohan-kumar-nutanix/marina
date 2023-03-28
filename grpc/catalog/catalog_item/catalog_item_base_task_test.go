@@ -23,6 +23,7 @@ import (
 	mockDb "github.com/nutanix-core/content-management-marina/mocks/db"
 	mockCatalogItem "github.com/nutanix-core/content-management-marina/mocks/grpc/catalog/catalog_item"
 	mockFile "github.com/nutanix-core/content-management-marina/mocks/grpc/catalog/file_repo"
+	mockImage "github.com/nutanix-core/content-management-marina/mocks/grpc/catalog/image"
 	mockMetadata "github.com/nutanix-core/content-management-marina/mocks/metadata"
 	mockUtils "github.com/nutanix-core/content-management-marina/mocks/util"
 	mockZeus "github.com/nutanix-core/content-management-marina/mocks/zeus"
@@ -36,6 +37,7 @@ var (
 	ergonIfc          = new(mockErgon.Ergon)
 	fileRepoIfc       = new(mockFile.FileRepoInterface)
 	idfIfc            = new(mockDb.IdfClientInterface)
+	imageIfc          = new(mockImage.ImageInterface)
 	protoIfc          = new(mockUtils.ProtoUtilInterface)
 	metadataIfc       = new(mockMetadata.EntityMetadataInterface)
 	serialExecutorIfc = new(mockSerialExecutor.SerialExecutorIfc)

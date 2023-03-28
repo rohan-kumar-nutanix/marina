@@ -28,10 +28,14 @@ type CatalogItemInterface interface {
 		latest bool, queryName string) ([]*marinaIfc.CatalogItemInfo, error)
 	GetCatalogItem(ctx context.Context, cpdbIfc cpdb.CPDBClientInterface, catalogItemUuid *uuid4.Uuid) (
 		*marinaIfc.CatalogItemInfo, error)
+	GetAllCatalogItems(ctx context.Context, cpdbIfc cpdb.CPDBClientInterface) ([]*marinaIfc.CatalogItemInfo, error)
 	CreateCatalogItemFromCreateSpec(ctx context.Context, cpdbIfc cpdb.CPDBClientInterface,
 		protoIfc utils.ProtoUtilInterface, catalogItemUuid *uuid4.Uuid, spec *marinaIfc.CatalogItemCreateSpec,
 		clusters []uuid4.Uuid, sourceGroups []*marinaIfc.SourceGroup) error
 	CreateCatalogItemFromUpdateSpec(ctx context.Context, cpdbIfc cpdb.CPDBClientInterface,
 		protoIfc utils.ProtoUtilInterface, catalogItem *marinaIfc.CatalogItemInfo, catalogItemUuid *uuid4.Uuid, spec *marinaIfc.CatalogItemUpdateSpec,
+		clusters []uuid4.Uuid, sourceGroupList []*marinaIfc.SourceGroup) error
+	CreateCatalogItemFromProto(ctx context.Context, cpdbIfc cpdb.CPDBClientInterface,
+		protoIfc utils.ProtoUtilInterface, catalogItemUuid *uuid4.Uuid, catalogItemInfo *marinaIfc.CatalogItemInfo,
 		clusters []uuid4.Uuid, sourceGroups []*marinaIfc.SourceGroup) error
 }

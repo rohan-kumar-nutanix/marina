@@ -22,4 +22,5 @@ type ConfigCache interface {
 	ClusterExternalIps(peUuid *uuid4.Uuid) []string
 	PeClusterName(peUuid *uuid4.Uuid) *string
 	ClusterSSPContainerUuidMap() map[uuid4.Uuid]*zeusConfig.ConfigurationProto_Container
+	CatalogPeRegistered(peUuid *uuid4.Uuid) *bool
 }

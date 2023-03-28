@@ -32,9 +32,9 @@ var (
 
 // Configuration proto cache for PE
 type peConfigCache struct {
-	clusterExternalIps map[uuid4.Uuid][]string
-	clusterNames       map[uuid4.Uuid]string
-	sspContainers      map[uuid4.Uuid]*zeusConfig.ConfigurationProto_Container
+	clusterExternalIps  []string
+	clusterName         string
+	catalogPeRegistered *bool
 }
 
 // Configuration proto cache for PC
@@ -44,12 +44,13 @@ type configCache struct {
 	configProto *zeusConfig.ConfigurationProto
 
 	// Fields of interest to cache.
-	clusterUUID  *uuid4.Uuid
-	clusterName  string
-	localNodeIp  string
-	peConfig     peConfigCache
-	zkSession    *zeus.ZookeeperSession
-	peConfigOnce sync.Once
+	clusterUUID   *uuid4.Uuid
+	clusterName   string
+	localNodeIp   string
+	configsByPe   map[uuid4.Uuid]peConfigCache
+	sspContainers map[uuid4.Uuid]*zeusConfig.ConfigurationProto_Container
+	zkSession     *zeus.ZookeeperSession
+	peConfigOnce  sync.Once
 }
 
 type ZookeeperConnInterface interface {
@@ -124,9 +125,8 @@ func (config *configCache) updatePeConfig(conn ZookeeperConnInterface, clusterUu
 	config.Lock()
 	defer config.Unlock()
 
-	clusterExternalIps := make(map[uuid4.Uuid][]string)
-	clusterNames := make(map[uuid4.Uuid]string)
 	sspContainers := make(map[uuid4.Uuid]*zeusConfig.ConfigurationProto_Container)
+	peConfigs := make(map[uuid4.Uuid]peConfigCache)
 
 	for _, clusterUuidStr := range clusterUuids {
 		clusterUuid, err := uuid4.StringToUuid4(clusterUuidStr)
@@ -154,8 +154,7 @@ func (config *configCache) updatePeConfig(conn ZookeeperConnInterface, clusterUu
 				externalIps = append(externalIps, node.GetServiceVmExternalIp())
 			}
 		}
-		clusterExternalIps[*clusterUuid] = externalIps
-		clusterNames[*clusterUuid] = configProto.GetClusterName()
+
 		if configProto.DefaultSspContainerId != nil {
 			for _, container := range configProto.GetContainerList() {
 				if container.ContainerId != nil && *container.ContainerId == *configProto.DefaultSspContainerId {
@@ -163,10 +162,17 @@ func (config *configCache) updatePeConfig(conn ZookeeperConnInterface, clusterUu
 				}
 			}
 		}
+
+		peConfig := peConfigCache{
+			clusterExternalIps:  externalIps,
+			clusterName:         configProto.GetClusterName(),
+			catalogPeRegistered: configProto.CatalogPeRegistered,
+		}
+		peConfigs[*clusterUuid] = peConfig
 	}
-	config.peConfig.clusterExternalIps = clusterExternalIps
-	config.peConfig.clusterNames = clusterNames
-	config.peConfig.sspContainers = sspContainers
+
+	config.sspContainers = sspContainers
+	config.configsByPe = peConfigs
 }
 
 func (config *configCache) initPeConfigWatcher(conn ZookeeperConnInterface, firstPublishWg *sync.WaitGroup) {
@@ -199,6 +205,8 @@ func (config *configCache) maybeInitPeConfigWatcher() {
 	})
 }
 
+// PC specific methods
+
 // ClusterName returns the name of the cluster.
 func (config *configCache) ClusterName() string {
 	config.RLock()
@@ -228,13 +236,15 @@ func (config *configCache) ContainerName(containerId int64) (string, error) {
 	return name, err
 }
 
+// PE specific methods
+
 // PeClusterUuids returns the UUIDs of the PE cluster registered to PC.
 func (config *configCache) PeClusterUuids() []*uuid4.Uuid {
 	config.maybeInitPeConfigWatcher()
 	config.RLock()
 	defer config.RUnlock()
 	pes := make([]*uuid4.Uuid, 0)
-	for peUuid := range config.peConfig.clusterNames {
+	for peUuid := range config.configsByPe {
 		pes = append(pes, uuid4.ToUuid4(peUuid.RawBytes()))
 	}
 	return pes
@@ -245,8 +255,8 @@ func (config *configCache) ClusterExternalIps(peUuid *uuid4.Uuid) []string {
 	config.maybeInitPeConfigWatcher()
 	config.RLock()
 	defer config.RUnlock()
-	if ips, ok := config.peConfig.clusterExternalIps[*peUuid]; ok {
-		return ips
+	if peConfig, ok := config.configsByPe[*peUuid]; ok {
+		return peConfig.clusterExternalIps
 	}
 	return nil
 }
@@ -256,8 +266,8 @@ func (config *configCache) PeClusterName(peUuid *uuid4.Uuid) *string {
 	config.maybeInitPeConfigWatcher()
 	config.RLock()
 	defer config.RUnlock()
-	if name, ok := config.peConfig.clusterNames[*peUuid]; ok {
-		return &name
+	if peConfig, ok := config.configsByPe[*peUuid]; ok {
+		return &peConfig.clusterName
 	}
 	return nil
 }
@@ -267,5 +277,16 @@ func (config *configCache) ClusterSSPContainerUuidMap() map[uuid4.Uuid]*zeusConf
 	config.maybeInitPeConfigWatcher()
 	config.RLock()
 	defer config.RUnlock()
-	return config.peConfig.sspContainers
+	return config.sspContainers
+}
+
+// CatalogPeRegistered returns catalogPeRegistered property of the PE from config cache.
+func (config *configCache) CatalogPeRegistered(peUuid *uuid4.Uuid) *bool {
+	config.maybeInitPeConfigWatcher()
+	config.RLock()
+	defer config.RUnlock()
+	if peConfig, ok := config.configsByPe[*peUuid]; ok {
+		return peConfig.catalogPeRegistered
+	}
+	return nil
 }

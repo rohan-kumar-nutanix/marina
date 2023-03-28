@@ -31,6 +31,7 @@ type EntityType int64
 const (
 	CatalogItem EntityType = iota
 	File
+	Image
 )
 
 func (entityType EntityType) ToString() string {
@@ -39,6 +40,8 @@ func (entityType EntityType) ToString() string {
 		return "catalog_item_info"
 	case File:
 		return "file_info"
+	case Image:
+		return "image_info"
 	}
 	return "unknown"
 }

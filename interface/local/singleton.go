@@ -49,8 +49,7 @@ func InitSingletonService() {
 }
 
 // GetSingletonServiceWithParams - Initialize a singleton Marina service with params. Should only be used in UTs
-func GetSingletonServiceWithParams(authzIfc authz.AuthzInterface,
-	metadataIfc metadata.EntityMetadataInterface,
+func GetSingletonServiceWithParams(authzIfc authz.AuthzInterface, metadataIfc metadata.EntityMetadataInterface,
 	protoIfc utils.ProtoUtilInterface, uuidIfc utils.UuidUtilInterface) *singletonObject {
 
 	return &singletonObject{

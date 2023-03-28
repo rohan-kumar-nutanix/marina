@@ -52,6 +52,7 @@ import (
 	"github.com/nutanix-core/acs-aos-go/ergon"
 	ergonClient "github.com/nutanix-core/acs-aos-go/ergon/client"
 	ergonTask "github.com/nutanix-core/acs-aos-go/ergon/task"
+	"github.com/nutanix-core/acs-aos-go/nutanix/util-go/uuid4"
 	marinaError "github.com/nutanix-core/content-management-marina/errors"
 	"github.com/nutanix-core/content-management-marina/interface/external"
 	internal "github.com/nutanix-core/content-management-marina/interface/local"
@@ -121,6 +122,14 @@ func (t *MarinaBaseTask) ExternalInterfaces() external.MarinaExternalInterfaces 
 
 func (t *MarinaBaseTask) InternalInterfaces() internal.MarinaInternalInterfaces {
 	return t.InternalSingletonInterface
+}
+
+func (t *MarinaBaseTask) AddClusterEntity(uuid *uuid4.Uuid) {
+	entity := &ergon.EntityId{
+		EntityType: ergon.EntityId_kCluster.Enum(),
+		EntityId:   uuid.RawBytes(),
+	}
+	t.AddEntity(t.Proto(), entity)
 }
 
 type MarinaBaseTaskUtil struct {

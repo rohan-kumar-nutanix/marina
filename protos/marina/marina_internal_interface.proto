@@ -1,0 +1,54 @@
+/*
+ * Copyright (c) 2023 Nutanix Inc. All rights reserved.
+ *
+ * Author: rishabh.gupta@nutanix.com
+ */
+
+syntax = "proto2";
+
+package protos.marina;
+
+option go_package = "protos/marina";
+
+import "protos/marina/marina_types.proto";
+
+//-----------------------------------------------------------------------------
+
+message CatalogMigratePeArg {
+  // UUID of the cluster registered with PC
+  optional bytes cluster_uuid = 1;
+
+  optional bytes task_uuid = 2;
+
+  // List of catalog item types to use as a filter.
+  repeated CatalogItemInfo.CatalogItemType catalog_item_type_list = 3;
+
+  // ID list for catalog items to be migrated from PE cluster
+  repeated CatalogItemId catalog_item_id_list = 4;
+
+  // Parent task.
+  optional bytes parent_task_uuid = 5;
+}
+
+message CatalogMigratePeRet {
+  // A task to poll for completion. On success, the task will contain a
+  // CatalogMigratePeTaskRet.
+  optional bytes task_uuid = 1;
+}
+
+message CatalogMigratePeTaskRet {
+  // Number of intent specs to be synced from PE to PC.
+  optional int64 intent_spec_count = 1;
+}
+
+//-----------------------------------------------------------------------------
+
+service MarinaInternal {
+  // RPC used to change state on PE once registered to PC.
+  // This will change ownership to PC, for those catalog items
+  // owner by that PE. Also this will push changes from PC to PE
+  // for those catalog items that were already sync'ed to PC but
+  // PE was unregistered after and re-registered.
+  rpc CatalogMigratePe(CatalogMigratePeArg)
+      returns (CatalogMigratePeRet);
+}

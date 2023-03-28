@@ -35,7 +35,32 @@ message PcTaskWalRecordCatalogItemData {
 
   // List of SourceGroupSpec.
   repeated SourceGroupSpec add_source_group_list = 7;
+}
 
+message PcTaskWalRecordMigrateTaskData {
+  enum TaskPhase {
+    kCreateEntries = 1;
+    kChangeOwnership = 2;
+    kCommitOwnership = 3;
+    kPublishImages = 4;
+    kCreateSpecs = 5;
+    kMigrationComplete = 6;
+  }
+
+  // Current phase of the migrate taks.
+  optional TaskPhase task_phase = 1;
+
+  // List of all catalog items being migrated from PE.
+  repeated bytes catalog_item_uuid_list = 2;
+
+  // List of image uuids to be published.
+  repeated bytes image_uuid_list = 3;
+
+  // List of catalog item global uuids for which the PC
+  // owned spec needs to be created.
+  repeated bytes create_spec_uuid_list = 4;
+
+  optional bool registration_reconciliation_required = 5 [ default = false ];
 }
 
 message PcTaskWalRecordData {
@@ -50,6 +75,9 @@ message PcTaskWalRecordData {
 
   // List of catalog tasks created on PEs
   repeated EndpointTask task_list = 5;
+
+  // WAL data for migrate task.
+  optional PcTaskWalRecordMigrateTaskData migrate = 6;
 }
 
 // Marina task WAL.
@@ -66,7 +94,6 @@ message PcTaskWalRecord {
 
   // The proxy task WAL.
   optional ProxyTaskWal proxy_task_wal = 4;
-
 }
 
 // Proxy task WAL.

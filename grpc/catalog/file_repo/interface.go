@@ -10,6 +10,8 @@
 package file_repo
 
 import (
+	"context"
+
 	cpdb "github.com/nutanix-core/acs-aos-go/nusights/util/db"
 	"github.com/nutanix-core/acs-aos-go/nutanix/util-go/uuid4"
 	marinaIfc "github.com/nutanix-core/content-management-marina/protos/marina"
@@ -17,7 +19,9 @@ import (
 )
 
 type FileRepoInterface interface {
-	GetFile(cpdbIfc cpdb.CPDBClientInterface, fileUuid *uuid4.Uuid) (*marinaIfc.FileInfo, error)
-	GetFiles(cpdbIfc cpdb.CPDBClientInterface, uuidIfc utils.UuidUtilInterface, fileUuids []*uuid4.Uuid) (
+	GetFile(ctx context.Context, cpdbIfc cpdb.CPDBClientInterface, fileUuid *uuid4.Uuid) (*marinaIfc.FileInfo, error)
+	GetFiles(ctx context.Context, cpdbIfc cpdb.CPDBClientInterface, uuidIfc utils.UuidUtilInterface, fileUuids []*uuid4.Uuid) (
 		[]*marinaIfc.FileInfo, error)
+	CreateFile(ctx context.Context, cpdbIfc cpdb.CPDBClientInterface, protoIfc utils.ProtoUtilInterface,
+		fileUuid *uuid4.Uuid, peUuid *uuid4.Uuid, peFileUuid *uuid4.Uuid) error
 }

@@ -35,6 +35,7 @@ type MarinaServiceInterface interface {
 	CatalogItemDelete(ctx context.Context, arg *marinaIfc.CatalogItemDeleteArg) (*marinaIfc.CatalogItemDeleteRet, error)
 	CatalogItemCreate(ctx context.Context, arg *marinaIfc.CatalogItemCreateArg) (*marinaIfc.CatalogItemCreateRet, error)
 	CatalogItemUpdate(ctx context.Context, arg *marinaIfc.CatalogItemUpdateArg) (*marinaIfc.CatalogItemUpdateRet, error)
+	CatalogMigratePc(ctx context.Context, arg *marinaIfc.CatalogMigratePcArg) (*marinaIfc.CatalogMigratePcRet, error)
 }
 
 func (s *MarinaServer) asyncHandler(ctx context.Context, request proto.Message, operation string) ([]byte, error) {
@@ -113,6 +114,20 @@ func (s *MarinaServer) CatalogItemUpdate(ctx context.Context, arg *marinaIfc.Cat
 	}
 
 	ret := &marinaIfc.CatalogItemUpdateRet{
+		TaskUuid: taskUuid,
+	}
+	return ret, nil
+}
+
+func (s *MarinaServer) CatalogMigratePc(ctx context.Context, arg *marinaIfc.CatalogMigratePcArg) (
+	*marinaIfc.CatalogMigratePcRet, error) {
+
+	taskUuid, err := s.asyncHandler(ctx, arg, CatalogMigratePc)
+	if err != nil {
+		return nil, err
+	}
+
+	ret := &marinaIfc.CatalogMigratePcRet{
 		TaskUuid: taskUuid,
 	}
 	return ret, nil

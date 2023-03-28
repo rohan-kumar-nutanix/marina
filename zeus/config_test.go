@@ -136,9 +136,7 @@ func TestUpdatePeConfigUuidError(t *testing.T) {
 	config := &configCache{}
 	config.updatePeConfig(zkConn, []string{"Invalid Uuid"})
 
-	assert.Equal(t, config.peConfig.clusterNames, map[uuid4.Uuid]string{})
-	assert.Equal(t, config.peConfig.clusterExternalIps, map[uuid4.Uuid][]string{})
-	assert.Equal(t, config.peConfig.sspContainers, map[uuid4.Uuid]*zeusConfig.ConfigurationProto_Container{})
+	assert.Equal(t, config.configsByPe, map[uuid4.Uuid]peConfigCache{})
 }
 
 func TestUpdatePeConfigZkError(t *testing.T) {
@@ -149,9 +147,7 @@ func TestUpdatePeConfigZkError(t *testing.T) {
 	config := &configCache{}
 	config.updatePeConfig(mockConn, []string{testClusterUuid.String()})
 
-	assert.Equal(t, config.peConfig.clusterNames, map[uuid4.Uuid]string{})
-	assert.Equal(t, config.peConfig.clusterExternalIps, map[uuid4.Uuid][]string{})
-	assert.Equal(t, config.peConfig.sspContainers, map[uuid4.Uuid]*zeusConfig.ConfigurationProto_Container{})
+	assert.Equal(t, config.configsByPe, map[uuid4.Uuid]peConfigCache{})
 	mockConn.AssertExpectations(t)
 }
 
@@ -163,9 +159,7 @@ func TestUpdatePeConfigProtoError(t *testing.T) {
 	config := &configCache{}
 	config.updatePeConfig(mockConn, []string{testClusterUuid.String()})
 
-	assert.Equal(t, config.peConfig.clusterNames, map[uuid4.Uuid]string{})
-	assert.Equal(t, config.peConfig.clusterExternalIps, map[uuid4.Uuid][]string{})
-	assert.Equal(t, config.peConfig.sspContainers, map[uuid4.Uuid]*zeusConfig.ConfigurationProto_Container{})
+	assert.Equal(t, config.configsByPe, map[uuid4.Uuid]peConfigCache{})
 	mockConn.AssertExpectations(t)
 }
 
@@ -177,9 +171,7 @@ func TestUpdatePeConfigNilZkDataError(t *testing.T) {
 	config := &configCache{}
 	config.updatePeConfig(mockConn, []string{testClusterUuid.String()})
 
-	assert.Equal(t, config.peConfig.clusterNames, map[uuid4.Uuid]string{})
-	assert.Equal(t, config.peConfig.clusterExternalIps, map[uuid4.Uuid][]string{})
-	assert.Equal(t, config.peConfig.sspContainers, map[uuid4.Uuid]*zeusConfig.ConfigurationProto_Container{})
+	assert.Equal(t, config.configsByPe, map[uuid4.Uuid]peConfigCache{})
 	mockConn.AssertExpectations(t)
 }
 
@@ -200,9 +192,9 @@ func TestUpdatePeConfig(t *testing.T) {
 	config := &configCache{}
 	config.updatePeConfig(mockConn, []string{testClusterUuid.String()})
 
-	assert.Equal(t, map[uuid4.Uuid]string{*testClusterUuid: testClusterName}, config.peConfig.clusterNames)
-	assert.Equal(t, map[uuid4.Uuid][]string{*testClusterUuid: {testNodeIp}}, config.peConfig.clusterExternalIps)
-	assert.Equal(t, map[uuid4.Uuid]*zeusConfig.ConfigurationProto_Container{}, config.peConfig.sspContainers)
+	assert.Equal(t, testClusterName, config.configsByPe[*testClusterUuid].clusterName)
+	assert.Equal(t, []string{testNodeIp}, config.configsByPe[*testClusterUuid].clusterExternalIps)
+	assert.Equal(t, map[uuid4.Uuid]*zeusConfig.ConfigurationProto_Container{}, config.sspContainers)
 	mockConn.AssertExpectations(t)
 }
 
@@ -232,9 +224,9 @@ func TestUpdatePeConfigWithContainers(t *testing.T) {
 	config := &configCache{}
 	config.updatePeConfig(mockConn, []string{testClusterUuid.String()})
 
-	assert.Equal(t, map[uuid4.Uuid]string{*testClusterUuid: testClusterName}, config.peConfig.clusterNames)
-	assert.Equal(t, map[uuid4.Uuid][]string{*testClusterUuid: {testNodeIp}}, config.peConfig.clusterExternalIps)
-	assert.Equal(t, 1, len(config.peConfig.sspContainers))
+	assert.Equal(t, testClusterName, config.configsByPe[*testClusterUuid].clusterName)
+	assert.Equal(t, []string{testNodeIp}, config.configsByPe[*testClusterUuid].clusterExternalIps)
+	assert.Equal(t, 1, len(config.sspContainers))
 	mockConn.AssertExpectations(t)
 }
 
@@ -274,9 +266,9 @@ func TestInitPeConfigWatcher(t *testing.T) {
 
 	logFatalln = log.Fatalln
 
-	assert.Equal(t, map[uuid4.Uuid]string{*testClusterUuid: testClusterName}, config.peConfig.clusterNames)
-	assert.Equal(t, map[uuid4.Uuid][]string{*testClusterUuid: {testNodeIp}}, config.peConfig.clusterExternalIps)
-	assert.Equal(t, map[uuid4.Uuid]*zeusConfig.ConfigurationProto_Container{}, config.peConfig.sspContainers)
+	assert.Equal(t, testClusterName, config.configsByPe[*testClusterUuid].clusterName)
+	assert.Equal(t, []string{testNodeIp}, config.configsByPe[*testClusterUuid].clusterExternalIps)
+	assert.Equal(t, map[uuid4.Uuid]*zeusConfig.ConfigurationProto_Container{}, config.sspContainers)
 	assert.Equal(t, 1, len(fatalErrors))
 	mockConn.AssertExpectations(t)
 }
@@ -323,7 +315,8 @@ func TestContainerName(t *testing.T) {
 func TestPeClusterUuids(t *testing.T) {
 	config := &configCache{}
 	config.peConfigOnce.Do(func() {})
-	config.peConfig.clusterNames = map[uuid4.Uuid]string{*testClusterUuid: "0.0.0.1"}
+	config.configsByPe = make(map[uuid4.Uuid]peConfigCache)
+	config.configsByPe[*testClusterUuid] = peConfigCache{clusterName: "0.0.0.1"}
 
 	peList := config.PeClusterUuids()
 
@@ -333,17 +326,18 @@ func TestPeClusterUuids(t *testing.T) {
 func TestClusterExternalIpsExist(t *testing.T) {
 	config := &configCache{}
 	config.peConfigOnce.Do(func() {})
-	config.peConfig.clusterExternalIps = map[uuid4.Uuid][]string{*testClusterUuid: {"0.0.0.1", "1.2.3.4"}}
+	config.configsByPe = make(map[uuid4.Uuid]peConfigCache)
+	config.configsByPe[*testClusterUuid] = peConfigCache{clusterExternalIps: []string{"0.0.0.1", "1.2.3.4"}}
 
 	externalIps := config.ClusterExternalIps(testClusterUuid)
 
-	assert.Equal(t, config.peConfig.clusterExternalIps[*testClusterUuid], externalIps)
+	assert.Equal(t, config.configsByPe[*testClusterUuid].clusterExternalIps, externalIps)
 }
 
 func TestClusterExternalIpsNotExist(t *testing.T) {
 	config := &configCache{}
 	config.peConfigOnce.Do(func() {})
-	config.peConfig.clusterExternalIps = map[uuid4.Uuid][]string{}
+	config.configsByPe = make(map[uuid4.Uuid]peConfigCache)
 
 	externalIps := config.ClusterExternalIps(testClusterUuid)
 
@@ -353,17 +347,18 @@ func TestClusterExternalIpsNotExist(t *testing.T) {
 func TestPeClusterName(t *testing.T) {
 	config := &configCache{}
 	config.peConfigOnce.Do(func() {})
-	config.peConfig.clusterNames = map[uuid4.Uuid]string{*testClusterUuid: "testName"}
+	config.configsByPe = make(map[uuid4.Uuid]peConfigCache)
+	config.configsByPe[*testClusterUuid] = peConfigCache{clusterName: "testName"}
 
 	clusterName := config.PeClusterName(testClusterUuid)
 
-	assert.Equal(t, config.peConfig.clusterNames[*testClusterUuid], *clusterName)
+	assert.Equal(t, config.configsByPe[*testClusterUuid].clusterName, *clusterName)
 }
 
 func TestPeClusterNameNotExist(t *testing.T) {
 	config := &configCache{}
 	config.peConfigOnce.Do(func() {})
-	config.peConfig.clusterNames = map[uuid4.Uuid]string{}
+	config.configsByPe = make(map[uuid4.Uuid]peConfigCache)
 
 	clusterName := config.PeClusterName(testClusterUuid)
 
@@ -373,9 +368,31 @@ func TestPeClusterNameNotExist(t *testing.T) {
 func TestClusterSSPContainerUuidMap(t *testing.T) {
 	config := &configCache{}
 	config.peConfigOnce.Do(func() {})
-	config.peConfig.sspContainers = map[uuid4.Uuid]*zeusConfig.ConfigurationProto_Container{}
+	config.configsByPe = make(map[uuid4.Uuid]peConfigCache)
+	config.sspContainers = map[uuid4.Uuid]*zeusConfig.ConfigurationProto_Container{}
 
 	sspContainers := config.ClusterSSPContainerUuidMap()
 
-	assert.Equal(t, config.peConfig.sspContainers, sspContainers)
+	assert.Equal(t, config.sspContainers, sspContainers)
+}
+
+func TestCatalogPeRegisteredExist(t *testing.T) {
+	config := &configCache{}
+	config.peConfigOnce.Do(func() {})
+	config.configsByPe = make(map[uuid4.Uuid]peConfigCache)
+	config.configsByPe[*testClusterUuid] = peConfigCache{catalogPeRegistered: proto.Bool(true)}
+
+	catalogPeRegistered := config.CatalogPeRegistered(testClusterUuid)
+
+	assert.True(t, *catalogPeRegistered)
+}
+
+func TestCatalogPeRegisteredNotExist(t *testing.T) {
+	config := &configCache{}
+	config.peConfigOnce.Do(func() {})
+	config.configsByPe = make(map[uuid4.Uuid]peConfigCache)
+
+	catalogPeRegistered := config.CatalogPeRegistered(testClusterUuid)
+
+	assert.Nil(t, catalogPeRegistered)
 }

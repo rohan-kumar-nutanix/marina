@@ -14,6 +14,7 @@ const (
 	CatalogItemCreate = "CatalogItemCreate"
 	CatalogItemDelete = "CatalogItemDelete"
 	CatalogItemUpdate = "CatalogItemUpdate"
+	CatalogMigratePc  = "CatalogMigratePc"
 )
 
 func GetErgonFullTaskByProto(taskProto *ergon.Task) ergonTask.FullTask {
@@ -27,6 +28,9 @@ func GetErgonFullTaskByProto(taskProto *ergon.Task) ergonTask.FullTask {
 			catalog_item.NewCatalogItemBaseTask(base.NewMarinaBaseTask(taskProto)))
 	case CatalogItemUpdate:
 		return catalog_item.NewCatalogItemUpdateTask(
+			catalog_item.NewCatalogItemBaseTask(base.NewMarinaBaseTask(taskProto)))
+	case CatalogMigratePc:
+		return catalog_item.NewCatalogMigratePcTask(
 			catalog_item.NewCatalogItemBaseTask(base.NewMarinaBaseTask(taskProto)))
 	default:
 		log.Errorf("Unknown gRPC method %s received", taskProto.Request.GetMethodName())

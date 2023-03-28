@@ -746,7 +746,7 @@ func TestFanoutCatalogRequestsRpcError(t *testing.T) {
 	name := "TestName"
 	configIfc.On("PeClusterName", mock.Anything).Return(&name).Once()
 
-	err := catalogItemDeleteTask.fanoutCatalogRequests([]*uuid4.Uuid{peUuid})
+	err := catalogItemDeleteTask.fanoutDeleteRequests([]*uuid4.Uuid{peUuid})
 
 	assert.Error(t, err)
 	assert.IsType(t, marinaError.ErrCatalogTaskForwardError, err)
@@ -795,7 +795,7 @@ func TestFanoutCatalogRequestsPollError(t *testing.T) {
 	remoteCatalogService = mockRemoteCatalogClient.NewRemoteCatalogService
 	mockTaskUtil.On("PollAll", mock.Anything, mock.Anything).Return(nil, errors.New("oh no")).Once()
 
-	err := catalogItemDeleteTask.fanoutCatalogRequests([]*uuid4.Uuid{peUuid})
+	err := catalogItemDeleteTask.fanoutDeleteRequests([]*uuid4.Uuid{peUuid})
 
 	assert.Error(t, err)
 	assert.IsType(t, new(marinaError.InternalError), err)

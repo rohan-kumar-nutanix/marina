@@ -14,6 +14,8 @@ import (
 	"errors"
 	"fmt"
 
+	set "github.com/deckarep/golang-set/v2"
+
 	"github.com/nutanix-core/acs-aos-go/nutanix/util-go/uuid4"
 	marinaError "github.com/nutanix-core/content-management-marina/errors"
 )
@@ -27,6 +29,9 @@ type UuidUtilInterface interface {
 	StringFromUuidPointers(uuids []*uuid4.Uuid) string
 	UuidPointersToUuids(uuids []*uuid4.Uuid) []uuid4.Uuid
 	UuidBytesToUuidPointers(uuids [][]byte) []*uuid4.Uuid
+	UuidBytesToUuids(uuids [][]byte) []uuid4.Uuid
+	UuidsToUuidBytes(uuids []uuid4.Uuid) [][]byte
+	Difference(uuidListA []*uuid4.Uuid, uuidListB []*uuid4.Uuid) []*uuid4.Uuid
 }
 
 type UuidUtil struct {
@@ -87,5 +92,39 @@ func (*UuidUtil) UuidBytesToUuidPointers(uuids [][]byte) []*uuid4.Uuid {
 	for _, uuid := range uuids {
 		ret = append(ret, uuid4.ToUuid4(uuid))
 	}
+	return ret
+}
+
+func (*UuidUtil) UuidBytesToUuids(uuids [][]byte) []uuid4.Uuid {
+	var ret []uuid4.Uuid
+	for _, uuid := range uuids {
+		ret = append(ret, *uuid4.ToUuid4(uuid))
+	}
+	return ret
+}
+
+func (*UuidUtil) UuidsToUuidBytes(uuids []uuid4.Uuid) [][]byte {
+	var ret [][]byte
+	for _, uuid := range uuids {
+		uuid := uuid
+		ret = append(ret, uuid.RawBytes())
+	}
+	return ret
+}
+
+// Difference - Return the difference A - B
+func (*UuidUtil) Difference(uuidsA []*uuid4.Uuid, uuidsB []*uuid4.Uuid) []*uuid4.Uuid {
+	uuidsBSet := set.NewSet[uuid4.Uuid]()
+	for _, clusterUuid := range uuidsB {
+		uuidsBSet.Add(*clusterUuid)
+	}
+
+	var ret []*uuid4.Uuid
+	for _, clusterUuid := range uuidsA {
+		if !uuidsBSet.Contains(*clusterUuid) {
+			ret = append(ret, clusterUuid)
+		}
+	}
+
 	return ret
 }

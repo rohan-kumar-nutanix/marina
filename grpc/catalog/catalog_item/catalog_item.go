@@ -173,6 +173,29 @@ func (*CatalogItemImpl) GetCatalogItem(ctx context.Context, cpdbIfc cpdb.CPDBCli
 	return catalogItem, nil
 }
 
+func (*CatalogItemImpl) GetAllCatalogItems(ctx context.Context, cpdbIfc cpdb.CPDBClientInterface) (
+	[]*marinaIfc.CatalogItemInfo, error) {
+
+	entities, err := cpdbIfc.GetEntitiesOfType(db.CatalogItem.ToString(), false)
+	if err != nil && err != insights_interface.ErrNotFound {
+		errMsg := fmt.Sprintf("Error encountered while getting all Catalog Items: %v", err)
+		return nil, marinaError.ErrInternalError().SetCauseAndLog(errors.New(errMsg))
+	}
+
+	var catalogItems []*marinaIfc.CatalogItemInfo
+	for _, entity := range entities {
+		catalogItem := &marinaIfc.CatalogItemInfo{}
+		err = entity.DeserializeEntity(catalogItem)
+		if err != nil {
+			errMsg := fmt.Sprintf("Failed to deserialize Catalog Item IDF entry: %v", err)
+			return nil, marinaError.ErrInternalError().SetCauseAndLog(errors.New(errMsg))
+		}
+		catalogItems = append(catalogItems, catalogItem)
+	}
+
+	return catalogItems, nil
+}
+
 func (*CatalogItemImpl) CreateCatalogItemFromCreateSpec(ctx context.Context, cpdbIfc cpdb.CPDBClientInterface,
 	protoIfc utils.ProtoUtilInterface, catalogItemUuid *uuid4.Uuid, spec *marinaIfc.CatalogItemCreateSpec,
 	clusters []uuid4.Uuid, sourceGroups []*marinaIfc.SourceGroup) error {
@@ -352,6 +375,106 @@ func (*CatalogItemImpl) CreateCatalogItemFromUpdateSpec(ctx context.Context, cpd
 	}
 
 	marshal, err := protoIfc.Marshal(newCatalogItem)
+	if err != nil {
+		errMsg := fmt.Sprintf("Error marshaling the catalog item proto: %v", err)
+		return marinaError.ErrInternalError().SetCauseAndLog(errors.New(errMsg))
+	}
+	var buffer bytes.Buffer
+	writer := zlib.NewWriter(&buffer)
+	_, err = writer.Write(marshal)
+	if err != nil {
+		errMsg := fmt.Sprintf("Error compressing the catalog item proto: %v", err)
+		return marinaError.ErrInternalError().SetCauseAndLog(errors.New(errMsg))
+	}
+	err = writer.Close()
+	if err != nil {
+		errMsg := fmt.Sprintf("Error encountered while closing zlib stream: %v", err)
+		return marinaError.ErrInternalError().SetCauseAndLog(errors.New(errMsg))
+	}
+
+	attrParams[insights_interface.COMPRESSED_PROTOBUF_ATTR] = buffer.Bytes()
+	attrVals, err := cpdbIfc.BuildAttributeDataArgs(&attrParams)
+	if err != nil {
+		errMsg := fmt.Sprintf("Error encountered while generating IDF attributes: %v", err)
+		return marinaError.ErrInternalError().SetCauseAndLog(errors.New(errMsg))
+	}
+
+	_, err = cpdbIfc.UpdateEntity(db.CatalogItem.ToString(), catalogItemUuid.String(), attrVals, nil, false, 0)
+	if err != nil {
+		errMsg := fmt.Sprintf("Error while creating the IDF entry for catalog item %s: %v", catalogItemUuid.String(), err)
+		return marinaError.ErrInternalError().SetCauseAndLog(errors.New(errMsg))
+	}
+	return nil
+}
+
+func (*CatalogItemImpl) CreateCatalogItemFromProto(ctx context.Context, cpdbIfc cpdb.CPDBClientInterface,
+	protoIfc utils.ProtoUtilInterface, catalogItemUuid *uuid4.Uuid, catalogItemInfo *marinaIfc.CatalogItemInfo,
+	clusters []uuid4.Uuid, sourceGroups []*marinaIfc.SourceGroup) error {
+
+	attrParams := make(cpdb.AttributeParams)
+	attrParams["uuid"] = catalogItemUuid.String()
+	attrParams["name"] = catalogItemInfo.GetName()
+	attrParams["annotation"] = catalogItemInfo.GetAnnotation()
+	attrParams["item_type"] = catalogItemInfo.GetItemType().String()
+	attrParams["version"] = catalogItemInfo.GetVersion()
+
+	catalogItemType := catalogItemInfo.GetItemType()
+	catalogItem := &marinaIfc.CatalogItemInfo{
+		Name:       proto.String(catalogItemInfo.GetName()),
+		Annotation: proto.String(catalogItemInfo.GetAnnotation()),
+		ItemType:   &catalogItemType,
+		Version:    proto.Int64(catalogItemInfo.GetVersion()),
+	}
+
+	ownerClusterUuid := catalogItemInfo.GetOwnerClusterUuid()
+	if ownerClusterUuid != nil {
+		catalogItem.OwnerClusterUuid = uuid4.ToUuid4(ownerClusterUuid).RawBytes()
+		attrParams["owner_cluster_uuid"] = uuid4.ToUuid4(ownerClusterUuid).String()
+	}
+
+	gcUuid := catalogItemInfo.GetGlobalCatalogItemUuid()
+	if gcUuid != nil {
+		catalogItem.GlobalCatalogItemUuid = uuid4.ToUuid4(gcUuid).RawBytes()
+		attrParams["global_catalog_item_uuid"] = uuid4.ToUuid4(gcUuid).String()
+	}
+
+	if catalogItemInfo.GetOpaque() != nil {
+		catalogItem.Opaque = catalogItemInfo.GetOpaque()
+		attrParams["opaque"] = catalogItemInfo.GetOpaque()
+	}
+
+	if catalogItemInfo.GetCatalogVersion() != nil {
+		catalogItem.CatalogVersion = &marinaIfc.CatalogVersion{
+			ProductName:    proto.String(catalogItemInfo.GetCatalogVersion().GetProductName()),
+			ProductVersion: proto.String(catalogItemInfo.GetCatalogVersion().GetProductVersion()),
+		}
+	}
+
+	if catalogItemInfo.GetSourceCatalogItemId() != nil {
+		catalogItem.SourceCatalogItemId = &marinaIfc.CatalogItemId{
+			GlobalCatalogItemUuid: catalogItemInfo.GetSourceCatalogItemId().GetGlobalCatalogItemUuid(),
+			Version:               catalogItemInfo.GetSourceCatalogItemId().Version,
+		}
+
+	} else {
+		catalogItem.SourceCatalogItemId = &marinaIfc.CatalogItemId{
+			GlobalCatalogItemUuid: catalogItem.GetGlobalCatalogItemUuid(),
+			Version:               catalogItem.Version,
+		}
+	}
+
+	for i := range clusters {
+		location := &marinaIfc.CatalogItemInfo_CatalogItemLocation{
+			ClusterUuid: clusters[i].RawBytes(),
+		}
+		catalogItem.LocationList = append(catalogItem.LocationList, location)
+	}
+
+	if len(sourceGroups) > 0 {
+		catalogItem.SourceGroupList = sourceGroups
+	}
+
+	marshal, err := protoIfc.Marshal(catalogItem)
 	if err != nil {
 		errMsg := fmt.Sprintf("Error marshaling the catalog item proto: %v", err)
 		return marinaError.ErrInternalError().SetCauseAndLog(errors.New(errMsg))
