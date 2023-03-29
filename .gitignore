@@ -1,6 +1,7 @@
 # Build
 build/
 vendor/
+internal/
 marina_client
 marina_server
 *.pb.go

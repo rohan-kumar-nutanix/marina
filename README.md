@@ -27,13 +27,15 @@ The top level directory of your repository should be set up like this:
     https://confluence.eng.nutanix.com:8443/display/~rajesh.battala/Marina+Setup+Guide+for+MAC
 
 ### Dependencies
-- go version go1.17 or later
+- go v1.19+
 - protoc: libprotoc 3.6.1
 - protoc-gen-go v1.5.2
 - protoc-gen-go-grpc v1.1.0
 - protoc-gen-grpc-gateway v2.4.0
 - mockery v2.15.0
--  brew commands to install the packages in MAC.
+- gotestsum v1.9.0+
+  - go install gotest.tools/gotestsum@latest
+- brew commands to install the packages in MAC:
   - brew install protobuf
   - brew install protoc-gen-go
   - brew install protoc-gen-go-grpc

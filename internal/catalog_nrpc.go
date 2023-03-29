@@ -7,7 +7,7 @@
  *
  */
 
-package main
+package internal
 
 import (
 	"fmt"

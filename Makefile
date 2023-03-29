@@ -23,7 +23,7 @@ server:
 	$(info ===================================)
 	$(info )
 	env GOOS=linux GOARCH=amd64 go build -o build/marina_server marina/*.go
-	env GOOS=linux GOARCH=amd64 go build -o build/marina_client client/*.go
+	env GOOS=linux GOARCH=amd64 go build -o build/marina_client internal/*.go
 
 build-debug-server:
 	$(info Building binary at the project root with gcflags "all=-N -l")

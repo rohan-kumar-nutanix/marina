@@ -11,6 +11,7 @@ export PATH=$PATH:/home/circleci/project/.workspace/build-tools/golang-go1.19/go
 go install github.com/golang/protobuf/protoc-gen-go@v1.5.2
 go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.1.0
 go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@v2.4.0
+go install gotest.tools/gotestsum@latest
 export PATH=$PATH:/home/circleci/go/bin
 
 make build-protos

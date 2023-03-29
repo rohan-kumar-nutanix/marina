@@ -4,7 +4,7 @@
  * GRPC client for echo service.
  */
 
-package main
+package internal
 
 import (
 	"context"
