@@ -23,27 +23,33 @@ import (
 type IdfClientInterface interface {
 	DeleteEntities(ctx context.Context, cpdbIfc cpdb.CPDBClientInterface, entityType EntityType,
 		entityUuids []string, isCasEnabled bool) error
+	GetEntitiesWithMetrics(ctx context.Context, arg *insights_interface.GetEntitiesWithMetricsArg,
+		ret *insights_interface.GetEntitiesWithMetricsRet) error
 }
 
-func newIdfClientWithRetry() *IdfClient {
-	insightsSvc := insights_interface.NewInsightsServiceInterface(
-		utils.HostAddr,
-		uint16(*insights_interface.InsightsPort))
-
-	err := insightsSvc.SetRequestTimeout(utils.IdfRpcTimeOut)
-	if err != nil {
-		log.Fatalf("Error occurred while setting IdfRpcTimeOut : %v", err)
-	}
-	idfClient := IdfClient{IdfSvc: insightsSvc}
+func newIdfClientWithRetry(insightsIfc insights_interface.InsightsServiceInterface) *IdfClient {
+	idfClient := IdfClient{IdfSvc: insightsIfc}
 	return &idfClient
 }
 
-func IdfClientWithRetry() IdfClientInterface {
-	return newIdfClientWithRetry()
+func InsightsServiceInterface() insights_interface.InsightsServiceInterface {
+	insightsIfc := insights_interface.NewInsightsServiceInterface(
+		utils.HostAddr,
+		uint16(*insights_interface.InsightsPort))
+
+	err := insightsIfc.SetRequestTimeout(utils.IdfRpcTimeOut)
+	if err != nil {
+		log.Fatalf("Error occurred while setting IdfRpcTimeOut : %v", err)
+	}
+	return insightsIfc
 }
 
-func IdfClientWithoutRetry() IdfClientInterface {
-	idfClientObj := newIdfClientWithRetry()
+func IdfClientWithRetry(insightsIfc insights_interface.InsightsServiceInterface) IdfClientInterface {
+	return newIdfClientWithRetry(insightsIfc)
+}
+
+func IdfClientWithoutRetry(insightsIfc insights_interface.InsightsServiceInterface) IdfClientInterface {
+	idfClientObj := newIdfClientWithRetry(insightsIfc)
 	idfClientObj.Retry = misc.NewExponentialBackoff(0, 0, 0)
 	return idfClientObj
 }

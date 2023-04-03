@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) 2023 Nutanix Inc. All rights reserved.
+ *
+ * Author: rishabh.gupta@nutanix.com
+ */
+
 syntax = "proto2";
 
 package protos.marina;
@@ -5,6 +11,7 @@ package protos.marina;
 option go_package = "protos/marina";
 
 import "google/protobuf/descriptor.proto";
+import "protos/marina/marina_insights_types.proto";
 
 //-----------------------------------------------------------------------------
 
@@ -506,4 +513,108 @@ message EntityMetadata {
 
   // List of categories attached to the Entity.
   repeated bytes categories_uuid_list = 5;
+}
+
+//-----------------------------------------------------------------------------
+
+message CatalogRateLimitFilter {
+  enum CategoryMatchType {
+    // Must match all categories
+    kAll = 1;
+    // Match any of the given categories
+    kAny = 2;
+  }
+
+  message CategoryKeyValue {
+    // The category key
+    optional string category_key = 1;
+
+    // List of category values for the given key
+    repeated string category_values = 2;
+  }
+
+  // Matching type
+  optional CategoryMatchType match_type = 2;
+
+  // Categories
+  repeated CategoryKeyValue categories = 3;
+}
+
+//-----------------------------------------------------------------------------
+
+message CatalogRateLimitInfo {
+  // Entity UUID.
+  optional bytes uuid = 1;
+
+  // Entity name.
+  optional string name = 2;
+
+  // Entity description.
+  optional string description = 3;
+
+  // Enforced rate limit in KBps.
+  optional uint64 rate_limit_kbps = 4;
+
+  // Category based filter UUID.
+  optional bytes cluster_filter_uuid = 5;
+
+  // Entity version.
+  optional int64 logical_timestamp = 6;
+
+  message CatalogRateLimitStatusInfo {
+
+    // The current filter params of the rate limit entry.
+    optional CatalogRateLimitFilter cluster_filter = 1;
+
+    message ClusterRateLimitStatusInfo {
+      // UUID of a cluster affected by the Rate Limit.
+      optional bytes cluster_uuid = 1;
+
+      // The effectively enforced Rate Limit for the cluster.
+      optional uint64 effective_rate_limit_kbps = 2;
+
+      // The UUID of the effective Rate Limit applied to the cluster.
+      optional bytes effective_rate_limit_uuid = 3;
+
+      // Name of the effective Rate Limit applied to the cluster.
+      optional string effective_rate_limit_name = 4;
+
+    }
+
+    // Has an entry for each cluster to which this Rate Limit applies, even when
+    // it is not the effective Rate Limit.
+    repeated ClusterRateLimitStatusInfo cluster_status_list = 2;
+
+    // A list of cluster UUIDs for clusters that match the Rate Limit cluster
+    // filter but that do not support rate limiting due to their version.
+    repeated bytes unsupported_cluster_uuid_list = 3;
+
+  }
+
+  optional CatalogRateLimitStatusInfo status = 7;
+
+  // Metadata for the Rate Limit.
+  optional EntityMetadata metadata = 8;
+
+}
+
+//-----------------------------------------------------------------------------
+// IDF query parameters to support filtering/sorting in V4 List APIs
+message IdfParameters {
+  // IDF BooleanExpression for filtering result
+  optional BooleanExpression boolean_expression = 1;
+
+  // IDF QueryOrderBy for sorting result
+  repeated QueryOrderBy query_order_by = 2;
+
+  message PaginationInfo {
+    // Page size
+    optional int64 page_size = 1;
+
+    // Page number
+    optional int64 page_number = 2;
+  }
+
+  // Parameters for paginating result
+  optional PaginationInfo pagination_info = 3;
 }

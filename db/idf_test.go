@@ -22,7 +22,8 @@ import (
 )
 
 func TestIdfClientWithRetry(t *testing.T) {
-	idfClient := IdfClientWithRetry()
+	mockIdfIfc := &mockIdf.InsightsServiceInterface{}
+	idfClient := IdfClientWithRetry(mockIdfIfc)
 	idfObj := idfClient.(*IdfClient)
 	assert.NotNil(t, idfObj)
 	assert.NotNil(t, idfObj.IdfSvc)
@@ -30,7 +31,8 @@ func TestIdfClientWithRetry(t *testing.T) {
 }
 
 func TestIdfClientWithoutRetry(t *testing.T) {
-	idfClient := IdfClientWithoutRetry()
+	mockIdfIfc := &mockIdf.InsightsServiceInterface{}
+	idfClient := IdfClientWithoutRetry(mockIdfIfc)
 	idfObj := idfClient.(*IdfClient)
 	assert.NotNil(t, idfObj)
 	assert.NotNil(t, idfObj.IdfSvc)
@@ -38,8 +40,8 @@ func TestIdfClientWithoutRetry(t *testing.T) {
 }
 
 func TestDeleteEntities(t *testing.T) {
-	mockIdf := &mockIdf.InsightsServiceInterface{}
-	idfClient := IdfClient{IdfSvc: mockIdf}
+	mockIdfIfc := &mockIdf.InsightsServiceInterface{}
+	idfClient := IdfClient{IdfSvc: mockIdfIfc}
 	cpdbMock := &mockCpdb.CPDBClientInterface{}
 	entityUuid, _ := uuid4.New()
 	entityUuidStr := entityUuid.String()
@@ -53,19 +55,19 @@ func TestDeleteEntities(t *testing.T) {
 		},
 	}
 	cpdbMock.On("GetEntities", mock.Anything, mock.Anything).Return(entities, nil).Once()
-	mockIdf.On("SendMsg", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+	mockIdfIfc.On("SendMsg", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Return(nil).Once()
 
 	err := idfClient.DeleteEntities(context.Background(), cpdbMock, CatalogItem, []string{entityUuidStr}, true)
 
 	assert.NoError(t, err)
 	cpdbMock.AssertExpectations(t)
-	mockIdf.AssertExpectations(t)
+	mockIdfIfc.AssertExpectations(t)
 }
 
 func TestDeleteEntitiesPartial(t *testing.T) {
-	mockIdf := &mockIdf.InsightsServiceInterface{}
-	idfClient := IdfClient{IdfSvc: mockIdf}
+	mockIdfIfc := &mockIdf.InsightsServiceInterface{}
+	idfClient := IdfClient{IdfSvc: mockIdfIfc}
 	cpdbMock := &mockCpdb.CPDBClientInterface{}
 	entityUuid, _ := uuid4.New()
 	entityUuidStr := entityUuid.String()
@@ -80,7 +82,7 @@ func TestDeleteEntitiesPartial(t *testing.T) {
 	}
 	cpdbMock.On("GetEntities", mock.Anything, mock.Anything).Return(entities, nil).Once()
 	noError := insights_interface.InsightsErrorProto_kNoError
-	mockIdf.On("SendMsg", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+	mockIdfIfc.On("SendMsg", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Run(func(args mock.Arguments) {
 			ret := args.Get(2).(*insights_interface.BatchDeleteEntitiesRet)
 			ret.RetList = append(ret.RetList, &insights_interface.BatchDeleteEntitiesRet_RetElem{
@@ -92,19 +94,19 @@ func TestDeleteEntitiesPartial(t *testing.T) {
 				Status: &insights_interface.InsightsErrorProto{ErrorType: &internalError},
 			})
 		}).Return(insights_interface.ErrPartial).Once()
-	mockIdf.On("SendMsg", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+	mockIdfIfc.On("SendMsg", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Return(nil).Once()
 
 	err := idfClient.DeleteEntities(context.Background(), cpdbMock, CatalogItem, []string{entityUuidStr}, true)
 
 	assert.NoError(t, err)
 	cpdbMock.AssertExpectations(t)
-	mockIdf.AssertExpectations(t)
+	mockIdfIfc.AssertExpectations(t)
 }
 
 func TestDeleteEntitiesNoOp(t *testing.T) {
-	mockIdf := &mockIdf.InsightsServiceInterface{}
-	idfClient := IdfClient{IdfSvc: mockIdf}
+	mockIdfIfc := &mockIdf.InsightsServiceInterface{}
+	idfClient := IdfClient{IdfSvc: mockIdfIfc}
 	cpdbMock := &mockCpdb.CPDBClientInterface{}
 	entityUuid, _ := uuid4.New()
 	var entities []*insights_interface.Entity
@@ -117,8 +119,8 @@ func TestDeleteEntitiesNoOp(t *testing.T) {
 }
 
 func TestDeleteEntitiesGetError(t *testing.T) {
-	mockIdf := &mockIdf.InsightsServiceInterface{}
-	idfClient := IdfClient{IdfSvc: mockIdf}
+	mockIdfIfc := &mockIdf.InsightsServiceInterface{}
+	idfClient := IdfClient{IdfSvc: mockIdfIfc}
 	cpdbMock := &mockCpdb.CPDBClientInterface{}
 	entityUuid, _ := uuid4.New()
 	cpdbMock.On("GetEntities", mock.Anything, mock.Anything).Return(nil, marinaError.ErrInternalError()).Once()
@@ -131,8 +133,8 @@ func TestDeleteEntitiesGetError(t *testing.T) {
 }
 
 func TestDeleteEntitiesDeleteError(t *testing.T) {
-	mockIdf := &mockIdf.InsightsServiceInterface{}
-	idfClient := IdfClient{IdfSvc: mockIdf}
+	mockIdfIfc := &mockIdf.InsightsServiceInterface{}
+	idfClient := IdfClient{IdfSvc: mockIdfIfc}
 	cpdbMock := &mockCpdb.CPDBClientInterface{}
 	entityUuid, _ := uuid4.New()
 	entityUuidStr := entityUuid.String()
@@ -146,7 +148,7 @@ func TestDeleteEntitiesDeleteError(t *testing.T) {
 		},
 	}
 	cpdbMock.On("GetEntities", mock.Anything, mock.Anything).Return(entities, nil).Once()
-	mockIdf.On("SendMsg", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+	mockIdfIfc.On("SendMsg", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Return(insights_interface.ErrInternalError).Once()
 
 	err := idfClient.DeleteEntities(context.Background(), cpdbMock, CatalogItem, []string{entityUuidStr}, true)
@@ -154,12 +156,12 @@ func TestDeleteEntitiesDeleteError(t *testing.T) {
 	assert.Error(t, err)
 	assert.IsType(t, new(marinaError.InternalError), err)
 	cpdbMock.AssertExpectations(t)
-	mockIdf.AssertExpectations(t)
+	mockIdfIfc.AssertExpectations(t)
 }
 
 func TestDeleteEntitiesPartialError(t *testing.T) {
-	mockIdf := &mockIdf.InsightsServiceInterface{}
-	idfClient := IdfClient{IdfSvc: mockIdf}
+	mockIdfIfc := &mockIdf.InsightsServiceInterface{}
+	idfClient := IdfClient{IdfSvc: mockIdfIfc}
 	cpdbMock := &mockCpdb.CPDBClientInterface{}
 	entityUuid, _ := uuid4.New()
 	entityUuidStr := entityUuid.String()
@@ -173,7 +175,7 @@ func TestDeleteEntitiesPartialError(t *testing.T) {
 		},
 	}
 	cpdbMock.On("GetEntities", mock.Anything, mock.Anything).Return(entities, nil).Once()
-	mockIdf.On("SendMsg", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+	mockIdfIfc.On("SendMsg", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Return(insights_interface.ErrPartial).Once()
 
 	err := idfClient.DeleteEntities(context.Background(), cpdbMock, CatalogItem, []string{entityUuidStr}, true)
@@ -181,12 +183,12 @@ func TestDeleteEntitiesPartialError(t *testing.T) {
 	assert.Error(t, err)
 	assert.IsType(t, new(marinaError.InternalError), err)
 	cpdbMock.AssertExpectations(t)
-	mockIdf.AssertExpectations(t)
+	mockIdfIfc.AssertExpectations(t)
 }
 
 func TestDeleteEntitiesRetryError(t *testing.T) {
-	mockIdf := &mockIdf.InsightsServiceInterface{}
-	idfClient := IdfClient{IdfSvc: mockIdf}
+	mockIdfIfc := &mockIdf.InsightsServiceInterface{}
+	idfClient := IdfClient{IdfSvc: mockIdfIfc}
 	cpdbMock := &mockCpdb.CPDBClientInterface{}
 	entityUuid, _ := uuid4.New()
 	entityUuidStr := entityUuid.String()
@@ -200,7 +202,7 @@ func TestDeleteEntitiesRetryError(t *testing.T) {
 		},
 	}
 	cpdbMock.On("GetEntities", mock.Anything, mock.Anything).Return(entities, nil).Once()
-	mockIdf.On("SendMsg", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+	mockIdfIfc.On("SendMsg", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Run(func(args mock.Arguments) {
 			internalError := insights_interface.InsightsErrorProto_kInternalError
 			ret := args.Get(2).(*insights_interface.BatchDeleteEntitiesRet)
@@ -217,5 +219,5 @@ func TestDeleteEntitiesRetryError(t *testing.T) {
 	assert.Error(t, err)
 	assert.IsType(t, marinaError.ErrRetry, err)
 	cpdbMock.AssertExpectations(t)
-	mockIdf.AssertExpectations(t)
+	mockIdfIfc.AssertExpectations(t)
 }

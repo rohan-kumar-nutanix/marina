@@ -14,12 +14,14 @@ import (
 
 	"github.com/nutanix-core/content-management-marina/authz"
 	"github.com/nutanix-core/content-management-marina/metadata"
+	"github.com/nutanix-core/content-management-marina/odata"
 	utils "github.com/nutanix-core/content-management-marina/util"
 )
 
 type MarinaInternalInterfaces interface {
 	AuthzIfc() authz.AuthzInterface
 	MetadataIfc() metadata.EntityMetadataInterface
+	OdataIfc() odata.OdataInterface
 	ProtoIfc() utils.ProtoUtilInterface
 	UuidIfc() utils.UuidUtilInterface
 }
@@ -27,6 +29,7 @@ type MarinaInternalInterfaces interface {
 type singletonObject struct {
 	authzIfc    authz.AuthzInterface
 	metadataIfc metadata.EntityMetadataInterface
+	odataIfc    odata.OdataInterface
 	protoIfc    utils.ProtoUtilInterface
 	uuidIfc     utils.UuidUtilInterface
 }
@@ -42,6 +45,7 @@ func InitSingletonService() {
 		singleton = &singletonObject{
 			authzIfc:    new(authz.AuthzUtil),
 			metadataIfc: new(metadata.EntityMetadataUtil),
+			odataIfc:    new(odata.OdataUtil),
 			protoIfc:    new(utils.ProtoUtil),
 			uuidIfc:     new(utils.UuidUtil),
 		}
@@ -50,11 +54,12 @@ func InitSingletonService() {
 
 // GetSingletonServiceWithParams - Initialize a singleton Marina service with params. Should only be used in UTs
 func GetSingletonServiceWithParams(authzIfc authz.AuthzInterface, metadataIfc metadata.EntityMetadataInterface,
-	protoIfc utils.ProtoUtilInterface, uuidIfc utils.UuidUtilInterface) *singletonObject {
+	odataIfc odata.OdataInterface, protoIfc utils.ProtoUtilInterface, uuidIfc utils.UuidUtilInterface) *singletonObject {
 
 	return &singletonObject{
 		authzIfc:    authzIfc,
 		metadataIfc: metadataIfc,
+		odataIfc:    odataIfc,
 		protoIfc:    protoIfc,
 		uuidIfc:     uuidIfc,
 	}
@@ -73,6 +78,11 @@ func (s *singletonObject) AuthzIfc() authz.AuthzInterface {
 // MetadataIfc - Returns the singleton for EntityMetadataInterface
 func (s *singletonObject) MetadataIfc() metadata.EntityMetadataInterface {
 	return s.metadataIfc
+}
+
+// OdataIfc - Returns the singleton for OdataInterface
+func (s *singletonObject) OdataIfc() odata.OdataInterface {
+	return s.odataIfc
 }
 
 // ProtoIfc - Returns the singleton for ProtoUtilInterface

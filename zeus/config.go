@@ -32,9 +32,10 @@ var (
 
 // Configuration proto cache for PE
 type peConfigCache struct {
-	clusterExternalIps  []string
-	clusterName         string
-	catalogPeRegistered *bool
+	clusterExternalIps   []string
+	clusterName          string
+	catalogPeRegistered  *bool
+	isRateLimitSupported *bool
 }
 
 // Configuration proto cache for PC
@@ -164,9 +165,10 @@ func (config *configCache) updatePeConfig(conn ZookeeperConnInterface, clusterUu
 		}
 
 		peConfig := peConfigCache{
-			clusterExternalIps:  externalIps,
-			clusterName:         configProto.GetClusterName(),
-			catalogPeRegistered: configProto.CatalogPeRegistered,
+			clusterExternalIps:   externalIps,
+			clusterName:          configProto.GetClusterName(),
+			catalogPeRegistered:  configProto.CatalogPeRegistered,
+			isRateLimitSupported: configProto.GetClusterCapabilities().GetCatalogCapabilities().RateLimitSupported,
 		}
 		peConfigs[*clusterUuid] = peConfig
 	}
@@ -287,6 +289,17 @@ func (config *configCache) CatalogPeRegistered(peUuid *uuid4.Uuid) *bool {
 	defer config.RUnlock()
 	if peConfig, ok := config.configsByPe[*peUuid]; ok {
 		return peConfig.catalogPeRegistered
+	}
+	return nil
+}
+
+// IsRateLimitSupported returns isRateLimitSupported property of the PE from config cache.
+func (config *configCache) IsRateLimitSupported(peUuid *uuid4.Uuid) *bool {
+	config.maybeInitPeConfigWatcher()
+	config.RLock()
+	defer config.RUnlock()
+	if peConfig, ok := config.configsByPe[*peUuid]; ok {
+		return peConfig.isRateLimitSupported
 	}
 	return nil
 }

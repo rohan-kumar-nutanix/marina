@@ -184,6 +184,11 @@ func TestUpdatePeConfig(t *testing.T) {
 			{ServiceVmExternalIp: proto.String(testNodeIp), ServiceVmId: proto.Int64(1)},
 		},
 		LogicalTimestamp: proto.Int64(1),
+		ClusterCapabilities: &zeusConfig.ConfigurationProto_ClusterCapabilities{
+			CatalogCapabilities: &zeusConfig.ConfigurationProto_ClusterCapabilities_CatalogCapabilities{
+				RateLimitSupported: proto.Bool(true),
+			},
+		},
 	}
 	zkData, _ := proto.Marshal(configProto)
 	mockConn.On("Get", peZeusConfigPath+"/"+testClusterUuid.String()).
@@ -216,6 +221,11 @@ func TestUpdatePeConfigWithContainers(t *testing.T) {
 			testContainer,
 		},
 		LogicalTimestamp: proto.Int64(1),
+		ClusterCapabilities: &zeusConfig.ConfigurationProto_ClusterCapabilities{
+			CatalogCapabilities: &zeusConfig.ConfigurationProto_ClusterCapabilities_CatalogCapabilities{
+				RateLimitSupported: proto.Bool(true),
+			},
+		},
 	}
 	zkData, _ := proto.Marshal(configProto)
 	mockConn.On("Get", peZeusConfigPath+"/"+testClusterUuid.String()).
@@ -239,6 +249,11 @@ func TestInitPeConfigWatcher(t *testing.T) {
 			{ServiceVmExternalIp: proto.String(testNodeIp), ServiceVmId: proto.Int64(1)},
 		},
 		LogicalTimestamp: proto.Int64(1),
+		ClusterCapabilities: &zeusConfig.ConfigurationProto_ClusterCapabilities{
+			CatalogCapabilities: &zeusConfig.ConfigurationProto_ClusterCapabilities_CatalogCapabilities{
+				RateLimitSupported: proto.Bool(true),
+			},
+		},
 	}
 	zkData, _ := proto.Marshal(configProto)
 	mockConn.On("Get", peZeusConfigPath+"/"+testClusterUuid.String()).
@@ -395,4 +410,25 @@ func TestCatalogPeRegisteredNotExist(t *testing.T) {
 	catalogPeRegistered := config.CatalogPeRegistered(testClusterUuid)
 
 	assert.Nil(t, catalogPeRegistered)
+}
+
+func TestIsRateLimitSupportedExist(t *testing.T) {
+	config := &configCache{}
+	config.peConfigOnce.Do(func() {})
+	config.configsByPe = make(map[uuid4.Uuid]peConfigCache)
+	config.configsByPe[*testClusterUuid] = peConfigCache{isRateLimitSupported: proto.Bool(true)}
+
+	isRateLimitSupported := config.IsRateLimitSupported(testClusterUuid)
+
+	assert.True(t, *isRateLimitSupported)
+}
+
+func TestIsRateLimitSupportedNotExist(t *testing.T) {
+	config := &configCache{}
+	config.peConfigOnce.Do(func() {})
+	config.configsByPe = make(map[uuid4.Uuid]peConfigCache)
+
+	isRateLimitSupported := config.IsRateLimitSupported(testClusterUuid)
+
+	assert.Nil(t, isRateLimitSupported)
 }

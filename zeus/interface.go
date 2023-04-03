@@ -23,4 +23,5 @@ type ConfigCache interface {
 	PeClusterName(peUuid *uuid4.Uuid) *string
 	ClusterSSPContainerUuidMap() map[uuid4.Uuid]*zeusConfig.ConfigurationProto_Container
 	CatalogPeRegistered(peUuid *uuid4.Uuid) *bool
+	IsRateLimitSupported(peUuid *uuid4.Uuid) *bool
 }

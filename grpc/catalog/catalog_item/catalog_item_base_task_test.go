@@ -11,6 +11,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	mockCategory "github.com/nutanix-core/acs-aos-go/aplos/categories/category_util/mocks"
+	mockFilter "github.com/nutanix-core/acs-aos-go/aplos/categories/filter_util/mocks"
 	mockErgon "github.com/nutanix-core/acs-aos-go/ergon/client/mocks"
 	mockCpdb "github.com/nutanix-core/acs-aos-go/nusights/util/db/mocks"
 	mockSerialExecutor "github.com/nutanix-core/acs-aos-go/nutanix/util-go/misc/serial_executor/mocks"
@@ -25,6 +27,7 @@ import (
 	mockFile "github.com/nutanix-core/content-management-marina/mocks/grpc/catalog/file_repo"
 	mockImage "github.com/nutanix-core/content-management-marina/mocks/grpc/catalog/image"
 	mockMetadata "github.com/nutanix-core/content-management-marina/mocks/metadata"
+	mockOdata "github.com/nutanix-core/content-management-marina/mocks/odata"
 	mockUtils "github.com/nutanix-core/content-management-marina/mocks/util"
 	mockZeus "github.com/nutanix-core/content-management-marina/mocks/zeus"
 	"github.com/nutanix-core/content-management-marina/task/base"
@@ -33,13 +36,16 @@ import (
 var (
 	authzIfc          = new(mockAuthz.AuthzInterface)
 	catalogItemIfc    = new(mockCatalogItem.CatalogItemInterface)
+	categoryIfc       = new(mockCategory.CategoryUtilInterface)
 	cpdbIfc           = new(mockCpdb.CPDBClientInterface)
 	ergonIfc          = new(mockErgon.Ergon)
 	fileRepoIfc       = new(mockFile.FileRepoInterface)
+	filterIfc         = new(mockFilter.FilterUtilInterface)
 	idfIfc            = new(mockDb.IdfClientInterface)
 	imageIfc          = new(mockImage.ImageInterface)
 	protoIfc          = new(mockUtils.ProtoUtilInterface)
 	metadataIfc       = new(mockMetadata.EntityMetadataInterface)
+	odataIfc          = new(mockOdata.OdataInterface)
 	serialExecutorIfc = new(mockSerialExecutor.SerialExecutorIfc)
 	uuidIfc           = new(mockUtils.UuidUtilInterface)
 	configIfc         = new(mockZeus.ConfigCache)
@@ -50,10 +56,11 @@ var (
 )
 
 func mockExternalInterfaces() external.MarinaExternalInterfaces {
-	return external.GetSingletonServiceWithParams(cpdbIfc, ergonIfc, idfIfc, serialExecutorIfc, configIfc, zkSession)
+	return external.GetSingletonServiceWithParams(categoryIfc, cpdbIfc, ergonIfc, filterIfc, idfIfc, serialExecutorIfc,
+		configIfc, zkSession)
 }
 func mockInternalInterfaces() internal.MarinaInternalInterfaces {
-	return internal.GetSingletonServiceWithParams(authzIfc, metadataIfc, protoIfc, uuidIfc)
+	return internal.GetSingletonServiceWithParams(authzIfc, metadataIfc, odataIfc, protoIfc, uuidIfc)
 }
 
 func TestNewCatalogItemBaseTask(t *testing.T) {

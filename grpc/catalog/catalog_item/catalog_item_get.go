@@ -21,11 +21,14 @@ import (
 )
 
 // CatalogItemGet implements the CatalogItemGet RPC.
-func CatalogItemGet(ctx context.Context, arg *marinaIfc.CatalogItemGetArg,
-	cpdbIfc cpdb.CPDBClientInterface, uuidIfc utils.UuidUtilInterface) (*marinaIfc.CatalogItemGetRet, error) {
+func CatalogItemGet(ctx context.Context, arg *marinaIfc.CatalogItemGetArg, cpdbIfc cpdb.CPDBClientInterface,
+	uuidIfc utils.UuidUtilInterface) (*marinaIfc.CatalogItemGetRet, error) {
+
 	log.V(2).Info("CatalogItemGet RPC started.")
 	span, ctx := tracer.StartSpan(ctx, "CatalogItemGet")
 	defer span.Finish()
+	defer log.V(2).Info("CatalogItemGet RPC finished.")
+
 	var catalogItems []*marinaIfc.CatalogItemInfo
 	catalogItemIds := arg.GetCatalogItemIdList()
 	catalogItemIdsSize := len(catalogItemIds)
@@ -69,6 +72,5 @@ func CatalogItemGet(ctx context.Context, arg *marinaIfc.CatalogItemGetArg,
 	}
 
 	ret := &marinaIfc.CatalogItemGetRet{CatalogItemList: catalogItems}
-	log.V(2).Info("CatalogItemGet RPC finished.")
 	return ret, nil
 }

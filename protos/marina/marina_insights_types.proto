@@ -1,0 +1,339 @@
+/*
+ * Copyright (c) 2023 Nutanix Inc. All rights reserved.
+ *
+ * Author: rishabh.gupta@nutanix.com
+ */
+
+syntax = "proto2";
+
+package protos.marina;
+
+option go_package = "protos/marina";
+
+/********************* Start messages for Insights ***************************/
+
+// Represents the generic list of data types supported.
+message DataValue {
+  // Exactly one of the following values is required.
+
+  message StrList {
+    // List of strings.
+    repeated string value_list = 1;
+  }
+
+  message Int64List {
+    // List of 64bit integers.
+    repeated int64 value_list = 1;
+  }
+
+  message BoolList {
+    // List of booleans.
+    repeated bool value_list = 1;
+  }
+
+  message UInt64List {
+    // List of 64bit unsigned integers.
+    repeated uint64 value_list = 1;
+  }
+
+  message FloatList {
+    // List of floats.
+    repeated float value_list = 1;
+  }
+
+  message DoubleList {
+    // List of doubles.
+    repeated double value_list = 1;
+  }
+
+  message BytesList {
+    // List of bytes.
+    repeated bytes value_list = 1;
+  }
+
+  // This is for storing histogram data. We support 2 different kind of
+  // histograms.
+  // Type 1:
+  // -------
+  // For histograms with keys which can be represented in a range,
+  // we have cumulative histogram. For example, histogram for latency, age, etc
+  // which can be bucketized based on upper bound. Sample buckets would be
+  // no. of requests under 1 sec latency, no. of requests under 5 sec latency,
+  // etc. So incase of cumulative histogram, the bucket_upper_bounds_list
+  // will be a list of numerically increasing numbers representing the upper
+  // bound value of each bucket and bucket_counts_list consist of cumulative
+  // count of data points whose value is less than or equal to upper bound.
+  // With this definition, the length of both the lists should always be the
+  // same.
+  // Example: bucket_upper_bounds_list: [10, 100, 500, 1000]
+  //                bucket_counts_list: [15, 25, 30, 50]
+  // This indicates that, there were 15 data points whose value is <= 10,
+  // 25 data points with value <= 100 and so on. Note that the count here is
+  // cumulative. The 25 data points under value 100 also includes the 15 data
+  // points under value 10.
+  //
+  // Type 2:
+  // -------
+  // For histograms with keys which cannot be represented as ranges, we have
+  // count based histograms. For example, histogram of RPC Error types, Gender,
+  // etc. Sample buckets would be no.of RPC errors with Timeout error, no. of
+  // RPC errors with Internal Server error, etc. So incase of count based
+  // histograms, bucket_keys_list will be a list of strings representing the
+  // key for each bucket and bucket_counts_list consist of total count of data
+  // points with that particular key. With this definition, the length of both
+  // the lists should always be the same.
+  // Example: bucket_keys_list: ["Error type1", "Error type2", "Error type3"]
+  //        bucket_counts_list: [15, 25, 30]
+  // This indicates that, there were 15 data points with Error typ1, 25 data
+  // points with Error type2 and so on.
+  message Histogram {
+    oneof BucketsList {
+      // For cumulative histogram
+      FloatList bucket_upper_bounds_list = 1;
+      // For count based histogram
+      StrList bucket_keys_list = 2;
+    }
+    repeated uint64 bucket_counts_list = 3;
+  }
+
+  // Fields 1 to 15 are deprecated.
+
+  oneof ValueType {
+    string str_value = 16;
+
+    int64 int64_value = 17;
+
+    bool bool_value = 18;
+
+    uint64 uint64_value = 19;
+
+    float float_value = 20;
+
+    double double_value = 21;
+
+    // This is for storing blobs that are not interepreted by the DB. This data
+    // type cannot be used in any of the filtering clauses such as group by,
+    // where, aggregate columns etc.
+    bytes bytes_value = 22;
+
+    // Important: Fields between 10 to 15 are deprecated. Do not use them.
+    StrList str_list = 23;
+
+    // List of 64bit integers.
+    Int64List int64_list = 24;
+
+    // List of booleans.
+    BoolList bool_list = 25;
+
+    // List of 64bit unsigned integers.
+    UInt64List uint64_list = 26;
+
+    // List of floats.
+    FloatList float_list = 27;
+
+    // List of doubles.
+    DoubleList double_list = 28;
+
+    // List of bytes.
+    BytesList bytes_list = 29;
+
+    // Marshalled JSON object stored as bytes.
+    bytes json_obj = 30;
+
+    // Histogram data.
+    Histogram histogram_obj = 31;
+  }
+
+  // This field should not be set by the client API.
+  optional uint64 count = 8 [default = 1];
+}
+
+/************* Start of message definitions related to queries ***************/
+
+// Defines the leaf of an expression tree. It is either a column or a data
+// value. Examples of a column are 'num_iops' and 'disk_size'. A value can
+// be any string or numeric constant.
+message LeafExpression {
+  // Either 'column' or 'value' is required.
+  optional string column = 1;
+
+  optional DataValue value = 2;
+
+  // Optional. Supported only by 'Nusights - Nutanix Insights'.
+  // The namespace the column belongs to.
+  optional string column_namespace = 3 [default = "_default_"];
+
+  // If 'column' is an entity type, the query processing pipeline creates
+  // ancestor relationship tree through the parent links (aka foriegn key
+  // references) in the entity. For instance, virtual_disk has a reference to
+  // vm, and vm has a reference to cluster, insights will filter virtual_disk
+  // entities based on the cluster to which they belong. If the client wants
+  // insights server to make use of immediate entity-type attribute value for
+  // filtering instead of the ancestor relationship, it could set
+  // 'suppress_ancestor_tree_traversal' to true. Note that if the same column
+  // is specified in multiple leaf expressions,
+  // 'suppress_ancestor_tree_traversal' should be set for all the instances or
+  // none.
+  optional bool suppress_ancestor_tree_traversal = 4 [ default = false];
+}
+
+// This defines an expression that evaluates to a non-boolean value, for
+// example: column1 + column2, column1.
+message Expression {
+  enum Operator {
+    kPlus   = 0;
+    kMinus  = 1;
+    kMult   = 2;
+    kDiv    = 3;
+    kMod    = 4;
+    kConcat = 5;
+  }
+
+  // As specified in the grammar listed in the definition of BooleanExpression,
+  // an expression can be exactly one of the following:
+  // - lhs operator rhs
+  // - leaf
+
+  optional Expression lhs = 1;
+
+  optional Operator operator = 2;
+
+  optional Expression rhs = 3;
+
+  optional LeafExpression leaf = 4;
+}
+
+// This defines a comparison expression that evaluates to a boolean value, for
+// example: lhs != rhs, lhs >= rhs and so on.
+message ComparisonExpression {
+  enum Operator {
+    kEQ = 0;
+    kNE = 1;
+    kLT = 2;
+    kLE = 3;
+    kGT = 4;
+    kGE = 5;
+
+    // Performs a regex match for the specified column and includes those
+    // entities for which the regex match with the specified 'value' succeeds.
+    // If the column value is not specified in comparison expression
+    // (wild card), insights server would iterate over all the attributes for
+    // the entities and include those entities for which there is a regex match.
+    kLike = 6;
+
+    // Includes the entities for which the 'rhs' expression is a subset of the
+    // metric values specified in the 'lhs'.
+    kContains = 7;
+
+    // Includes the entities for which the metric values specified in the 'lhs'
+    // is a subset of 'rhs'.
+    kIN = 8;
+
+    // If the intersection of LHS and RHS is not empty, then kAny will evaluate
+    // to true, otherwise false.
+    // In the case of entity type attributes, the LHS is the set of the
+    // ancestor UUIDs. All the UUIDs should be of the same ancestor type as the
+    // type mentioned in the LHS column name.
+    // In the case of the normal attributes, the LHS is the attribute value
+    // list.
+    kAny = 9;
+
+    // This is a unary operator to check for the existence of a value for the
+    // column specified in the LHS leaf expression.
+    kExists = 10;
+
+    // This operator is only valid for conditional watches(no support in query).
+    // This is a unary operator to check that value for the attribute specified
+    // has changed from the previous value. This includes changes from a null
+    // value to a non-null value and vice versa.
+    // For detailed semantics of this operator especially with respect to
+    // current state filtering, please refer to:
+    // main/insights/insights_server/watch/watches_framework_guarantee.txt
+    kChanged = 11;
+  }
+
+  // Required.
+  optional Expression lhs = 1;
+
+  // Required.
+  optional Operator operator = 2;
+
+  // Required.
+  optional Expression rhs = 3;
+}
+
+// Defines a general boolean expression, as specified by the following grammar:
+//
+// BooleanExpression -> BooleanExpression BooleanOperator BooleanExpression |
+//                      NOT BooleanExpression |
+//                      ComparisonExpression
+// BooleanOperator   -> AND | OR
+//
+// ComparisonExpression -> Expression ComparisonOperator Expression
+// ComparisonOperator   -> EQ | NE | GT | GE | LT | LE | LIKE | CONTAINS | IN
+//
+// Expression         -> Expression ExpressionOperator Expression |
+//                       LeafExpression
+// ExpressionOperator -> PLUS | MINUS | MULT | DIV | MOD | CONCAT
+// LeafExpression     -> Column | Value
+message BooleanExpression {
+  enum Operator {
+    kAnd = 0;
+    kOr = 1;
+    kNot = 2;
+  }
+
+  // From the above grammar, a boolean expression can be exactly one
+  // of the following:
+  // - lhs operator rhs (where operator = AND or OR)
+  // - operator lhs     (where operator = NOT)
+  // - comparison_expr
+
+  optional BooleanExpression lhs = 1;
+
+  optional Operator operator = 2;
+
+  optional BooleanExpression rhs = 3;
+
+  optional ComparisonExpression comparison_expr = 4;
+}
+
+message QueryOrderBy {
+  enum SortOrder {
+    kAscending = 0;
+    kDescending = 1;
+  }
+
+  // When sorting using a time-series column, we need to map the multiple
+  // values in the time-series to a single value. This specifies how we do
+  // the mapping.
+  enum SortKey {
+    // Use the maximum value of the column in the time range.
+    kMax = 0;
+    // Use the minimum value of the column in the time range.
+    kMin = 1;
+    // Use the first value of the column in the time range.
+    kFirst = 2;
+    // Use the last value of the column in the time range.
+    kLast = 3;
+    // Use the latest value of the column and ignore the other values
+    // in the time range.
+    kLatest = 4;
+    // Use the avg value of the column in the time range.
+    // It takes non-numeric values as 0.
+    // If all data are non-numeric, an error of kInvalidRequest will be thrown.
+    // It only works for raw column sort and group sort on aggregate column.
+    kAvg = 5;
+  }
+
+  // Optional. Supported only by 'Nusights - Nutanix Insights'.
+  // Set this field if the column belongs to a namespace other than '_default_'.
+  optional string sort_column_namespace = 4 [default = "_default_"];
+
+  optional string sort_column = 1;
+
+  optional SortOrder sort_order = 2 [default = kAscending];
+
+  // TODO(swagat) : Replace default to kLatest after implementing it.
+  optional SortKey sort_key = 3 [default = kLast];
+}

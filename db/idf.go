@@ -32,6 +32,8 @@ const (
 	CatalogItem EntityType = iota
 	File
 	Image
+	RateLimit
+	EntityCapability
 )
 
 func (entityType EntityType) ToString() string {
@@ -42,6 +44,10 @@ func (entityType EntityType) ToString() string {
 		return "file_info"
 	case Image:
 		return "image_info"
+	case RateLimit:
+		return "catalog_rate_limit_info"
+	case EntityCapability:
+		return "abac_entity_capability"
 	}
 	return "unknown"
 }
@@ -126,4 +132,15 @@ func (idf *IdfClient) DeleteEntities(ctx context.Context, cpdbIfc cpdb.CPDBClien
 		}
 		log.Warningf("Could not delete %s. Retrying...", msg)
 	}
+}
+
+func (idf *IdfClient) GetEntitiesWithMetrics(ctx context.Context, arg *insights_interface.GetEntitiesWithMetricsArg,
+	ret *insights_interface.GetEntitiesWithMetricsRet) error {
+
+	err := idf.IdfSvc.SendMsg("GetEntitiesWithMetrics", arg, ret, idf.Retry)
+	if err != nil {
+		errMsg := fmt.Sprintf("Failed to get entities from IDF: %v", err)
+		return marinaError.ErrRetry.SetCauseAndLog(errors.New(errMsg))
+	}
+	return nil
 }

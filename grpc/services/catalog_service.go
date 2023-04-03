@@ -17,9 +17,9 @@ import (
 	"github.com/nutanix-core/acs-aos-go/ergon"
 	"github.com/nutanix-core/acs-aos-go/nutanix/util-go/tracer"
 	"github.com/nutanix-core/acs-aos-go/nutanix/util-go/uuid4"
-
 	marinaError "github.com/nutanix-core/content-management-marina/errors"
 	"github.com/nutanix-core/content-management-marina/grpc/catalog/catalog_item"
+	"github.com/nutanix-core/content-management-marina/grpc/catalog/rate_limit"
 	"github.com/nutanix-core/content-management-marina/interface/external"
 	internal "github.com/nutanix-core/content-management-marina/interface/local"
 	marinaIfc "github.com/nutanix-core/content-management-marina/protos/marina"
@@ -36,6 +36,8 @@ type MarinaServiceInterface interface {
 	CatalogItemCreate(ctx context.Context, arg *marinaIfc.CatalogItemCreateArg) (*marinaIfc.CatalogItemCreateRet, error)
 	CatalogItemUpdate(ctx context.Context, arg *marinaIfc.CatalogItemUpdateArg) (*marinaIfc.CatalogItemUpdateRet, error)
 	CatalogMigratePc(ctx context.Context, arg *marinaIfc.CatalogMigratePcArg) (*marinaIfc.CatalogMigratePcRet, error)
+
+	CatalogRateLimitGet(ctx context.Context, arg *marinaIfc.CatalogRateLimitGetArg) (*marinaIfc.CatalogRateLimitGetRet, error)
 }
 
 func (s *MarinaServer) asyncHandler(ctx context.Context, request proto.Message, operation string) ([]byte, error) {
@@ -67,14 +69,15 @@ func (s *MarinaServer) asyncHandler(ctx context.Context, request proto.Message, 
 	return taskUuid, nil
 }
 
+// CATALOG ITEM RPCs
+
 func (s *MarinaServer) CatalogItemGet(ctx context.Context, arg *marinaIfc.CatalogItemGetArg) (
 	*marinaIfc.CatalogItemGetRet, error) {
 
 	span, ctx := tracer.StartSpan(ctx, "catalogitem-get")
 	defer span.Finish()
 
-	return catalog_item.CatalogItemGet(ctx, arg,
-		external.Interfaces().CPDBIfc(), internal.Interfaces().UuidIfc())
+	return catalog_item.CatalogItemGet(ctx, arg, external.Interfaces().CPDBIfc(), internal.Interfaces().UuidIfc())
 }
 
 func (s *MarinaServer) CatalogItemDelete(ctx context.Context, arg *marinaIfc.CatalogItemDeleteArg) (
@@ -131,4 +134,15 @@ func (s *MarinaServer) CatalogMigratePc(ctx context.Context, arg *marinaIfc.Cata
 		TaskUuid: taskUuid,
 	}
 	return ret, nil
+}
+
+// RATE LIMIT RPCs
+
+func (s *MarinaServer) CatalogRateLimitGet(ctx context.Context, arg *marinaIfc.CatalogRateLimitGetArg) (
+	*marinaIfc.CatalogRateLimitGetRet, error) {
+
+	return rate_limit.CatalogRateLimitGet(ctx, arg, external.Interfaces().IdfIfc(), external.Interfaces().CPDBIfc(),
+		internal.Interfaces().AuthzIfc(), external.Interfaces().IamIfc(), internal.Interfaces().MetadataIfc(),
+		internal.Interfaces().OdataIfc(), external.Interfaces().CategoryIfc(), external.Interfaces().FilterIfc(),
+		external.Interfaces().ZeusConfig())
 }

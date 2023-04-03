@@ -16,6 +16,8 @@ import (
 
 	log "k8s.io/klog/v2"
 
+	categoryUtil "github.com/nutanix-core/acs-aos-go/aplos/categories/category_util"
+	filterUtil "github.com/nutanix-core/acs-aos-go/aplos/categories/filter_util"
 	ergonClient "github.com/nutanix-core/acs-aos-go/ergon/client"
 	"github.com/nutanix-core/acs-aos-go/insights/insights_interface"
 	cpdb "github.com/nutanix-core/acs-aos-go/nusights/util/db"
@@ -30,8 +32,10 @@ import (
 )
 
 type MarinaExternalInterfaces interface {
+	CategoryIfc() categoryUtil.CategoryUtilInterface
 	CPDBIfc() cpdb.CPDBClientInterface
 	ErgonIfc() ergonClient.Ergon
+	FilterIfc() filterUtil.FilterUtilInterface
 	IamIfc() authz_cache.IamClientIfc
 	IdfIfc() db.IdfClientInterface
 	SerialExecutor() serial_executor.SerialExecutorIfc
@@ -40,8 +44,10 @@ type MarinaExternalInterfaces interface {
 }
 
 type singletonObject struct {
+	categoryIfc    categoryUtil.CategoryUtilInterface
 	cpdbIfc        cpdb.CPDBClientInterface
 	ergonIfc       ergonClient.Ergon
+	filterIfc      filterUtil.FilterUtilInterface
 	iamIfc         authz_cache.IamClientIfc
 	idfIfc         db.IdfClientInterface
 	serialExecutor serial_executor.SerialExecutorIfc
@@ -63,12 +69,16 @@ var (
 // InitSingletonService - Initialize a singleton Marina service
 func InitSingletonService() {
 	singletonServiceOnce.Do(func() {
+		cpdbIfc := cpdb.NewCPDBService(utils.HostAddr, uint16(*insights_interface.InsightsPort))
+		insightsIfc := db.InsightsServiceInterface()
 		zkSession := initZkSession()
 		singleton = &singletonObject{
-			cpdbIfc:        cpdb.NewCPDBService(utils.HostAddr, uint16(*insights_interface.InsightsPort)),
+			categoryIfc:    categoryUtil.NewCategoryUtilIfc(cpdbIfc, insightsIfc),
+			cpdbIfc:        cpdbIfc,
 			ergonIfc:       ergonClient.NewErgonService(utils.HostAddr, ergonClient.DefaultErgonPort),
+			filterIfc:      filterUtil.NewFilterUtilIfc(cpdbIfc),
 			iamIfc:         newIamClient(),
-			idfIfc:         db.IdfClientWithRetry(),
+			idfIfc:         db.IdfClientWithRetry(insightsIfc),
 			serialExecutor: serial_executor.NewSerialExecutor(),
 			zeusConfig:     marinaZeus.InitConfigCache(zkSession),
 			zkSession:      zkSession,
@@ -77,13 +87,16 @@ func InitSingletonService() {
 }
 
 // GetSingletonServiceWithParams - Initialize a singleton Marina service with params. Should only be used in UTs
-func GetSingletonServiceWithParams(cpdbService cpdb.CPDBClientInterface, ergonService ergonClient.Ergon,
-	idfService db.IdfClientInterface, serialExecutor serial_executor.SerialExecutorIfc,
-	zeusConfig marinaZeus.ConfigCache, zkSession *zeus.ZookeeperSession) *singletonObject {
+func GetSingletonServiceWithParams(categoryIfc categoryUtil.CategoryUtilInterface, cpdbService cpdb.CPDBClientInterface,
+	ergonService ergonClient.Ergon, filterIfc filterUtil.FilterUtilInterface, idfService db.IdfClientInterface,
+	serialExecutor serial_executor.SerialExecutorIfc, zeusConfig marinaZeus.ConfigCache,
+	zkSession *zeus.ZookeeperSession) *singletonObject {
 
 	return &singletonObject{
+		categoryIfc:    categoryIfc,
 		cpdbIfc:        cpdbService,
 		ergonIfc:       ergonService,
+		filterIfc:      filterIfc,
 		idfIfc:         idfService,
 		serialExecutor: serialExecutor,
 		zeusConfig:     zeusConfig,
@@ -96,6 +109,11 @@ func Interfaces() MarinaExternalInterfaces {
 	return singleton
 }
 
+// CategoryIfc - Returns the singleton for CategoryUtilInterface
+func (s *singletonObject) CategoryIfc() categoryUtil.CategoryUtilInterface {
+	return s.categoryIfc
+}
+
 // CPDBIfc - Returns the singleton for CPDBClientInterface
 func (s *singletonObject) CPDBIfc() cpdb.CPDBClientInterface {
 	return s.cpdbIfc
@@ -104,6 +122,11 @@ func (s *singletonObject) CPDBIfc() cpdb.CPDBClientInterface {
 // ErgonIfc returns the singleton for Ergon Interface
 func (s *singletonObject) ErgonIfc() ergonClient.Ergon {
 	return s.ergonIfc
+}
+
+// FilterIfc - Returns the singleton for FilterUtilInterface
+func (s *singletonObject) FilterIfc() filterUtil.FilterUtilInterface {
+	return s.filterIfc
 }
 
 // IamIfc returns the singleton for IamClientIfc

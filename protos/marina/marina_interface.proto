@@ -218,7 +218,42 @@ message FileImportTaskRet {
 
 //-----------------------------------------------------------------------------
 
+message CatalogRateLimitGetArg {
+  // List of Rate Limit UUIDs.
+  repeated bytes rate_limit_uuid_list = 1;
+
+  // Whether to include the status of each Rate Limit in the response or not.
+  optional bool include_status = 2  [ default = true ];
+
+  // IDF Params for filtering & sorting support
+  optional IdfParameters idf_params = 3;
+
+  // Flag to return E-Tag with response
+  optional bool include_etag = 4 [ default = false ];
+
+  // If true, include the metadata of each Rate Limit.
+  optional bool include_metadata = 5 [ default = false ];
+}
+
+message CatalogRateLimitGetRet {
+  // List of rate limit objects.
+  repeated CatalogRateLimitInfo rate_limit_info_list = 1;
+
+  // Total number of entities, for response metadata.
+  optional int64 total_entity_count = 2;
+
+  // E-Tag value for the entity, only used while returning single entity
+  optional string etag = 3;
+}
+
+//-----------------------------------------------------------------------------
+
 service Marina {
+
+  //---------------------------------------------------------------------------
+  // Catalog Item
+  //---------------------------------------------------------------------------
+
   // Returns information about a set of catalog items.
   rpc CatalogItemGet(CatalogItemGetArg)
     returns (CatalogItemGetRet);
@@ -250,7 +285,17 @@ service Marina {
   rpc CatalogMigratePc(CatalogMigratePcArg)
       returns (CatalogMigratePcRet);
 
+  //---------------------------------------------------------------------------
+  // File Repo
+  //---------------------------------------------------------------------------
+
   // Imports a source and creates a new file in the file repository.
   rpc FileImport(FileImportArg)
       returns (FileImportRet);
+
+  //---------------------------------------------------------------------------
+  // Rate limit
+  //---------------------------------------------------------------------------
+      rpc CatalogRateLimitGet(CatalogRateLimitGetArg)
+      returns (CatalogRateLimitGetRet);
 }
