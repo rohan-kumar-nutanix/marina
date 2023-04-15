@@ -58,7 +58,7 @@ type singletonObject struct {
 
 const (
 	zkPort      = 9876
-	zkTimeOut   = time.Duration(20) * time.Second
+	zkTimeOut   = time.Duration(25) * time.Minute
 	serviceName = "marina"
 )
 

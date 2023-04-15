@@ -12,7 +12,6 @@ package grpc
 
 import (
 	"net"
-
 	"strconv"
 	"sync"
 
@@ -23,9 +22,8 @@ import (
 	"google.golang.org/grpc"
 	log "k8s.io/klog/v2"
 
-	"github.com/nutanix-core/content-management-marina/protos/apis/cms/v4/content"
-
 	"github.com/nutanix-core/content-management-marina/grpc/services"
+	"github.com/nutanix-core/content-management-marina/protos/apis/cms/v4/content"
 	marinaIfc "github.com/nutanix-core/content-management-marina/protos/marina"
 )
 

@@ -94,12 +94,12 @@ message PcTaskWalRecord {
 
   // The proxy task WAL.
   optional ProxyTaskWal proxy_task_wal = 4;
-<<<<<<< HEAD
-=======
+
+  // Request UUID.
+  optional bytes request_uuid = 5;
 
   // The WarehouseWal
-  optional WarehouseWal warehouse_wal = 5;
->>>>>>> 59d0ea6 (Warehouse Create draft)
+  optional WarehouseWal warehouse_wal = 6;
 }
 
 // Proxy task WAL.

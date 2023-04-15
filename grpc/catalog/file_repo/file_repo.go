@@ -56,7 +56,6 @@ func (*FileRepoImpl) GetFile(ctx context.Context, cpdbIfc cpdb.CPDBClientInterfa
 		return nil, marinaError.ErrInternalError().SetCauseAndLog(errors.New(errMsg))
 
 	}
-
 	file := &marinaIfc.FileInfo{}
 	err = entity.DeserializeEntity(file)
 	if err != nil {
