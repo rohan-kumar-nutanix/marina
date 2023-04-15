@@ -1,0 +1,89 @@
+/*
+ * Generated file common/v1/response/response.proto.
+ *
+ * Product version: 1.0-SNAPSHOT
+ *
+ * Part of the Content Management System APIs
+ *
+ * (c) 2023 Nutanix Inc.  All rights reserved
+ *
+ */
+
+syntax = "proto2";
+
+package common.v1.response;
+
+option java_multiple_files = true;
+option java_package = "common.v1.response";
+option go_package = "common/v1/response";
+
+import "protos/apis/common/v1/config/config.proto";
+
+/*
+ * A HATEOAS style link for the response.  Each link contains a user friendly name identifying the link and an address for retrieving the particular resource. 
+ */
+
+message ApiLink {
+  /*
+   * The URL at which the entity described by this link can be accessed. 
+   */
+
+  optional string href = 1001;
+  /*
+   * A name that identifies the relationship of this link to the object that is returned by the URL.  The special value of \"self\" identifies the URL for the object. 
+   */
+
+  optional string rel = 1002;
+}
+/*
+ * The metadata associated with an API response. Always present and minimally contains the self-link for the API request that produced this response.  Also contains pagination data for paginated requests. 
+ */
+
+message ApiResponseMetadata {
+  /*
+   * 
+   */
+
+  repeated common.v1.config.Flag flags = 1001;
+    /*
+   * 
+   */
+
+  repeated common.v1.response.ApiLink links = 1002;
+    /*
+   * 
+   */
+
+  optional int32 total_available_results = 1003;
+  /*
+   * 
+   */
+
+  repeated common.v1.config.Message messages = 1004;
+    /*
+   * An array of entity-specific metadata 
+   */
+
+  repeated common.v1.config.KVPair extra_info = 1005;
+  }
+/*
+ * 
+ */
+
+message ExternalizableAbstractModel {
+  /*
+   * 
+   */
+
+  optional common.v1.config.TenantAwareModel tenant_info = 1001;
+  /*
+   * A globally unique identifier of an instance that is suitable for external consumption. 
+   */
+
+  optional string ext_id = 1002;
+  /*
+   * A HATEOAS style link for the response.  Each link contains a user friendly name identifying the link and an address for retrieving the particular resource. 
+   */
+
+  repeated common.v1.response.ApiLink links = 1003;
+  }

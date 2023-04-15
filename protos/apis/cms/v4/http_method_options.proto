@@ -1,0 +1,24 @@
+syntax = "proto2";
+
+package cms.v4;
+
+option java_multiple_files = true;
+option java_package = "cms.v4";
+option go_package = "cms/v4";
+
+import "google/protobuf/descriptor.proto";
+
+message HttpMethodOptions {
+  optional string POST = 1;
+  optional string PATCH = 2;
+  optional string PUT = 3;
+  optional string DELETE = 4;
+  optional string GET = 5;
+  optional string HEAD = 6;
+  optional string OPTIONS = 7;
+  optional string TRACE = 8;
+}
+
+extend google.protobuf.MethodOptions {
+  optional HttpMethodOptions ntnx_api_http = 1000;
+}

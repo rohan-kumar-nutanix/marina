@@ -1,0 +1,230 @@
+/*
+ * Generated file cms/v4/config.proto.
+ *
+ * Product version: 1.0-SNAPSHOT
+ *
+ * Part of the Content Management System APIs
+ *
+ * (c) 2023 Nutanix Inc.  All rights reserved
+ *
+ */
+
+syntax = "proto2";
+
+package cms.v4.config;
+
+option java_multiple_files = true;
+option java_package = "cms.v4.config";
+option go_package = "cms/v4/config";
+
+import "protos/apis/cms/v4/api_version.proto";
+
+import "protos/apis/cms/v4/http_method_options.proto";
+import "protos/apis/cms/v4/config/config.proto";
+
+service SecurityPolicyService {
+    option (ntnx_api_version) = {
+    MAJOR: "4",
+    MINOR: "0",
+    RELEASE_TYPE: "a",
+    RELEASE_TYPE_REVISION: "1"
+    };
+
+
+  /*
+   * uri: /cms/v4/config/security-policies
+   * http method: POST
+   * Create Security Policy.
+   * Create Security Policy.
+   */
+  rpc createSecurityPolicy(CreateSecurityPolicyArg) returns (CreateSecurityPolicyRet) {
+    option (ntnx_api_http) = {
+      POST: "/cms/v4/config/security-policies"
+    };
+  }
+  /*
+   * uri: /cms/v4/config/security-policies/{extId}
+   * http method: DELETE
+   * Delete Security Policy by UUID.
+   * Delete Security Policy by UUID.
+   */
+  rpc deleteSecurityPolicyByExtId(DeleteSecurityPolicyByExtIdArg) returns (DeleteSecurityPolicyByExtIdRet) {
+    option (ntnx_api_http) = {
+      DELETE: "/cms/v4/config/security-policies/{extId}"
+    };
+  }
+  /*
+   * uri: /cms/v4/config/security-policies/{extId}
+   * http method: GET
+   * Get Security Policy by UUID.
+   * Get Security Policy by UUID.
+   */
+  rpc getSecurityPolicyByExtId(GetSecurityPolicyByExtIdArg) returns (GetSecurityPolicyByExtIdRet) {
+    option (ntnx_api_http) = {
+      GET: "/cms/v4/config/security-policies/{extId}"
+    };
+  }
+  /*
+   * uri: /cms/v4/config/security-policies
+   * http method: GET
+   * List all Security Policies.
+   * List all Security Policies.
+   */
+  rpc listSecurityPolicies(ListSecurityPoliciesArg) returns (ListSecurityPoliciesRet) {
+    option (ntnx_api_http) = {
+      GET: "/cms/v4/config/security-policies"
+    };
+  }
+  /*
+   * uri: /cms/v4/config/security-policies/{extId}
+   * http method: PUT
+   * Update Security Policy by UUID.
+   * Update Security Policy by UUID.
+   */
+  rpc updateSecurityPolicyByExtId(UpdateSecurityPolicyByExtIdArg) returns (UpdateSecurityPolicyByExtIdRet) {
+    option (ntnx_api_http) = {
+      PUT: "/cms/v4/config/security-policies/{extId}"
+    };
+  }
+}
+
+/*
+ * message containing all attributes expected in the createSecurityPolicy request
+ */
+
+message CreateSecurityPolicyArg {
+  /*
+   * Create Security Policy.
+   */
+  optional cms.v4.config.SecurityPolicy body = 2001;
+}
+
+/*
+ * message containing all attributes expected in the createSecurityPolicy response
+ */
+message CreateSecurityPolicyRet {
+  /*
+   * field containing expected response content
+   */
+  optional cms.v4.config.CreateSecurityPolicyResponse content = 999;
+  /*
+   * map containing headers expected in response
+   */
+  map<string, string> reserved = 1000;
+}
+/*
+ * message containing all attributes expected in the deleteSecurityPolicyByExtId request
+ */
+
+message DeleteSecurityPolicyByExtIdArg {
+  /*
+   * Globally unique identifier of a Security Policy. It should be of type UUID.
+   */
+  optional string ext_id = 2001;
+}
+
+/*
+ * message containing all attributes expected in the deleteSecurityPolicyByExtId response
+ */
+message DeleteSecurityPolicyByExtIdRet {
+  /*
+   * field containing expected response content
+   */
+  optional cms.v4.config.DeleteSecurityPolicyResponse content = 999;
+  /*
+   * map containing headers expected in response
+   */
+  map<string, string> reserved = 1000;
+}
+/*
+ * message containing all attributes expected in the getSecurityPolicyByExtId request
+ */
+
+message GetSecurityPolicyByExtIdArg {
+  /*
+   * A URL query parameter that specifies the page number of the result set.  Must be a positive integer between 0 and the maximum number of pages that are available for that resource. Any number out of this range will lead to no results being returned.
+
+   */
+  optional int32 _page = 2001;
+  /*
+   * A URL query parameter that specifies the total number of records returned in the result set.  Must be a positive integer between 0 and 100. Any number out of this range will lead to a validation error. If the limit is not provided a default value of 50 records will be returned in the result set.
+
+   */
+  optional int32 _limit = 2002;
+  /*
+   * Globally unique identifier of a Security Policy. It should be of type UUID.
+   */
+  optional string ext_id = 2005;
+}
+
+/*
+ * message containing all attributes expected in the getSecurityPolicyByExtId response
+ */
+message GetSecurityPolicyByExtIdRet {
+  /*
+   * field containing expected response content
+   */
+  optional cms.v4.config.GetSecurityPolicyResponse content = 999;
+  /*
+   * map containing headers expected in response
+   */
+  map<string, string> reserved = 1000;
+}
+/*
+ * message containing all attributes expected in the listSecurityPolicies request
+ */
+
+message ListSecurityPoliciesArg {
+  /*
+   * A URL query parameter that specifies the page number of the result set.  Must be a positive integer between 0 and the maximum number of pages that are available for that resource. Any number out of this range will lead to no results being returned.
+
+   */
+  optional int32 _page = 2001;
+  /*
+   * A URL query parameter that specifies the total number of records returned in the result set.  Must be a positive integer between 0 and 100. Any number out of this range will lead to a validation error. If the limit is not provided a default value of 50 records will be returned in the result set.
+
+   */
+  optional int32 _limit = 2002;
+}
+
+/*
+ * message containing all attributes expected in the listSecurityPolicies response
+ */
+message ListSecurityPoliciesRet {
+  /*
+   * field containing expected response content
+   */
+  optional cms.v4.config.ListSecurityPolicyResponse content = 999;
+  /*
+   * map containing headers expected in response
+   */
+  map<string, string> reserved = 1000;
+}
+/*
+ * message containing all attributes expected in the updateSecurityPolicyByExtId request
+ */
+
+message UpdateSecurityPolicyByExtIdArg {
+  /*
+   * Globally unique identifier of a Security Policy. It should be of type UUID.
+   */
+  optional string ext_id = 2001;
+  /*
+   * Update Security Policy by UUID.
+   */
+  optional cms.v4.config.SecurityPolicy body = 2002;
+}
+
+/*
+ * message containing all attributes expected in the updateSecurityPolicyByExtId response
+ */
+message UpdateSecurityPolicyByExtIdRet {
+  /*
+   * field containing expected response content
+   */
+  optional cms.v4.config.UpdateSecurityPolicyResponse content = 999;
+  /*
+   * map containing headers expected in response
+   */
+  map<string, string> reserved = 1000;
+}

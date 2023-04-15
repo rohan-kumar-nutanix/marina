@@ -1,0 +1,415 @@
+/*
+ * Generated file cms/v4/config/config.proto.
+ *
+ * Product version: 1.0-SNAPSHOT
+ *
+ * Part of the Content Management System APIs
+ *
+ * (c) 2023 Nutanix Inc.  All rights reserved
+ *
+ */
+
+syntax = "proto2";
+
+package cms.v4.config;
+
+option java_multiple_files = true;
+option java_package = "cms.v4.config";
+option go_package = "cms/v4/config";
+
+import "protos/apis/prism/v4/config/config.proto";
+import "protos/apis/cms/v4/error/error.proto";
+import "protos/apis/common/v1/response/response.proto";
+import "protos/apis/cms/v4/content/content.proto";
+import "protos/apis/common/v1/config/config.proto";
+import "google/protobuf/timestamp.proto";
+
+/*
+ * OneOf item wrapper message
+ */
+
+message TaskReferenceWrapper {
+  /*
+   * Value field in oneOf item wrapper message
+   */
+
+  optional prism.v4.config.TaskReference value = 1000;
+}
+/*
+ * OneOf item wrapper message
+ */
+
+message ErrorResponseWrapper {
+  /*
+   * Value field in oneOf item wrapper message
+   */
+
+  optional cms.v4.error.ErrorResponse value = 1000;
+}
+/*
+ * REST response for all response codes in api path /cms/v4.0.a1/config/scanner-tools Post operation
+ */
+
+message CreateScannerToolConfigResponse {
+  /*
+   * REST response for all response codes in api path /cms/v4.0.a1/config/scanner-tools Post operation
+   */
+  oneof data {
+    /*
+     * 
+     */
+    cms.v4.config.TaskReferenceWrapper task_reference_data = 2001;
+    /*
+     * 
+     */
+    cms.v4.config.ErrorResponseWrapper error_response_data = 400;
+  }
+    /*
+   * 
+   */
+
+  optional common.v1.response.ApiResponseMetadata metadata = 1001;
+}
+/*
+ * REST response for all response codes in api path /cms/v4.0.a1/config/security-policies Post operation
+ */
+
+message CreateSecurityPolicyResponse {
+  /*
+   * REST response for all response codes in api path /cms/v4.0.a1/config/security-policies Post operation
+   */
+  oneof data {
+    /*
+     * 
+     */
+    cms.v4.config.TaskReferenceWrapper task_reference_data = 2001;
+    /*
+     * 
+     */
+    cms.v4.config.ErrorResponseWrapper error_response_data = 400;
+  }
+    /*
+   * 
+   */
+
+  optional common.v1.response.ApiResponseMetadata metadata = 1001;
+}
+/*
+ * REST response for all response codes in api path /cms/v4.0.a1/config/scanner-tools/{extId} Delete operation
+ */
+
+message DeleteScannerToolConfigResponse {
+  /*
+   * REST response for all response codes in api path /cms/v4.0.a1/config/scanner-tools/{extId} Delete operation
+   */
+  oneof data {
+    /*
+     * 
+     */
+    cms.v4.config.TaskReferenceWrapper task_reference_data = 2001;
+    /*
+     * 
+     */
+    cms.v4.config.ErrorResponseWrapper error_response_data = 400;
+  }
+    /*
+   * 
+   */
+
+  optional common.v1.response.ApiResponseMetadata metadata = 1001;
+}
+/*
+ * REST response for all response codes in api path /cms/v4.0.a1/config/security-policies/{extId} Delete operation
+ */
+
+message DeleteSecurityPolicyResponse {
+  /*
+   * REST response for all response codes in api path /cms/v4.0.a1/config/security-policies/{extId} Delete operation
+   */
+  oneof data {
+    /*
+     * 
+     */
+    cms.v4.config.TaskReferenceWrapper task_reference_data = 2001;
+    /*
+     * 
+     */
+    cms.v4.config.ErrorResponseWrapper error_response_data = 400;
+  }
+    /*
+   * 
+   */
+
+  optional common.v1.response.ApiResponseMetadata metadata = 1001;
+}
+/*
+ * OneOf item wrapper message
+ */
+
+message ScannerConfigWrapper {
+  /*
+   * Value field in oneOf item wrapper message
+   */
+
+  optional cms.v4.config.ScannerConfig value = 1000;
+}
+/*
+ * REST response for all response codes in api path /cms/v4.0.a1/config/scanner-tools/{extId} Get operation
+ */
+
+message GetScannerToolConfigResponse {
+  /*
+   * REST response for all response codes in api path /cms/v4.0.a1/config/scanner-tools/{extId} Get operation
+   */
+  oneof data {
+    /*
+     * 
+     */
+    cms.v4.config.ScannerConfigWrapper scanner_config_data = 2002;
+    /*
+     * 
+     */
+    cms.v4.config.ErrorResponseWrapper error_response_data = 400;
+  }
+    /*
+   * 
+   */
+
+  optional common.v1.response.ApiResponseMetadata metadata = 1001;
+}
+/*
+ * OneOf item wrapper message
+ */
+
+message SecurityPolicyWrapper {
+  /*
+   * Value field in oneOf item wrapper message
+   */
+
+  optional cms.v4.config.SecurityPolicy value = 1000;
+}
+/*
+ * REST response for all response codes in api path /cms/v4.0.a1/config/security-policies/{extId} Get operation
+ */
+
+message GetSecurityPolicyResponse {
+  /*
+   * REST response for all response codes in api path /cms/v4.0.a1/config/security-policies/{extId} Get operation
+   */
+  oneof data {
+    /*
+     * 
+     */
+    cms.v4.config.SecurityPolicyWrapper security_policy_data = 2002;
+    /*
+     * 
+     */
+    cms.v4.config.ErrorResponseWrapper error_response_data = 400;
+  }
+    /*
+   * 
+   */
+
+  optional common.v1.response.ApiResponseMetadata metadata = 1001;
+}
+/*
+ * REST response for all response codes in api path /cms/v4.0.a1/config/scanner-tools Get operation
+ */
+
+message ListScannerToolConfigResponse {
+  /*
+   * REST response for all response codes in api path /cms/v4.0.a1/config/scanner-tools Get operation
+   */
+  oneof data {
+    /*
+     * 
+     */
+    cms.v4.config.ScannerConfigWrapper scanner_config_data = 2002;
+    /*
+     * 
+     */
+    cms.v4.config.ErrorResponseWrapper error_response_data = 400;
+  }
+    /*
+   * 
+   */
+
+  optional common.v1.response.ApiResponseMetadata metadata = 1001;
+}
+/*
+ * REST response for all response codes in api path /cms/v4.0.a1/config/security-policies Get operation
+ */
+
+message ListSecurityPolicyResponse {
+  /*
+   * REST response for all response codes in api path /cms/v4.0.a1/config/security-policies Get operation
+   */
+  oneof data {
+    /*
+     * 
+     */
+    cms.v4.config.SecurityPolicyWrapper security_policy_data = 2002;
+    /*
+     * 
+     */
+    cms.v4.config.ErrorResponseWrapper error_response_data = 400;
+  }
+    /*
+   * 
+   */
+
+  optional common.v1.response.ApiResponseMetadata metadata = 1001;
+}
+/*
+ * Scan Status.
+ */
+message ScanStatusMessage {
+  enum ScanStatus {
+    UNKNOWN = 0;
+    REDACTED = 1;
+    ACTIVE = 2001;
+    INACTIVE = 2002;
+    ERROR = 2003;
+  }
+}
+
+/*
+ * Scanning Tool Configuration.
+ */
+
+message ScannerConfig {
+  /*
+   * 
+   */
+
+  optional common.v1.response.ExternalizableAbstractModel base = 2001;
+  /*
+   * Name of the Scanning Tool.
+   */
+
+  optional string name = 2002;
+  /*
+   * Description for the Security Policy.
+   */
+
+  optional string description = 2003;
+  /*
+   * Warehouse Item Type.
+   */
+
+  repeated cms.v4.content.ItemTypeMessage.ItemType image_types = 2004;
+    /*
+   * URL to access Scanning Tool.
+   */
+
+  optional string service_url = 2005;
+  /*
+   * Allow Insecure or Skip Certificate Validation.
+   */
+
+  optional bool allow_insecure = 2006 [default = false];
+  /*
+   * Service Token to access the service.
+   */
+
+  optional string access_token = 2007;
+  /*
+   * 
+   */
+
+  optional common.v1.config.Metadata metadata = 2008;
+}
+/*
+ * Security Policy Configuration.
+ */
+
+message SecurityPolicy {
+  /*
+   * 
+   */
+
+  optional common.v1.response.ExternalizableAbstractModel base = 2001;
+  /*
+   * Name for the Security Policy.
+   */
+
+  optional string name = 2002;
+  /*
+   * Description for the Security Policy.
+   */
+
+  optional string description = 2003;
+  /*
+   * Warehouse Item Type.
+   */
+
+  repeated cms.v4.content.ItemTypeMessage.ItemType image_types = 2004;
+    /*
+   * Last Time when scanning policy was last enforced.
+   */
+
+  optional google.protobuf.Timestamp last_run_time = 2005;
+  /*
+   * 
+   */
+
+  optional cms.v4.config.ScanStatusMessage.ScanStatus last_run_status = 2006;
+  /*
+   * Error Message during Policy Enforcement.
+   */
+
+  optional string error_message = 2007;
+  /*
+   * 
+   */
+
+  optional common.v1.config.Metadata metadata = 2008;
+}
+/*
+ * REST response for all response codes in api path /cms/v4.0.a1/config/scanner-tools/{extId} Put operation
+ */
+
+message UpdateScannerToolConfigResponse {
+  /*
+   * REST response for all response codes in api path /cms/v4.0.a1/config/scanner-tools/{extId} Put operation
+   */
+  oneof data {
+    /*
+     * 
+     */
+    cms.v4.config.TaskReferenceWrapper task_reference_data = 2001;
+    /*
+     * 
+     */
+    cms.v4.config.ErrorResponseWrapper error_response_data = 400;
+  }
+    /*
+   * 
+   */
+
+  optional common.v1.response.ApiResponseMetadata metadata = 1001;
+}
+/*
+ * REST response for all response codes in api path /cms/v4.0.a1/config/security-policies/{extId} Put operation
+ */
+
+message UpdateSecurityPolicyResponse {
+  /*
+   * REST response for all response codes in api path /cms/v4.0.a1/config/security-policies/{extId} Put operation
+   */
+  oneof data {
+    /*
+     * 
+     */
+    cms.v4.config.TaskReferenceWrapper task_reference_data = 2001;
+    /*
+     * 
+     */
+    cms.v4.config.ErrorResponseWrapper error_response_data = 400;
+  }
+    /*
+   * 
+   */
+
+  optional common.v1.response.ApiResponseMetadata metadata = 1001;
+}

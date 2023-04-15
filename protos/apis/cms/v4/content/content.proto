@@ -1,0 +1,591 @@
+/*
+ * Generated file cms/v4/content/content.proto.
+ *
+ * Product version: 1.0-SNAPSHOT
+ *
+ * Part of the Content Management System APIs
+ *
+ * (c) 2023 Nutanix Inc.  All rights reserved
+ *
+ */
+
+syntax = "proto2";
+
+package cms.v4.content;
+
+option java_multiple_files = true;
+option java_package = "cms.v4.content";
+option go_package = "cms/v4/content";
+
+import "protos/apis/prism/v4/config/config.proto";
+import "protos/apis/cms/v4/error/error.proto";
+import "protos/apis/common/v1/response/response.proto";
+import "google/protobuf/timestamp.proto";
+import "protos/apis/common/v1/config/config.proto";
+
+/*
+ * OneOf item wrapper message
+ */
+
+message TaskReferenceWrapper {
+  /*
+   * Value field in oneOf item wrapper message
+   */
+
+  optional prism.v4.config.TaskReference value = 1000;
+}
+/*
+ * OneOf item wrapper message
+ */
+
+message ErrorResponseWrapper {
+  /*
+   * Value field in oneOf item wrapper message
+   */
+
+  optional cms.v4.error.ErrorResponse value = 1000;
+}
+/*
+ * REST response for all response codes in api path /cms/v4.0.a1/content/warehouses/{extId}/warehouse-items Post operation
+ */
+
+message AddItemToWarehouseResponse {
+  /*
+   * REST response for all response codes in api path /cms/v4.0.a1/content/warehouses/{extId}/warehouse-items Post operation
+   */
+  oneof data {
+    /*
+     * 
+     */
+    cms.v4.content.TaskReferenceWrapper task_reference_data = 2001;
+    /*
+     * 
+     */
+    cms.v4.content.ErrorResponseWrapper error_response_data = 400;
+  }
+    /*
+   * 
+   */
+
+  optional common.v1.response.ApiResponseMetadata metadata = 1001;
+}
+/*
+ * Warehouse Item Clone Configuration.
+ */
+
+message CloneItem {
+  /*
+   * Warehouse Item External ID.
+   */
+
+  optional string warehouse_item_ext_id = 2001;
+  /*
+   * Name for the Clone Item.
+   */
+
+  optional string name = 2002;
+  /*
+   * Description for the Clone Item.
+   */
+
+  optional string description = 2003;
+}
+/*
+ * REST response for all response codes in api path /cms/v4.0.a1/content/warehouses/{extId}/warehouse-items/$actions/clone Post operation
+ */
+
+message CloneWarehouseItemResponse {
+  /*
+   * REST response for all response codes in api path /cms/v4.0.a1/content/warehouses/{extId}/warehouse-items/$actions/clone Post operation
+   */
+  oneof data {
+    /*
+     * 
+     */
+    cms.v4.content.TaskReferenceWrapper task_reference_data = 2001;
+    /*
+     * 
+     */
+    cms.v4.content.ErrorResponseWrapper error_response_data = 400;
+  }
+    /*
+   * 
+   */
+
+  optional common.v1.response.ApiResponseMetadata metadata = 1001;
+}
+/*
+ * REST response for all response codes in api path /cms/v4.0.a1/content/warehouses Post operation
+ */
+
+message CreateWarehouseResponse {
+  /*
+   * REST response for all response codes in api path /cms/v4.0.a1/content/warehouses Post operation
+   */
+  oneof data {
+    /*
+     * 
+     */
+    cms.v4.content.TaskReferenceWrapper task_reference_data = 2001;
+    /*
+     * 
+     */
+    cms.v4.content.ErrorResponseWrapper error_response_data = 400;
+  }
+    /*
+   * 
+   */
+
+  optional common.v1.response.ApiResponseMetadata metadata = 1001;
+}
+/*
+ * REST response for all response codes in api path /cms/v4.0.a1/content/warehouses/{warehouseExtId}/warehouse-items/{extId} Delete operation
+ */
+
+message DeleteWarehouseItemResponse {
+  /*
+   * REST response for all response codes in api path /cms/v4.0.a1/content/warehouses/{warehouseExtId}/warehouse-items/{extId} Delete operation
+   */
+  oneof data {
+    /*
+     * 
+     */
+    cms.v4.content.TaskReferenceWrapper task_reference_data = 2001;
+    /*
+     * 
+     */
+    cms.v4.content.ErrorResponseWrapper error_response_data = 400;
+  }
+    /*
+   * 
+   */
+
+  optional common.v1.response.ApiResponseMetadata metadata = 1001;
+}
+/*
+ * REST response for all response codes in api path /cms/v4.0.a1/content/warehouses/{extId} Delete operation
+ */
+
+message DeleteWarehouseResponse {
+  /*
+   * REST response for all response codes in api path /cms/v4.0.a1/content/warehouses/{extId} Delete operation
+   */
+  oneof data {
+    /*
+     * 
+     */
+    cms.v4.content.TaskReferenceWrapper task_reference_data = 2001;
+    /*
+     * 
+     */
+    cms.v4.content.ErrorResponseWrapper error_response_data = 400;
+  }
+    /*
+   * 
+   */
+
+  optional common.v1.response.ApiResponseMetadata metadata = 1001;
+}
+/*
+ * V4 entity Image or OVA or VMTemplate references.
+ */
+
+message DockerImageReference {
+  /*
+   * Docker SHA256 Image digest.
+   */
+
+  optional string sha256_hex_digest = 2001;
+}
+/*
+ * V4 entity Image or OVA or VMTemplate references.
+ */
+
+message EntityReference {
+  /*
+   * 
+   */
+
+  optional string ext_id = 2001;
+}
+/*
+ * OneOf item wrapper message
+ */
+
+message WarehouseItemWrapper {
+  /*
+   * Value field in oneOf item wrapper message
+   */
+
+  optional cms.v4.content.WarehouseItem value = 1000;
+}
+/*
+ * REST response for all response codes in api path /cms/v4.0.a1/content/warehouses/{warehouseExtId}/warehouse-items/{extId} Get operation
+ */
+
+message GetWarehouseItemResponse {
+  /*
+   * REST response for all response codes in api path /cms/v4.0.a1/content/warehouses/{warehouseExtId}/warehouse-items/{extId} Get operation
+   */
+  oneof data {
+    /*
+     * 
+     */
+    cms.v4.content.WarehouseItemWrapper warehouse_item_data = 1005;
+    /*
+     * 
+     */
+    cms.v4.content.ErrorResponseWrapper error_response_data = 400;
+  }
+    /*
+   * 
+   */
+
+  optional common.v1.response.ApiResponseMetadata metadata = 1001;
+}
+/*
+ * OneOf item wrapper message
+ */
+
+message WarehouseWrapper {
+  /*
+   * Value field in oneOf item wrapper message
+   */
+
+  optional cms.v4.content.Warehouse value = 1000;
+}
+/*
+ * REST response for all response codes in api path /cms/v4.0.a1/content/warehouses/{extId} Get operation
+ */
+
+message GetWarehouseResponse {
+  /*
+   * REST response for all response codes in api path /cms/v4.0.a1/content/warehouses/{extId} Get operation
+   */
+  oneof data {
+    /*
+     * 
+     */
+    cms.v4.content.WarehouseWrapper warehouse_data = 2001;
+    /*
+     * 
+     */
+    cms.v4.content.ErrorResponseWrapper error_response_data = 400;
+  }
+    /*
+   * 
+   */
+
+  optional common.v1.response.ApiResponseMetadata metadata = 1001;
+}
+/*
+ * Status of Warehouse Item.
+ */
+message ItemStatusMessage {
+  enum ItemStatus {
+    UNKNOWN = 0;
+    REDACTED = 1;
+    ACTIVE = 2001;
+    INACTIVE = 2002;
+    QUARANTINED = 2003;
+  }
+}
+
+/*
+ * Warehouse Item Type.
+ */
+message ItemTypeMessage {
+  enum ItemType {
+    UNKNOWN = 0;
+    REDACTED = 1;
+    CONTAINER_IMAGE = 2001;
+    DISK_IMAGE = 2002;
+    ISO = 2003;
+    OVA = 2004;
+    OVF = 2005;
+    VM_TEMPLATE = 2006;
+  }
+}
+
+/*
+ * OneOf item wrapper message
+ */
+
+message WarehouseItemArrayWrapper {
+  /*
+   * Value field in oneOf item wrapper message
+   */
+
+  repeated cms.v4.content.WarehouseItem value = 1000;
+  }
+/*
+ * REST response for all response codes in api path /cms/v4.0.a1/content/warehouses/{extId}/warehouse-items Get operation
+ */
+
+message ListWarehouseItemsResponse {
+  /*
+   * REST response for all response codes in api path /cms/v4.0.a1/content/warehouses/{extId}/warehouse-items Get operation
+   */
+  oneof data {
+    /*
+     * 
+     */
+    cms.v4.content.WarehouseItemArrayWrapper warehouse_item_array_data = 2001;
+    /*
+     * 
+     */
+    cms.v4.content.ErrorResponseWrapper error_response_data = 400;
+  }
+    /*
+   * 
+   */
+
+  optional common.v1.response.ApiResponseMetadata metadata = 1001;
+}
+/*
+ * OneOf item wrapper message
+ */
+
+message WarehouseArrayWrapper {
+  /*
+   * Value field in oneOf item wrapper message
+   */
+
+  repeated cms.v4.content.Warehouse value = 1000;
+  }
+/*
+ * REST response for all response codes in api path /cms/v4.0.a1/content/warehouses Get operation
+ */
+
+message ListWarehousesResponse {
+  /*
+   * REST response for all response codes in api path /cms/v4.0.a1/content/warehouses Get operation
+   */
+  oneof data {
+    /*
+     * 
+     */
+    cms.v4.content.WarehouseArrayWrapper warehouse_array_data = 2001;
+    /*
+     * 
+     */
+    cms.v4.content.ErrorResponseWrapper error_response_data = 400;
+  }
+    /*
+   * 
+   */
+
+  optional common.v1.response.ApiResponseMetadata metadata = 1001;
+}
+/*
+ * SHA256 Hex digest.
+ */
+
+message SHA256HexDigest {
+  /*
+   * 
+   */
+
+  optional string sha256_hex_digest = 2001;
+}
+/*
+ * REST response for all response codes in api path /cms/v4.0.a1/content/warehouses/{warehouseExtId}/warehouse-items/{extId} Put operation
+ */
+
+message UpdateWarehouseItemResponse {
+  /*
+   * REST response for all response codes in api path /cms/v4.0.a1/content/warehouses/{warehouseExtId}/warehouse-items/{extId} Put operation
+   */
+  oneof data {
+    /*
+     * 
+     */
+    cms.v4.content.TaskReferenceWrapper task_reference_data = 2001;
+    /*
+     * 
+     */
+    cms.v4.content.ErrorResponseWrapper error_response_data = 400;
+  }
+    /*
+   * 
+   */
+
+  optional common.v1.response.ApiResponseMetadata metadata = 1001;
+}
+/*
+ * REST response for all response codes in api path /cms/v4.0.a1/content/warehouses/{extId} Put operation
+ */
+
+message UpdateWarehouseResponse {
+  /*
+   * REST response for all response codes in api path /cms/v4.0.a1/content/warehouses/{extId} Put operation
+   */
+  oneof data {
+    /*
+     * 
+     */
+    cms.v4.content.TaskReferenceWrapper task_reference_data = 2001;
+    /*
+     * 
+     */
+    cms.v4.content.ErrorResponseWrapper error_response_data = 400;
+  }
+    /*
+   * 
+   */
+
+  optional common.v1.response.ApiResponseMetadata metadata = 1001;
+}
+/*
+ * 
+ */
+
+message Warehouse {
+  /*
+   * 
+   */
+
+  optional common.v1.response.ExternalizableAbstractModel base = 2001;
+  /*
+   * Warehouse Name.
+   */
+
+  optional string name = 2002;
+  /*
+   * Warehouse Description.
+   */
+
+  optional string description = 2003;
+  /*
+   * 
+   */
+
+  optional cms.v4.content.WarehouseMetadata metadata = 2004;
+}
+/*
+ * OneOf item wrapper message
+ */
+
+message EntityReferenceWrapper {
+  /*
+   * Value field in oneOf item wrapper message
+   */
+
+  optional cms.v4.content.EntityReference value = 1000;
+}
+/*
+ * OneOf item wrapper message
+ */
+
+message DockerImageReferenceWrapper {
+  /*
+   * Value field in oneOf item wrapper message
+   */
+
+  optional cms.v4.content.DockerImageReference value = 1000;
+}
+/*
+ * OneOf item wrapper message
+ */
+
+message SHA256HexDigestWrapper {
+  /*
+   * Value field in oneOf item wrapper message
+   */
+
+  optional cms.v4.content.SHA256HexDigest value = 1000;
+}
+/*
+ * 
+ */
+
+message WarehouseItem {
+  /*
+   * 
+   */
+  oneof source_reference {
+    /*
+     * 
+     */
+    cms.v4.content.EntityReferenceWrapper entity_reference_source_reference = 2010;
+    /*
+     * 
+     */
+    cms.v4.content.DockerImageReferenceWrapper docker_image_reference_source_reference = 2011;
+  }
+    /*
+   * 
+   */
+  oneof signature {
+    /*
+     * 
+     */
+    cms.v4.content.SHA256HexDigestWrapper s_h_a256_hex_digest_signature = 2013;
+  }
+    /*
+   * 
+   */
+
+  optional common.v1.response.ExternalizableAbstractModel base = 2001;
+  /*
+   * Name of the Warehouse Item.
+   */
+
+  optional string name = 2002;
+  /*
+   * Description of the Warehouse Item.
+   */
+
+  optional string description = 2003;
+  /*
+   * 
+   */
+
+  optional cms.v4.content.ItemTypeMessage.ItemType type = 2004;
+  /*
+   * Size in Bytes.
+   */
+
+  optional int64 size_bytes = 2006;
+  /*
+   * 
+   */
+
+  optional cms.v4.content.WarehouseMetadata meta_data = 2007;
+  /*
+   * 
+   */
+
+  optional cms.v4.content.ItemStatusMessage.ItemStatus status = 2009;
+}
+/*
+ * 
+ */
+
+message WarehouseMetadata {
+  /*
+   * 
+   */
+
+  optional common.v1.config.Metadata base = 2001;
+  /*
+   * Created Time.
+   */
+
+  optional google.protobuf.Timestamp created_at = 2002;
+  /*
+   * Last Update Time.
+   */
+
+  optional google.protobuf.Timestamp last_updated_at = 2003;
+  /*
+   * The user who created the Warehouse.
+   */
+
+  optional string created_by = 2004;
+  /*
+   * The user who updated the Version in Warehouse.
+   */
+
+  optional string last_updated_by = 2005;
+}

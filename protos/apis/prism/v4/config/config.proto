@@ -1,0 +1,31 @@
+/*
+ * Generated file prism/v4/config/config.proto.
+ *
+ * Product version: 1.0-SNAPSHOT
+ *
+ * Part of the Content Management System APIs
+ *
+ * (c) 2023 Nutanix Inc.  All rights reserved
+ *
+ */
+
+syntax = "proto2";
+
+package prism.v4.config;
+
+option java_multiple_files = true;
+option java_package = "prism.v4.config";
+option go_package = "prism/v4/config";
+
+
+/*
+ * Reference to a task tracking the async operation.
+ */
+
+message TaskReference {
+  /*
+   * Globally unique identifier of a task.
+   */
+
+  optional string ext_id = 2001;
+}
