@@ -24,6 +24,7 @@ type MarinaInternalInterfaces interface {
 	OdataIfc() odata.OdataInterface
 	ProtoIfc() utils.ProtoUtilInterface
 	UuidIfc() utils.UuidUtilInterface
+	ErrorIfc() utils.GrpcStatusUtilInterface
 }
 
 type singletonObject struct {
@@ -32,6 +33,7 @@ type singletonObject struct {
 	odataIfc    odata.OdataInterface
 	protoIfc    utils.ProtoUtilInterface
 	uuidIfc     utils.UuidUtilInterface
+	errorIfc    utils.GrpcStatusUtilInterface
 }
 
 var (
@@ -48,6 +50,7 @@ func InitSingletonService() {
 			odataIfc:    new(odata.OdataUtil),
 			protoIfc:    new(utils.ProtoUtil),
 			uuidIfc:     new(utils.UuidUtil),
+			errorIfc:    new(utils.GrpcStatusUtil),
 		}
 	})
 }
@@ -92,4 +95,9 @@ func (s *singletonObject) ProtoIfc() utils.ProtoUtilInterface {
 // UuidIfc returns the singleton for UuidUtilInterface
 func (s *singletonObject) UuidIfc() utils.UuidUtilInterface {
 	return s.uuidIfc
+}
+
+// ErrorIfc returns the singleton for GrpcStatusUtilInterface
+func (s *singletonObject) ErrorIfc() utils.GrpcStatusUtilInterface {
+	return s.errorIfc
 }

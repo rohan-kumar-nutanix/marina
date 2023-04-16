@@ -25,6 +25,8 @@ import (
 
 	"github.com/nutanix-core/content-management-marina/grpc/services"
 	"github.com/nutanix-core/content-management-marina/interface/external"
+	"github.com/nutanix-core/content-management-marina/proxy"
+	"github.com/nutanix-core/content-management-marina/task/base"
 	utils "github.com/nutanix-core/content-management-marina/util"
 )
 
@@ -139,9 +141,9 @@ func (m *MarinaTaskManager) hydrateTask(taskProto *ergon.Task) ergonTask.FullTas
 	methodName := taskProto.GetOperationType()
 	log.Info("HydrateTask RPC methodName :", methodName)
 	fullTask := services.GetErgonFullTaskByProto(taskProto)
-	// if fullTask == nil {
-	// 	log.Warning("Proxying task to Legacy Catalog Service")
-	// 	fullTask = proxy.NewProxyTask(base.NewMarinaBaseTask(taskProto))
-	// }
+	if fullTask == nil {
+		log.Warning("Proxying task to Legacy Catalog Service")
+		fullTask = proxy.NewProxyTask(base.NewMarinaBaseTask(taskProto))
+	}
 	return fullTask
 }

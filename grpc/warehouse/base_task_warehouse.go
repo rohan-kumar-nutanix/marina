@@ -69,13 +69,6 @@ func (t *MarinaBaseWarehouseTask) SetWarehouseUuid(uuid *uuid4.Uuid) {
 	t.WarehouseUuid = uuid
 }
 
-/*func (task *MarinaBaseWarehouseTask) RecoverHook() error {
+func (task *MarinaBaseWarehouseTask) RecoverHook() error {
 	return nil
-}*/
-
-/*func newMarinaBaseWarehouseTaskUtil(
-	marinaBaseTask *base.MarinaBaseTask) *MarinaBaseWarehouseTask {
-	return &MarinaBaseWarehouseTask{
-		MarinaBaseTask: marinaBaseTask,
-	}
-}*/
+}

@@ -15,12 +15,10 @@ import (
 	log "k8s.io/klog/v2"
 
 	"github.com/nutanix-core/acs-aos-go/ergon"
-	ergonTask "github.com/nutanix-core/acs-aos-go/ergon/task"
 	"github.com/nutanix-core/acs-aos-go/nutanix/util-go/tracer"
 	"github.com/nutanix-core/acs-aos-go/nutanix/util-go/uuid4"
 
 	marinaError "github.com/nutanix-core/content-management-marina/errors"
-	"github.com/nutanix-core/content-management-marina/grpc/warehouse"
 	internalIFC "github.com/nutanix-core/content-management-marina/interface/local"
 	warehousePB "github.com/nutanix-core/content-management-marina/protos/apis/cms/v4/content"
 	prismPB "github.com/nutanix-core/content-management-marina/protos/apis/prism/v4/config"
@@ -67,26 +65,13 @@ func (s *WarehouseServer) ListWarehouse(ctx context.Context, arg *warehousePB.Li
 	return nil, nil
 }
 
-func GetWarehouseTaskByRPC(baseWarehouseTask *warehouse.MarinaBaseWarehouseTask) ergonTask.FullTask {
-	taskProto := baseWarehouseTask.Proto()
-	switch taskProto.Request.GetMethodName() {
-	case CreateWarehouse:
-		// return _warehouse.NewMarinaWarehouseCreateTask(baseWarehouseTask)
-	case AddItemToWarehouse:
-		return nil // warehouse.NewMarinaWarehouseItemCreateTask(baseWarehouseTask)
-	default:
-		log.Errorf("Unknown gRPC method %s received", taskProto.Request.GetMethodName())
-	}
-	return nil
-}
-
 func (s *WarehouseServer) asyncHandlerWithGrpcStatus(c context.Context, request proto.Message,
-	operation string) (*uuid4.Uuid, error) { // ToDO add marinaError.AppMessage for APIs
-
+	operation string) (*uuid4.Uuid, error) {
+	// TODO add marinaError.AppMessage for APIs
 	taskUuid, err := s.asyncHandler(c, request, operation)
 	if err != nil {
-		// grpcErr := narsilUtil.Interfaces().GrpcErrorUtil().BuildGrpcError(vmmErr)
-		return taskUuid, fmt.Errorf("some error occured %s", err) // []*ntnxApiVmmError.AppMessage{vmmErr.ConvertToAppMessagePb()}, grpcErr
+		// TODO: Create gRPC error from MarinaError and generate AppMessage Error and return to client.
+		return taskUuid, internalIFC.Interfaces().ErrorIfc().BuildGrpcError(err)
 	}
 
 	return taskUuid, nil

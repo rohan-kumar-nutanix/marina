@@ -36,6 +36,7 @@ require (
 	github.com/josharian/intern v1.0.1-0.20191216181125-a140101e2404 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.1 // indirect
+	github.com/nutanix-core/ntnx-api-utils-go v1.0.15 // indirect
 	github.com/opentracing-contrib/go-grpc v0.0.0-20210225150812-73cb765af46e // indirect
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
 	github.com/pkg/errors v0.9.1 // indirect

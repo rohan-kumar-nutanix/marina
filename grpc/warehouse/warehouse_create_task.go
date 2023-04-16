@@ -91,9 +91,7 @@ func (task *MarinaWarehouseCreateTask) Run() error {
 }
 
 func (task *MarinaWarehouseCreateTask) Enqueue() {
-	// task.ExternalInterfaces().SerialExecutor().SubmitJob(task)
-	serialExecutor := task.ExternalInterfaces().SerialExecutor()
-	serialExecutor.SubmitJob(task)
+	task.ExternalInterfaces().SerialExecutor().SubmitJob(task)
 }
 
 func (task *MarinaWarehouseCreateTask) SerializationID() string {

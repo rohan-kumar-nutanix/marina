@@ -11,10 +11,11 @@
 package utils
 
 import (
-	marinaError "github.com/nutanix-core/content-management-marina/errors"
 	statusPb "google.golang.org/genproto/googleapis/rpc/status"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	marinaError "github.com/nutanix-core/content-management-marina/errors"
 )
 
 const (

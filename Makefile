@@ -39,8 +39,8 @@ build-protos-with-cobra:
 
 clean:
 	find ./protos -name \*.pb.go -type f -exec rm -f {} +
-	#rm -rf build/
-	#rm -rf mocks/
+	rm -rf build/
+	rm -rf mocks/
 
 server:
 	$(info Building binary at the project root)

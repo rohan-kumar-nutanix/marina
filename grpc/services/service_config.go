@@ -25,9 +25,6 @@ const (
 	CatalogMigratePc   = "CatalogMigratePc"
 	CreateWarehouse    = "CreateWarehouse"
 	AddItemToWarehouse = "AddItemToWarehouse"
-	CatalogItemCreate  = "CatalogItemCreate"
-	CatalogItemDelete  = "CatalogItemDelete"
-	CatalogItemUpdate  = "CatalogItemUpdate"
 )
 
 func GetErgonFullTaskByProto(taskProto *ergon.Task) ergonTask.FullTask {
@@ -45,9 +42,6 @@ func GetErgonFullTaskByProto(taskProto *ergon.Task) ergonTask.FullTask {
 	case CatalogMigratePc:
 		return catalog_item.NewCatalogMigratePcTask(
 			catalog_item.NewCatalogItemBaseTask(base.NewMarinaBaseTask(taskProto)))
-	// case CreateWarehouse:
-	// 	return tasks.NewMarinaWarehouseCreateTask(
-	// 		tasks.NewMarinaBaseWarehouseTask(base.NewMarinaBaseTask(taskProto)))
 	case CreateWarehouse:
 		return warehouse.NewMarinaWarehouseCreateTask(
 			warehouse.NewMarinaBaseWarehouseTask(base.NewMarinaBaseTask(taskProto)))
