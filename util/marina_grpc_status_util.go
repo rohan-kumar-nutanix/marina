@@ -16,6 +16,8 @@ import (
 	"google.golang.org/grpc/status"
 
 	marinaError "github.com/nutanix-core/content-management-marina/errors"
+	"github.com/nutanix-core/content-management-marina/protos/apis/cms/v4/content"
+	ntnxApiCmsError "github.com/nutanix-core/content-management-marina/protos/apis/cms/v4/error"
 )
 
 const (
@@ -42,9 +44,20 @@ func (e *GrpcStatusUtil) BuildGrpcErrorWithCode(grpcCode codes.Code,
 			Code:    int32(grpcCode),
 			Message: marinaErr.GetErrorDetail(),
 		})
-
 }
 
 func (e *GrpcStatusUtil) BuildGrpcError(marinaErr marinaError.MarinaErrorInterface) error {
 	return e.BuildGrpcErrorWithCode(marinaError.GetGrpcCodeFromMarinaError(marinaErr), marinaErr)
+}
+
+func SetErrorResponse(appMessageList []*ntnxApiCmsError.AppMessage) *content.ErrorResponseWrapper {
+	return &content.ErrorResponseWrapper{
+		Value: &ntnxApiCmsError.ErrorResponse{
+			Error: &ntnxApiCmsError.ErrorResponse_AppMessageArrayError{
+				AppMessageArrayError: &ntnxApiCmsError.AppMessageArrayWrapper{
+					Value: appMessageList,
+				},
+			},
+		},
+	}
 }

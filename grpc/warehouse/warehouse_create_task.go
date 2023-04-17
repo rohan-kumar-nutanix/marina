@@ -74,7 +74,7 @@ func (task *MarinaWarehouseCreateTask) Run() error {
 	task.SetWarehouseUuid(uuid4.ToUuid4(task.Wal().GetWarehouseWal().GetWarehouseUuid()))
 	arg := task.getCreateWarehouseArg()
 
-	log.Infof("Running a Warehouse Create request with Task UUID : %s", task.GetWarehouseUuid())
+	log.Infof("Running a Warehouse Create with UUID : %s", task.GetWarehouseUuid())
 	err := task.CreateWarehouse(ctx, task.ExternalInterfaces().CPDBIfc(), task.InternalInterfaces().ProtoIfc(),
 		task.GetWarehouseUuid(), arg.Body)
 	if err != nil {

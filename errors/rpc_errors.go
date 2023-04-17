@@ -14,12 +14,16 @@ package errors
 import (
 	"fmt"
 	"runtime"
+	"strconv"
 	"strings"
 
 	"google.golang.org/grpc/codes"
+	"google.golang.org/protobuf/proto"
 	log "k8s.io/klog/v2"
 
 	"github.com/nutanix-core/acs-aos-go/nutanix/util-go/errors"
+
+	ntnxCmsApiError "github.com/nutanix-core/content-management-marina/protos/apis/cms/v4/error"
 )
 
 // MarinaErrorInterface shall be embedded in each of the app error struct defined below.
@@ -27,6 +31,7 @@ type MarinaErrorInterface interface {
 	errors.INtnxError
 	SetCauseAndLog(err error) MarinaErrorInterface
 	SetCause(err error) MarinaErrorInterface
+	ConvertToAppMessagePb() *ntnxCmsApiError.AppMessage
 }
 
 type MarinaError struct {
@@ -144,6 +149,15 @@ func (e *MarinaError) SetCauseAndLog(err error) MarinaErrorInterface {
 	return &MarinaError{e.NtnxError.SetCause(fmt.Errorf("%s", message)).(*errors.NtnxError)}
 }
 
+func (e *MarinaError) ConvertToAppMessagePb() *ntnxCmsApiError.AppMessage {
+	return &ntnxCmsApiError.AppMessage{
+		Code:    proto.String(strconv.Itoa(e.GetErrorCode())),
+		Message: proto.String(e.GetErrorDetail()),
+		// TODO Add arg map
+		ArgumentsMap: nil,
+	}
+}
+
 // err creates a new Marina error.
 func err(errMsg string, errCode int) *MarinaError {
 	return &MarinaError{
@@ -193,7 +207,7 @@ func (e *MarinaInternalError) SetCause(err error) MarinaErrorInterface {
 	return e
 }
 
-// Invalid argument error.
+// MarinaInvalidArgumentError
 type MarinaInvalidArgumentError struct {
 	*MarinaError
 	catalogItemUuid string
@@ -220,7 +234,7 @@ func (e *MarinaInvalidArgumentError) SetCause(err error) MarinaErrorInterface {
 	return e
 }
 
-// Invalid Uuid error.
+// MarinaInvalidUuidError.
 type MarinaInvalidUuidError struct {
 	*MarinaError
 	uuid string

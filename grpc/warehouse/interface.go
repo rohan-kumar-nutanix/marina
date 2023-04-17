@@ -13,6 +13,7 @@ import (
 	cpdb "github.com/nutanix-core/acs-aos-go/nusights/util/db"
 	"github.com/nutanix-core/acs-aos-go/nutanix/util-go/uuid4"
 
+	"github.com/nutanix-core/content-management-marina/db"
 	"github.com/nutanix-core/content-management-marina/protos/apis/cms/v4/content"
 	utils "github.com/nutanix-core/content-management-marina/util"
 )
@@ -20,6 +21,13 @@ import (
 type IWarehouseDB interface {
 	CreateWarehouse(ctx context.Context, cpdbIfc cpdb.CPDBClientInterface,
 		protoIfc utils.ProtoUtilInterface, warehouseUuid *uuid4.Uuid, warehousePB *content.Warehouse) error
+	GetWarehouse(ctx context.Context, cpdbIfc cpdb.CPDBClientInterface, WarehouseUuid *uuid4.Uuid) (
+		*content.Warehouse, error)
+	DeleteWarehouse(ctx context.Context, idfIfc db.IdfClientInterface,
+		cpdbIfc cpdb.CPDBClientInterface, warehouseUuid string) error
+	UpdateWarehouse(ctx context.Context, cpdbIfc cpdb.CPDBClientInterface,
+		protoIfc utils.ProtoUtilInterface, warehouseUuid *uuid4.Uuid, warehousePB *content.Warehouse) error
+	ListWarehouses(ctx context.Context, cpdbIfc cpdb.CPDBClientInterface) ([]*content.Warehouse, error)
 }
 
 type IWarehouseStorage interface {

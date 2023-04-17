@@ -19,12 +19,13 @@ import (
 )
 
 const (
-	CatalogItemCreate  = "CatalogItemCreate"
-	CatalogItemDelete  = "CatalogItemDelete"
-	CatalogItemUpdate  = "CatalogItemUpdate"
-	CatalogMigratePc   = "CatalogMigratePc"
-	CreateWarehouse    = "CreateWarehouse"
-	AddItemToWarehouse = "AddItemToWarehouse"
+	CatalogItemCreate = "CatalogItemCreate"
+	CatalogItemDelete = "CatalogItemDelete"
+	CatalogItemUpdate = "CatalogItemUpdate"
+	CatalogMigratePc  = "CatalogMigratePc"
+	CreateWarehouse   = "CreateWarehouse"
+	DeleteWarehouse   = "DeleteWarehouse"
+	UpdateWarehouse   = "UpdateWarehouseMetadata"
 )
 
 func GetErgonFullTaskByProto(taskProto *ergon.Task) ergonTask.FullTask {
@@ -44,6 +45,12 @@ func GetErgonFullTaskByProto(taskProto *ergon.Task) ergonTask.FullTask {
 			catalog_item.NewCatalogItemBaseTask(base.NewMarinaBaseTask(taskProto)))
 	case CreateWarehouse:
 		return warehouse.NewMarinaWarehouseCreateTask(
+			warehouse.NewMarinaBaseWarehouseTask(base.NewMarinaBaseTask(taskProto)))
+	case DeleteWarehouse:
+		return warehouse.NewMarinaWarehouseDeleteTask(
+			warehouse.NewMarinaBaseWarehouseTask(base.NewMarinaBaseTask(taskProto)))
+	case UpdateWarehouse:
+		return warehouse.NewMarinaWarehouseUpdateTask(
 			warehouse.NewMarinaBaseWarehouseTask(base.NewMarinaBaseTask(taskProto)))
 	default:
 		log.Errorf("Unknown gRPC method %s received", taskProto.Request.GetMethodName())
