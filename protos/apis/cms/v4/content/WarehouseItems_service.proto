@@ -43,17 +43,6 @@ service WarehouseItemsService {
     };
   }
   /*
-   * uri: /cms/v4/content/warehouses/{extId}/warehouse-items/$actions/clone
-   * http method: POST
-   * Clone Warehouse Item to V4 Entity
-   * Clone Warehouse Item to V4 Entity
-   */
-  rpc cloneItemFromWarehouse(CloneItemFromWarehouseArg) returns (CloneItemFromWarehouseRet) {
-    option (ntnx_api_http) = {
-      POST: "/cms/v4/content/warehouses/{extId}/warehouse-items/$actions/clone"
-    };
-  }
-  /*
    * uri: /cms/v4/content/warehouses/{warehouseExtId}/warehouse-items/{extId}
    * http method: DELETE
    * Delete Warehouse Item in a Warehouse.
@@ -81,7 +70,7 @@ service WarehouseItemsService {
    * List all Items in the Warehouse.
    * List all Items in the Warehouse.
    */
-  rpc listAllWarehouseItems(ListAllWarehouseItemsArg) returns (ListAllWarehouseItemsRet) {
+  rpc listWarehouseItems(ListWarehouseItemsArg) returns (ListWarehouseItemsRet) {
     option (ntnx_api_http) = {
       GET: "/cms/v4/content/warehouses/{extId}/warehouse-items"
     };
@@ -128,34 +117,6 @@ message AddItemToWarehouseRet {
   map<string, string> reserved = 1000;
 }
 /*
- * message containing all attributes expected in the cloneItemFromWarehouse request
- */
-
-message CloneItemFromWarehouseArg {
-  /*
-   * Globally unique identifier of a Warehouse. It should be of type UUID.
-   */
-  optional string ext_id = 2001;
-  /*
-   * Clone Warehouse Item to V4 Entity
-   */
-  optional cms.v4.content.CloneItem body = 2002;
-}
-
-/*
- * message containing all attributes expected in the cloneItemFromWarehouse response
- */
-message CloneItemFromWarehouseRet {
-  /*
-   * field containing expected response content
-   */
-  optional cms.v4.content.CloneWarehouseItemResponse content = 999;
-  /*
-   * map containing headers expected in response
-   */
-  map<string, string> reserved = 1000;
-}
-/*
  * message containing all attributes expected in the deleteWarehouseItem request
  */
 
@@ -194,7 +155,7 @@ message GetWarehouseItemByIdArg {
    */
   optional int32 _page = 2001;
   /*
-   * A URL query parameter that specifies the total number of records returned in the result set.  Must be a positive integer between 0 and 100. Any number out of this range will lead to a validation error. If the limit is not provided a default value of 50 records will be returned in the result set.
+   * A URL query parameter that specifies the total number of records returned in the result set.  Must be a positive integer between 1 and 100. Any number out of this range will lead to a validation error. If the limit is not provided a default value of 50 records will be returned in the result set.
 
    */
   optional int32 _limit = 2002;
@@ -222,17 +183,17 @@ message GetWarehouseItemByIdRet {
   map<string, string> reserved = 1000;
 }
 /*
- * message containing all attributes expected in the listAllWarehouseItems request
+ * message containing all attributes expected in the listWarehouseItems request
  */
 
-message ListAllWarehouseItemsArg {
+message ListWarehouseItemsArg {
   /*
    * A URL query parameter that specifies the page number of the result set.  Must be a positive integer between 0 and the maximum number of pages that are available for that resource. Any number out of this range will lead to no results being returned.
 
    */
   optional int32 _page = 2001;
   /*
-   * A URL query parameter that specifies the total number of records returned in the result set.  Must be a positive integer between 0 and 100. Any number out of this range will lead to a validation error. If the limit is not provided a default value of 50 records will be returned in the result set.
+   * A URL query parameter that specifies the total number of records returned in the result set.  Must be a positive integer between 1 and 100. Any number out of this range will lead to a validation error. If the limit is not provided a default value of 50 records will be returned in the result set.
 
    */
   optional int32 _limit = 2002;
@@ -260,9 +221,9 @@ The orderby can be applied to the following fields:
 }
 
 /*
- * message containing all attributes expected in the listAllWarehouseItems response
+ * message containing all attributes expected in the listWarehouseItems response
  */
-message ListAllWarehouseItemsRet {
+message ListWarehouseItemsRet {
   /*
    * field containing expected response content
    */

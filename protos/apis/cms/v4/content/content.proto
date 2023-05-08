@@ -24,6 +24,17 @@ import "google/protobuf/timestamp.proto";
 import "protos/apis/common/v1/config/config.proto";
 
 /*
+ * Array wrapper message
+ */
+
+message ItemTypeArrayWrapper {
+  /*
+   * Value field in wrapper message
+   */
+
+  repeated cms.v4.content.ItemTypeMessage.ItemType value = 1000;
+  }
+/*
  * OneOf item wrapper message
  */
 
@@ -46,12 +57,12 @@ message ErrorResponseWrapper {
   optional cms.v4.error.ErrorResponse value = 1000;
 }
 /*
- * REST response for all response codes in api path /cms/v4.0.a1/content/warehouses/{extId}/warehouse-items Post operation
+ * REST response for all response codes in API path /cms/v4.0.a1/content/warehouses/{extId}/warehouse-items Post operation
  */
 
 message AddItemToWarehouseResponse {
   /*
-   * REST response for all response codes in api path /cms/v4.0.a1/content/warehouses/{extId}/warehouse-items Post operation
+   * REST response for all response codes in API path /cms/v4.0.a1/content/warehouses/{extId}/warehouse-items Post operation
    */
   oneof data {
     /*
@@ -70,57 +81,12 @@ message AddItemToWarehouseResponse {
   optional common.v1.response.ApiResponseMetadata metadata = 1001;
 }
 /*
- * Warehouse Item Clone Configuration.
- */
-
-message CloneItem {
-  /*
-   * Warehouse Item External ID.
-   */
-
-  optional string warehouse_item_ext_id = 2001;
-  /*
-   * Name for the Clone Item.
-   */
-
-  optional string name = 2002;
-  /*
-   * Description for the Clone Item.
-   */
-
-  optional string description = 2003;
-}
-/*
- * REST response for all response codes in api path /cms/v4.0.a1/content/warehouses/{extId}/warehouse-items/$actions/clone Post operation
- */
-
-message CloneWarehouseItemResponse {
-  /*
-   * REST response for all response codes in api path /cms/v4.0.a1/content/warehouses/{extId}/warehouse-items/$actions/clone Post operation
-   */
-  oneof data {
-    /*
-     * 
-     */
-    cms.v4.content.TaskReferenceWrapper task_reference_data = 2001;
-    /*
-     * 
-     */
-    cms.v4.content.ErrorResponseWrapper error_response_data = 400;
-  }
-    /*
-   * 
-   */
-
-  optional common.v1.response.ApiResponseMetadata metadata = 1001;
-}
-/*
- * REST response for all response codes in api path /cms/v4.0.a1/content/warehouses Post operation
+ * REST response for all response codes in API path /cms/v4.0.a1/content/warehouses Post operation
  */
 
 message CreateWarehouseResponse {
   /*
-   * REST response for all response codes in api path /cms/v4.0.a1/content/warehouses Post operation
+   * REST response for all response codes in API path /cms/v4.0.a1/content/warehouses Post operation
    */
   oneof data {
     /*
@@ -139,12 +105,12 @@ message CreateWarehouseResponse {
   optional common.v1.response.ApiResponseMetadata metadata = 1001;
 }
 /*
- * REST response for all response codes in api path /cms/v4.0.a1/content/warehouses/{warehouseExtId}/warehouse-items/{extId} Delete operation
+ * REST response for all response codes in API path /cms/v4.0.a1/content/warehouses/{warehouseExtId}/warehouse-items/{extId} Delete operation
  */
 
 message DeleteWarehouseItemResponse {
   /*
-   * REST response for all response codes in api path /cms/v4.0.a1/content/warehouses/{warehouseExtId}/warehouse-items/{extId} Delete operation
+   * REST response for all response codes in API path /cms/v4.0.a1/content/warehouses/{warehouseExtId}/warehouse-items/{extId} Delete operation
    */
   oneof data {
     /*
@@ -163,12 +129,12 @@ message DeleteWarehouseItemResponse {
   optional common.v1.response.ApiResponseMetadata metadata = 1001;
 }
 /*
- * REST response for all response codes in api path /cms/v4.0.a1/content/warehouses/{extId} Delete operation
+ * REST response for all response codes in API path /cms/v4.0.a1/content/warehouses/{extId} Delete operation
  */
 
 message DeleteWarehouseResponse {
   /*
-   * REST response for all response codes in api path /cms/v4.0.a1/content/warehouses/{extId} Delete operation
+   * REST response for all response codes in API path /cms/v4.0.a1/content/warehouses/{extId} Delete operation
    */
   oneof data {
     /*
@@ -220,12 +186,12 @@ message WarehouseItemWrapper {
   optional cms.v4.content.WarehouseItem value = 1000;
 }
 /*
- * REST response for all response codes in api path /cms/v4.0.a1/content/warehouses/{warehouseExtId}/warehouse-items/{extId} Get operation
+ * REST response for all response codes in API path /cms/v4.0.a1/content/warehouses/{warehouseExtId}/warehouse-items/{extId} Get operation
  */
 
 message GetWarehouseItemResponse {
   /*
-   * REST response for all response codes in api path /cms/v4.0.a1/content/warehouses/{warehouseExtId}/warehouse-items/{extId} Get operation
+   * REST response for all response codes in API path /cms/v4.0.a1/content/warehouses/{warehouseExtId}/warehouse-items/{extId} Get operation
    */
   oneof data {
     /*
@@ -255,12 +221,12 @@ message WarehouseWrapper {
   optional cms.v4.content.Warehouse value = 1000;
 }
 /*
- * REST response for all response codes in api path /cms/v4.0.a1/content/warehouses/{extId} Get operation
+ * REST response for all response codes in API path /cms/v4.0.a1/content/warehouses/{extId} Get operation
  */
 
 message GetWarehouseResponse {
   /*
-   * REST response for all response codes in api path /cms/v4.0.a1/content/warehouses/{extId} Get operation
+   * REST response for all response codes in API path /cms/v4.0.a1/content/warehouses/{extId} Get operation
    */
   oneof data {
     /*
@@ -319,12 +285,12 @@ message WarehouseItemArrayWrapper {
   repeated cms.v4.content.WarehouseItem value = 1000;
   }
 /*
- * REST response for all response codes in api path /cms/v4.0.a1/content/warehouses/{extId}/warehouse-items Get operation
+ * REST response for all response codes in API path /cms/v4.0.a1/content/warehouses/{extId}/warehouse-items Get operation
  */
 
 message ListWarehouseItemsResponse {
   /*
-   * REST response for all response codes in api path /cms/v4.0.a1/content/warehouses/{extId}/warehouse-items Get operation
+   * REST response for all response codes in API path /cms/v4.0.a1/content/warehouses/{extId}/warehouse-items Get operation
    */
   oneof data {
     /*
@@ -354,12 +320,12 @@ message WarehouseArrayWrapper {
   repeated cms.v4.content.Warehouse value = 1000;
   }
 /*
- * REST response for all response codes in api path /cms/v4.0.a1/content/warehouses Get operation
+ * REST response for all response codes in API path /cms/v4.0.a1/content/warehouses Get operation
  */
 
 message ListWarehousesResponse {
   /*
-   * REST response for all response codes in api path /cms/v4.0.a1/content/warehouses Get operation
+   * REST response for all response codes in API path /cms/v4.0.a1/content/warehouses Get operation
    */
   oneof data {
     /*
@@ -389,12 +355,12 @@ message SHA256HexDigest {
   optional string sha256_hex_digest = 2001;
 }
 /*
- * REST response for all response codes in api path /cms/v4.0.a1/content/warehouses/{warehouseExtId}/warehouse-items/{extId} Put operation
+ * REST response for all response codes in API path /cms/v4.0.a1/content/warehouses/{warehouseExtId}/warehouse-items/{extId} Put operation
  */
 
 message UpdateWarehouseItemResponse {
   /*
-   * REST response for all response codes in api path /cms/v4.0.a1/content/warehouses/{warehouseExtId}/warehouse-items/{extId} Put operation
+   * REST response for all response codes in API path /cms/v4.0.a1/content/warehouses/{warehouseExtId}/warehouse-items/{extId} Put operation
    */
   oneof data {
     /*
@@ -413,12 +379,12 @@ message UpdateWarehouseItemResponse {
   optional common.v1.response.ApiResponseMetadata metadata = 1001;
 }
 /*
- * REST response for all response codes in api path /cms/v4.0.a1/content/warehouses/{extId} Put operation
+ * REST response for all response codes in API path /cms/v4.0.a1/content/warehouses/{extId} Put operation
  */
 
 message UpdateWarehouseResponse {
   /*
-   * REST response for all response codes in api path /cms/v4.0.a1/content/warehouses/{extId} Put operation
+   * REST response for all response codes in API path /cms/v4.0.a1/content/warehouses/{extId} Put operation
    */
   oneof data {
     /*
@@ -551,7 +517,7 @@ message WarehouseItem {
    * 
    */
 
-  optional cms.v4.content.WarehouseMetadata meta_data = 2007;
+  optional cms.v4.content.WarehouseMetadata metadata = 2007;
   /*
    * 
    */

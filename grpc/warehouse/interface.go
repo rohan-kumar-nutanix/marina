@@ -21,15 +21,27 @@ import (
 type IWarehouseDB interface {
 	CreateWarehouse(ctx context.Context, cpdbIfc cpdb.CPDBClientInterface,
 		protoIfc utils.ProtoUtilInterface, warehouseUuid *uuid4.Uuid, warehousePB *content.Warehouse) error
-	GetWarehouse(ctx context.Context, cpdbIfc cpdb.CPDBClientInterface, WarehouseUuid *uuid4.Uuid) (
+	GetWarehouse(ctx context.Context, cpdbIfc cpdb.CPDBClientInterface, warehouseUuid *uuid4.Uuid) (
 		*content.Warehouse, error)
 	DeleteWarehouse(ctx context.Context, idfIfc db.IdfClientInterface,
 		cpdbIfc cpdb.CPDBClientInterface, warehouseUuid string) error
 	UpdateWarehouse(ctx context.Context, cpdbIfc cpdb.CPDBClientInterface,
 		protoIfc utils.ProtoUtilInterface, warehouseUuid *uuid4.Uuid, warehousePB *content.Warehouse) error
 	ListWarehouses(ctx context.Context, cpdbIfc cpdb.CPDBClientInterface) ([]*content.Warehouse, error)
+
+	// WarehouseItem Methods
+	CreateWarehouseItem(ctx context.Context, cpdbIfc cpdb.CPDBClientInterface,
+		protoIfc utils.ProtoUtilInterface, warehouseUuid *uuid4.Uuid, warehouseItemUuid *uuid4.Uuid, warehouseItemPB *content.WarehouseItem) error
+	GetWarehouseItem(ctx context.Context, cpdbIfc cpdb.CPDBClientInterface, warehouseItemUuid *uuid4.Uuid) (
+		*content.WarehouseItem, error)
+	ListWarehouseItems(ctx context.Context, cpdbIfc cpdb.CPDBClientInterface, warehouseUuid *uuid4.Uuid) ([]*content.WarehouseItem, error)
+	DeleteWarehouseItem(ctx context.Context, idfIfc db.IdfClientInterface, cpdbIfc cpdb.CPDBClientInterface,
+		warehouseUuid string, warehouseItemUuid string) error
+	UpdateWarehouseItem(ctx context.Context, cpdbIfc cpdb.CPDBClientInterface, protoIfc utils.ProtoUtilInterface,
+		warehouseUuid *uuid4.Uuid, warehouseItemUuid *uuid4.Uuid, warehouseItemPB *content.WarehouseItem) error
 }
 
 type IWarehouseStorage interface {
-	CreateWarehouseBucket(ctx context.Context, warehouseUuid *uuid4.Uuid)
+	CreateWarehouseBucket(ctx context.Context, warehouseUuid string) error
+	DeleteWarehouseBucket(ctx context.Context, warehouseUuid string) error
 }

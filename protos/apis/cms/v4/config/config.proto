@@ -47,12 +47,12 @@ message ErrorResponseWrapper {
   optional cms.v4.error.ErrorResponse value = 1000;
 }
 /*
- * REST response for all response codes in api path /cms/v4.0.a1/config/scanner-tools Post operation
+ * REST response for all response codes in API path /cms/v4.0.a1/config/scanner-tools Post operation
  */
 
 message CreateScannerToolConfigResponse {
   /*
-   * REST response for all response codes in api path /cms/v4.0.a1/config/scanner-tools Post operation
+   * REST response for all response codes in API path /cms/v4.0.a1/config/scanner-tools Post operation
    */
   oneof data {
     /*
@@ -71,12 +71,12 @@ message CreateScannerToolConfigResponse {
   optional common.v1.response.ApiResponseMetadata metadata = 1001;
 }
 /*
- * REST response for all response codes in api path /cms/v4.0.a1/config/security-policies Post operation
+ * REST response for all response codes in API path /cms/v4.0.a1/config/security-policies Post operation
  */
 
 message CreateSecurityPolicyResponse {
   /*
-   * REST response for all response codes in api path /cms/v4.0.a1/config/security-policies Post operation
+   * REST response for all response codes in API path /cms/v4.0.a1/config/security-policies Post operation
    */
   oneof data {
     /*
@@ -95,12 +95,12 @@ message CreateSecurityPolicyResponse {
   optional common.v1.response.ApiResponseMetadata metadata = 1001;
 }
 /*
- * REST response for all response codes in api path /cms/v4.0.a1/config/scanner-tools/{extId} Delete operation
+ * REST response for all response codes in API path /cms/v4.0.a1/config/scanner-tools/{extId} Delete operation
  */
 
 message DeleteScannerToolConfigResponse {
   /*
-   * REST response for all response codes in api path /cms/v4.0.a1/config/scanner-tools/{extId} Delete operation
+   * REST response for all response codes in API path /cms/v4.0.a1/config/scanner-tools/{extId} Delete operation
    */
   oneof data {
     /*
@@ -119,12 +119,12 @@ message DeleteScannerToolConfigResponse {
   optional common.v1.response.ApiResponseMetadata metadata = 1001;
 }
 /*
- * REST response for all response codes in api path /cms/v4.0.a1/config/security-policies/{extId} Delete operation
+ * REST response for all response codes in API path /cms/v4.0.a1/config/security-policies/{extId} Delete operation
  */
 
 message DeleteSecurityPolicyResponse {
   /*
-   * REST response for all response codes in api path /cms/v4.0.a1/config/security-policies/{extId} Delete operation
+   * REST response for all response codes in API path /cms/v4.0.a1/config/security-policies/{extId} Delete operation
    */
   oneof data {
     /*
@@ -154,18 +154,18 @@ message ScannerConfigWrapper {
   optional cms.v4.config.ScannerConfig value = 1000;
 }
 /*
- * REST response for all response codes in api path /cms/v4.0.a1/config/scanner-tools/{extId} Get operation
+ * REST response for all response codes in API path /cms/v4.0.a1/config/scanner-tools/{extId} Get operation
  */
 
 message GetScannerToolConfigResponse {
   /*
-   * REST response for all response codes in api path /cms/v4.0.a1/config/scanner-tools/{extId} Get operation
+   * REST response for all response codes in API path /cms/v4.0.a1/config/scanner-tools/{extId} Get operation
    */
   oneof data {
     /*
      * 
      */
-    cms.v4.config.ScannerConfigWrapper scanner_config_data = 2002;
+    cms.v4.config.ScannerConfigWrapper scanner_config_data = 2001;
     /*
      * 
      */
@@ -189,18 +189,18 @@ message SecurityPolicyWrapper {
   optional cms.v4.config.SecurityPolicy value = 1000;
 }
 /*
- * REST response for all response codes in api path /cms/v4.0.a1/config/security-policies/{extId} Get operation
+ * REST response for all response codes in API path /cms/v4.0.a1/config/security-policies/{extId} Get operation
  */
 
 message GetSecurityPolicyResponse {
   /*
-   * REST response for all response codes in api path /cms/v4.0.a1/config/security-policies/{extId} Get operation
+   * REST response for all response codes in API path /cms/v4.0.a1/config/security-policies/{extId} Get operation
    */
   oneof data {
     /*
      * 
      */
-    cms.v4.config.SecurityPolicyWrapper security_policy_data = 2002;
+    cms.v4.config.SecurityPolicyWrapper security_policy_data = 2001;
     /*
      * 
      */
@@ -213,18 +213,29 @@ message GetSecurityPolicyResponse {
   optional common.v1.response.ApiResponseMetadata metadata = 1001;
 }
 /*
- * REST response for all response codes in api path /cms/v4.0.a1/config/scanner-tools Get operation
+ * OneOf item wrapper message
  */
 
-message ListScannerToolConfigResponse {
+message ScannerConfigArrayWrapper {
   /*
-   * REST response for all response codes in api path /cms/v4.0.a1/config/scanner-tools Get operation
+   * Value field in oneOf item wrapper message
+   */
+
+  repeated cms.v4.config.ScannerConfig value = 1000;
+  }
+/*
+ * REST response for all response codes in API path /cms/v4.0.a1/config/scanner-tools Get operation
+ */
+
+message ListScannerToolConfigsResponse {
+  /*
+   * REST response for all response codes in API path /cms/v4.0.a1/config/scanner-tools Get operation
    */
   oneof data {
     /*
      * 
      */
-    cms.v4.config.ScannerConfigWrapper scanner_config_data = 2002;
+    cms.v4.config.ScannerConfigArrayWrapper scanner_config_array_data = 2001;
     /*
      * 
      */
@@ -237,18 +248,29 @@ message ListScannerToolConfigResponse {
   optional common.v1.response.ApiResponseMetadata metadata = 1001;
 }
 /*
- * REST response for all response codes in api path /cms/v4.0.a1/config/security-policies Get operation
+ * OneOf item wrapper message
  */
 
-message ListSecurityPolicyResponse {
+message SecurityPolicyArrayWrapper {
   /*
-   * REST response for all response codes in api path /cms/v4.0.a1/config/security-policies Get operation
+   * Value field in oneOf item wrapper message
+   */
+
+  repeated cms.v4.config.SecurityPolicy value = 1000;
+  }
+/*
+ * REST response for all response codes in API path /cms/v4.0.a1/config/security-policies Get operation
+ */
+
+message ListSecurityPoliciesResponse {
+  /*
+   * REST response for all response codes in API path /cms/v4.0.a1/config/security-policies Get operation
    */
   oneof data {
     /*
      * 
      */
-    cms.v4.config.SecurityPolicyWrapper security_policy_data = 2002;
+    cms.v4.config.SecurityPolicyArrayWrapper security_policy_array_data = 2001;
     /*
      * 
      */
@@ -263,6 +285,18 @@ message ListSecurityPolicyResponse {
 /*
  * Scan Status.
  */
+message ScanServerTypeMessage {
+  enum ScanServerType {
+    UNKNOWN = 0;
+    REDACTED = 1;
+    TRIVY = 2001;
+    CLAIR = 2002;
+  }
+}
+
+/*
+ * Scan Status.
+ */
 message ScanStatusMessage {
   enum ScanStatus {
     UNKNOWN = 0;
@@ -274,11 +308,31 @@ message ScanStatusMessage {
 }
 
 /*
+ * OneOf item wrapper message
+ */
+
+message TrivyServiceConfigWrapper {
+  /*
+   * Value field in oneOf item wrapper message
+   */
+
+  optional cms.v4.config.TrivyServiceConfig value = 1000;
+}
+/*
  * Scanning Tool Configuration.
  */
 
 message ScannerConfig {
   /*
+   * Scanning Tool Configuration.
+   */
+  oneof server_config {
+    /*
+     * 
+     */
+    cms.v4.config.TrivyServiceConfigWrapper trivy_service_config_server_config = 2010;
+  }
+    /*
    * 
    */
 
@@ -297,22 +351,12 @@ message ScannerConfig {
    * Warehouse Item Type.
    */
 
-  repeated cms.v4.content.ItemTypeMessage.ItemType image_types = 2004;
-    /*
-   * URL to access Scanning Tool.
-   */
-
-  optional string service_url = 2005;
+  optional cms.v4.content.ItemTypeArrayWrapper image_types = 2004;
   /*
-   * Allow Insecure or Skip Certificate Validation.
+   * 
    */
 
-  optional bool allow_insecure = 2006 [default = false];
-  /*
-   * Service Token to access the service.
-   */
-
-  optional string access_token = 2007;
+  optional cms.v4.config.ScanServerTypeMessage.ScanServerType server_type = 2005;
   /*
    * 
    */
@@ -343,8 +387,8 @@ message SecurityPolicy {
    * Warehouse Item Type.
    */
 
-  repeated cms.v4.content.ItemTypeMessage.ItemType image_types = 2004;
-    /*
+  optional cms.v4.content.ItemTypeArrayWrapper image_types = 2004;
+  /*
    * Last Time when scanning policy was last enforced.
    */
 
@@ -366,12 +410,33 @@ message SecurityPolicy {
   optional common.v1.config.Metadata metadata = 2008;
 }
 /*
- * REST response for all response codes in api path /cms/v4.0.a1/config/scanner-tools/{extId} Put operation
+ * Trivy Service Client Configuration.
+ */
+
+message TrivyServiceConfig {
+  /*
+   * URL to access Scanning Tool.
+   */
+
+  optional string service_url = 2001;
+  /*
+   * Service Token to access the service.
+   */
+
+  optional string access_token = 2002;
+  /*
+   * Allow Insecure or Skip Certificate Validation.
+   */
+
+  optional bool is_secure = 2003 [default = false];
+}
+/*
+ * REST response for all response codes in API path /cms/v4.0.a1/config/scanner-tools/{extId} Put operation
  */
 
 message UpdateScannerToolConfigResponse {
   /*
-   * REST response for all response codes in api path /cms/v4.0.a1/config/scanner-tools/{extId} Put operation
+   * REST response for all response codes in API path /cms/v4.0.a1/config/scanner-tools/{extId} Put operation
    */
   oneof data {
     /*
@@ -390,12 +455,12 @@ message UpdateScannerToolConfigResponse {
   optional common.v1.response.ApiResponseMetadata metadata = 1001;
 }
 /*
- * REST response for all response codes in api path /cms/v4.0.a1/config/security-policies/{extId} Put operation
+ * REST response for all response codes in API path /cms/v4.0.a1/config/security-policies/{extId} Put operation
  */
 
 message UpdateSecurityPolicyResponse {
   /*
-   * REST response for all response codes in api path /cms/v4.0.a1/config/security-policies/{extId} Put operation
+   * REST response for all response codes in API path /cms/v4.0.a1/config/security-policies/{extId} Put operation
    */
   oneof data {
     /*

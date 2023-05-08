@@ -27,15 +27,18 @@ type MarinaBaseWarehouseTaskInterface interface {
 type MarinaBaseWarehouseTask struct {
 	*base.MarinaBaseTask
 	WarehouseUuid             *uuid4.Uuid
+	WarehouseItemUuid         *uuid4.Uuid
 	WarehouseLogicalTimestamp *int64
 	IWarehouseDB
+	IWarehouseStorage
 }
 
 func NewMarinaBaseWarehouseTask(
 	marinaBaseTask *base.MarinaBaseTask) *MarinaBaseWarehouseTask {
 	return &MarinaBaseWarehouseTask{
-		MarinaBaseTask: marinaBaseTask,
-		IWarehouseDB:   &WarehouseDBImpl{},
+		MarinaBaseTask:    marinaBaseTask,
+		IWarehouseDB:      &WarehouseDBImpl{},
+		IWarehouseStorage: &WarehouseS3StorageImpl{},
 	}
 }
 
@@ -57,6 +60,10 @@ func (t *MarinaBaseWarehouseTask) AddWarehouseEntity() {
 	t.AddAnEntity(ergon.EntityId_kUnknown.Enum(), t.GetWarehouseUuid())
 }
 
+func (t *MarinaBaseWarehouseTask) AddWarehouseItemEntity() {
+	// TODO: Add Warehouse Entity to Ergon Types.
+	t.AddAnEntity(ergon.EntityId_kUnknown.Enum(), t.WarehouseItemUuid)
+}
 func (t *MarinaBaseWarehouseTask) SetLogicalTimestamp(warehouseLogicalTimestamp *int64) {
 	t.WarehouseLogicalTimestamp = warehouseLogicalTimestamp
 }
@@ -69,6 +76,9 @@ func (t *MarinaBaseWarehouseTask) SetWarehouseUuid(uuid *uuid4.Uuid) {
 	t.WarehouseUuid = uuid
 }
 
+func (t *MarinaBaseWarehouseTask) SetWarehouseItemUuid(uuid *uuid4.Uuid) {
+	t.WarehouseItemUuid = uuid
+}
 func (task *MarinaBaseWarehouseTask) RecoverHook() error {
 	return nil
 }

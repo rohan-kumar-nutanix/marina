@@ -100,6 +100,12 @@ message PcTaskWalRecord {
 
   // The WarehouseWal
   optional WarehouseWal warehouse_wal = 6;
+
+  // The SecurityPolicyWal
+  optional SecurityPolicyWal security_policy_wal = 7;
+
+  // The ScannerConfig Wal
+  optional ScannerConfigWal scanner_config_wal = 8;
 }
 
 // Proxy task WAL.
@@ -117,10 +123,26 @@ message WarehouseWal {
   optional bytes warehouse_uuid = 1;
 
   // WarehouseItem UUID
-  optional string warehouse_item_uuid = 2;
+  optional bytes warehouse_item_uuid = 2;
 
   // Warehouse logical timestamp for the request.
   optional int64 logical_timestamp = 3;
+}
 
-  // TODO: Add Warehouse field.
+// Security Policy task WAL.
+message SecurityPolicyWal {
+  // Security Policy UUID
+  optional bytes security_policy_uuid = 1;
+
+  // Security Policy logical timestamp for the request.
+  optional int64 logical_timestamp = 2;
+}
+
+// Scanner Config Tool task WAL.
+message ScannerConfigWal {
+  // Scanner Config UUID
+  optional bytes scanner_config_uuid = 1;
+
+  // Scanner Config logical timestamp for the request.
+  optional int64 logical_timestamp = 2;
 }

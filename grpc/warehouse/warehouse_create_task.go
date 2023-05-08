@@ -9,6 +9,7 @@
 package warehouse
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
@@ -20,6 +21,7 @@ import (
 	marinaError "github.com/nutanix-core/content-management-marina/errors"
 	internal "github.com/nutanix-core/content-management-marina/interface/local"
 	warehousePB "github.com/nutanix-core/content-management-marina/protos/apis/cms/v4/content"
+	"github.com/nutanix-core/content-management-marina/protos/apis/common/v1/response"
 	marinaPB "github.com/nutanix-core/content-management-marina/protos/marina"
 )
 
@@ -75,11 +77,21 @@ func (task *MarinaWarehouseCreateTask) Run() error {
 	arg := task.getCreateWarehouseArg()
 
 	log.Infof("Running a Warehouse Create with UUID : %s", task.GetWarehouseUuid())
+
+	if arg.Body.Base == nil {
+		arg.Body.Base = &response.ExternalizableAbstractModel{ExtId: proto.String(task.GetWarehouseUuid().String())}
+	} else {
+		arg.Body.Base.ExtId = proto.String(task.GetWarehouseUuid().String())
+	}
+
 	err := task.CreateWarehouse(ctx, task.ExternalInterfaces().CPDBIfc(), task.InternalInterfaces().ProtoIfc(),
 		task.GetWarehouseUuid(), arg.Body)
 	if err != nil {
 		return err
 	}
+
+	// Create Warehouse Storage bucket
+	task.CreateWarehouseBucket(context.TODO(), task.GetWarehouseUuid().String())
 	ret := &warehousePB.CreateWarehouseRet{}
 	retBytes, err := task.InternalInterfaces().ProtoIfc().Marshal(ret)
 	if err != nil {

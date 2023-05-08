@@ -28,14 +28,23 @@ import (
 
 type WarehouseServer struct {
 	contentPB.UnimplementedWarehouseServiceServer
+	contentPB.UnimplementedWarehouseItemsServiceServer
 }
 
 type WarehouseInterface interface {
+	// Warehouse Methods
 	CreateWarehouse(c context.Context, arg *contentPB.CreateWarehouseArg) (*contentPB.CreateWarehouseRet, error)
 	ListWarehouses(context.Context, *contentPB.ListWarehousesArg) (*contentPB.ListWarehousesRet, error)
 	GetWarehouse(context.Context, *contentPB.GetWarehouseArg) (*contentPB.GetWarehouseRet, error)
 	UpdateWarehouseMetadata(context.Context, *contentPB.UpdateWarehouseMetadataArg) (*contentPB.UpdateWarehouseMetadataRet, error)
 	DeleteWarehouse(context.Context, *contentPB.DeleteWarehouseArg) (*contentPB.DeleteWarehouseRet, error)
+
+	// WarehouseItems Methods
+	AddItemToWarehouse(context.Context, *contentPB.AddItemToWarehouseArg) (*contentPB.AddItemToWarehouseRet, error)
+	GetWarehouseItemById(context.Context, *contentPB.GetWarehouseItemByIdArg) (*contentPB.GetWarehouseItemByIdRet, error)
+	ListWarehouseItems(context.Context, *contentPB.ListWarehouseItemsArg) (*contentPB.ListWarehouseItemsRet, error)
+	DeleteWarehouseItem(context.Context, *contentPB.DeleteWarehouseItemArg) (*contentPB.DeleteWarehouseItemRet, error)
+	UpdateWarehouseItemMetadata(context.Context, *contentPB.UpdateWarehouseItemMetadataArg) (*contentPB.UpdateWarehouseItemMetadataRet, error)
 }
 
 func (s *WarehouseServer) GetWarehouse(ctx context.Context, arg *contentPB.GetWarehouseArg) (*contentPB.GetWarehouseRet, error) {
@@ -107,7 +116,6 @@ func (s *WarehouseServer) DeleteWarehouse(c context.Context,
 // UpdateWarehouseMetadata  gRPC Handler.
 func (s *WarehouseServer) UpdateWarehouseMetadata(c context.Context,
 	arg *contentPB.UpdateWarehouseMetadataArg) (*contentPB.UpdateWarehouseMetadataRet, error) {
-	// TODO get operation in same method.
 	taskUuid, err := s.asyncHandlerWithGrpcStatus(c, arg, UpdateWarehouse)
 	if err != nil {
 		ret := &contentPB.UpdateWarehouseMetadataRet{
@@ -122,6 +130,98 @@ func (s *WarehouseServer) UpdateWarehouseMetadata(c context.Context,
 	ret := &contentPB.UpdateWarehouseMetadataRet{
 		Content: &contentPB.UpdateWarehouseResponse{
 			Data: &contentPB.UpdateWarehouseResponse_TaskReferenceData{
+				TaskReferenceData: setTaskData(taskUuid),
+			},
+		},
+	}
+	return ret, nil
+}
+
+// AddItemToWarehouse Handler, to add WarehouseItem to the Warehouse
+func (s *WarehouseServer) AddItemToWarehouse(c context.Context,
+	arg *contentPB.AddItemToWarehouseArg) (*contentPB.AddItemToWarehouseRet, error) {
+	taskUuid, err := s.asyncHandlerWithGrpcStatus(c, arg, AddItemToWarehouse)
+	if err != nil {
+		ret := &contentPB.AddItemToWarehouseRet{
+			Content: &contentPB.AddItemToWarehouseResponse{
+				Data: &contentPB.AddItemToWarehouseResponse_ErrorResponseData{
+					ErrorResponseData: nil,
+				},
+			},
+		}
+		return ret, err
+	}
+	ret := &contentPB.AddItemToWarehouseRet{
+		Content: &contentPB.AddItemToWarehouseResponse{
+			Data: &contentPB.AddItemToWarehouseResponse_TaskReferenceData{
+				TaskReferenceData: setTaskData(taskUuid),
+			},
+		},
+	}
+	return ret, nil
+}
+
+// GetWarehouseItemById gRPC Handler.
+func (s *WarehouseServer) GetWarehouseItemById(ctx context.Context, arg *contentPB.GetWarehouseItemByIdArg) (
+	*contentPB.GetWarehouseItemByIdRet, error) {
+	log.Infof("Arg received %v", arg)
+	defer log.Infof("Finished GetWarehouseItemById RPC for WarehouseUUID: %s WarehouseItemUUID: ",
+		*arg.ExtId, arg.ExtId)
+	span := tracer.GetSpanFromContext(ctx)
+	span.SetTag("WarehouseUUID", arg.ExtId)
+
+	return warehouse.WarehouseItemGetWithGrpcStatus(ctx, arg)
+}
+
+// ListWarehouseItems gRPC Handler.
+func (s *WarehouseServer) ListWarehouseItems(ctx context.Context, arg *contentPB.ListWarehouseItemsArg) (
+	*contentPB.ListWarehouseItemsRet, error) {
+	span := tracer.GetSpanFromContext(ctx)
+	span.SetTag("ListWarehouseItems", "")
+	return warehouse.WarehouseItemListWithGrpcStatus(ctx, arg)
+}
+
+// DeleteWarehouseItem gRPC Handler
+func (s *WarehouseServer) DeleteWarehouseItem(ctx context.Context, arg *contentPB.DeleteWarehouseItemArg) (
+	*contentPB.DeleteWarehouseItemRet, error) {
+	taskUuid, err := s.asyncHandlerWithGrpcStatus(ctx, arg, DeleteWarehouseItem)
+	if err != nil {
+		ret := &contentPB.DeleteWarehouseItemRet{
+			Content: &contentPB.DeleteWarehouseItemResponse{
+				Data: &contentPB.DeleteWarehouseItemResponse_ErrorResponseData{
+					ErrorResponseData: util.SetErrorResponse(nil),
+				},
+			},
+		}
+		return ret, err
+	}
+	ret := &contentPB.DeleteWarehouseItemRet{
+		Content: &contentPB.DeleteWarehouseItemResponse{
+			Data: &contentPB.DeleteWarehouseItemResponse_TaskReferenceData{
+				TaskReferenceData: setTaskData(taskUuid),
+			},
+		},
+	}
+	return ret, nil
+
+}
+
+func (s *WarehouseServer) UpdateWarehouseItemMetadata(ctx context.Context, arg *contentPB.UpdateWarehouseItemMetadataArg) (
+	*contentPB.UpdateWarehouseItemMetadataRet, error) {
+	taskUuid, err := s.asyncHandlerWithGrpcStatus(ctx, arg, UpdateWarehouseItemMetadata)
+	if err != nil {
+		ret := &contentPB.UpdateWarehouseItemMetadataRet{
+			Content: &contentPB.UpdateWarehouseItemResponse{
+				Data: &contentPB.UpdateWarehouseItemResponse_ErrorResponseData{
+					ErrorResponseData: util.SetErrorResponse(nil),
+				},
+			},
+		}
+		return ret, err
+	}
+	ret := &contentPB.UpdateWarehouseItemMetadataRet{
+		Content: &contentPB.UpdateWarehouseItemResponse{
+			Data: &contentPB.UpdateWarehouseItemResponse_TaskReferenceData{
 				TaskReferenceData: setTaskData(taskUuid),
 			},
 		},

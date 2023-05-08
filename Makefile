@@ -42,6 +42,9 @@ clean:
 	rm -rf build/
 	rm -rf mocks/
 
+clean-protos:
+	find ./protos/ -iname "*.pb.*" -delete
+
 server:
 	$(info Building binary at the project root)
 	$(info ===================================)

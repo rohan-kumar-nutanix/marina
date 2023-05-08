@@ -147,7 +147,7 @@ message GetWarehouseArg {
    */
   optional int32 _page = 2001;
   /*
-   * A URL query parameter that specifies the total number of records returned in the result set.  Must be a positive integer between 0 and 100. Any number out of this range will lead to a validation error. If the limit is not provided a default value of 50 records will be returned in the result set.
+   * A URL query parameter that specifies the total number of records returned in the result set.  Must be a positive integer between 1 and 100. Any number out of this range will lead to a validation error. If the limit is not provided a default value of 50 records will be returned in the result set.
 
    */
   optional int32 _limit = 2002;
@@ -181,7 +181,7 @@ message ListWarehousesArg {
    */
   optional int32 _page = 2001;
   /*
-   * A URL query parameter that specifies the total number of records returned in the result set.  Must be a positive integer between 0 and 100. Any number out of this range will lead to a validation error. If the limit is not provided a default value of 50 records will be returned in the result set.
+   * A URL query parameter that specifies the total number of records returned in the result set.  Must be a positive integer between 1 and 100. Any number out of this range will lead to a validation error. If the limit is not provided a default value of 50 records will be returned in the result set.
 
    */
   optional int32 _limit = 2002;

@@ -147,7 +147,7 @@ message GetScannerToolConfigByExtIdArg {
    */
   optional int32 _page = 2001;
   /*
-   * A URL query parameter that specifies the total number of records returned in the result set.  Must be a positive integer between 0 and 100. Any number out of this range will lead to a validation error. If the limit is not provided a default value of 50 records will be returned in the result set.
+   * A URL query parameter that specifies the total number of records returned in the result set.  Must be a positive integer between 1 and 100. Any number out of this range will lead to a validation error. If the limit is not provided a default value of 50 records will be returned in the result set.
 
    */
   optional int32 _limit = 2002;
@@ -181,10 +181,27 @@ message ListScannerToolConfigArg {
    */
   optional int32 _page = 2001;
   /*
-   * A URL query parameter that specifies the total number of records returned in the result set.  Must be a positive integer between 0 and 100. Any number out of this range will lead to a validation error. If the limit is not provided a default value of 50 records will be returned in the result set.
+   * A URL query parameter that specifies the total number of records returned in the result set.  Must be a positive integer between 1 and 100. Any number out of this range will lead to a validation error. If the limit is not provided a default value of 50 records will be returned in the result set.
 
    */
   optional int32 _limit = 2002;
+  /*
+   * A URL query parameter that allows clients to filter a collection of resources. The expression specified with $filter is evaluated for each resource in the collection, and only items where the expression evaluates to true are included in the response. Expression specified with the $filter must conform to the OData V4.01 URL conventions.
+The filter can be applied on the following fields:
+- description
+- imageTypes
+- name
+
+   */
+  optional string _filter = 2003;
+  /*
+   * A URL query parameter that allows clients to specify the sort criteria for the returned list of objects. Resources can be sorted in ascending order using asc or descending order using desc. If asc or desc are not specified the resources will be sorted in ascending order by default. For example, 'orderby=templateName desc' would get all templates sorted by templateName in desc order.
+The orderby can be applied to the following fields:
+- description
+- name
+
+   */
+  optional string _orderby = 2004;
 }
 
 /*
@@ -194,7 +211,7 @@ message ListScannerToolConfigRet {
   /*
    * field containing expected response content
    */
-  optional cms.v4.config.ListScannerToolConfigResponse content = 999;
+  optional cms.v4.config.ListScannerToolConfigsResponse content = 999;
   /*
    * map containing headers expected in response
    */

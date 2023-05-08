@@ -57,6 +57,39 @@ message IntegerWrapper {
   optional int32 value = 1000;
 }
 /*
+ * OneOf item wrapper message
+ */
+
+message BooleanWrapper {
+  /*
+   * Value field in oneOf item wrapper message
+   */
+
+  optional bool value = 1000;
+}
+/*
+ * Array wrapper message
+ */
+
+message StringArrayWrapper {
+  /*
+   * Value field in wrapper message
+   */
+
+  repeated string value = 1000;
+  }
+/*
+ * OneOf item wrapper message
+ */
+
+message StringMapWrapper {
+  /*
+   * Value field in oneOf item wrapper message
+   */
+
+  map<string, string> value = 1000;
+  }
+/*
  * A map describing a set of keys and their corresponding values. 
  */
 
@@ -73,6 +106,18 @@ message KVPair {
      * 
      */
     common.v1.config.IntegerWrapper integer_value = 1003;
+    /*
+     * 
+     */
+    common.v1.config.BooleanWrapper boolean_value = 1004;
+    /*
+     * 
+     */
+    common.v1.config.StringArrayWrapper string_array_value = 1005;
+    /*
+     * 
+     */
+    common.v1.config.StringMapWrapper string_map_value = 1006;
   }
     /*
    * The key of this key-value pair
@@ -148,8 +193,8 @@ message Metadata {
    * A list of globally unique identifiers that represent all the categories the resource is associated with. 
    */
 
-  repeated string category_ids = 1005;
-  }
+  optional common.v1.config.StringArrayWrapper category_ids = 1005;
+}
 /*
  * A model base class whose instances are bound to a specific tenant.  This model adds a tenantId to the base model class that it extends and is automatically set by the server. 
  */
@@ -161,3 +206,36 @@ message TenantAwareModel {
 
   optional string tenant_id = 1001;
 }
+/*
+ * Array wrapper message
+ */
+
+message FlagArrayWrapper {
+  /*
+   * Value field in wrapper message
+   */
+
+  repeated common.v1.config.Flag value = 1000;
+  }
+/*
+ * Array wrapper message
+ */
+
+message MessageArrayWrapper {
+  /*
+   * Value field in wrapper message
+   */
+
+  repeated common.v1.config.Message value = 1000;
+  }
+/*
+ * Array wrapper message
+ */
+
+message KVPairArrayWrapper {
+  /*
+   * Value field in wrapper message
+   */
+
+  repeated common.v1.config.KVPair value = 1000;
+  }

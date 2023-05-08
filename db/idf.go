@@ -29,12 +29,15 @@ import (
 type EntityType int64
 
 const (
-	CatalogItem EntityType = iota
+	CatalogItem EntityType = iota + 1
 	File
 	Image
 	RateLimit
 	EntityCapability
 	Warehouse
+	WarehouseItem
+	SecurityPolicy
+	ScannerConfig
 )
 
 func (entityType EntityType) ToString() string {
@@ -51,6 +54,12 @@ func (entityType EntityType) ToString() string {
 		return "abac_entity_capability"
 	case Warehouse:
 		return "warehouse"
+	case WarehouseItem:
+		return "warehouse_item"
+	case SecurityPolicy:
+		return "warehouse_security_policy"
+	case ScannerConfig:
+		return "warehouse_scanner_config"
 	}
 	return "unknown"
 }

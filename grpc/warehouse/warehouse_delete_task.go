@@ -9,6 +9,7 @@
 package warehouse
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
@@ -69,6 +70,11 @@ func (task *MarinaWarehouseDeleteTask) Run() error {
 	if err != nil {
 		return err
 	}
+
+	// Delete the Warehouse Storage
+	// Create Warehouse Storage
+	task.DeleteWarehouseBucket(context.TODO(), task.GetWarehouseUuid().String())
+
 	ret := &warehousePB.DeleteWarehouseRet{}
 	retBytes, err := task.InternalInterfaces().ProtoIfc().Marshal(ret)
 	if err != nil {

@@ -36,6 +36,17 @@ message ApiLink {
   optional string rel = 1002;
 }
 /*
+ * Array wrapper message
+ */
+
+message ApiLinkArrayWrapper {
+  /*
+   * Value field in wrapper message
+   */
+
+  repeated common.v1.response.ApiLink value = 1000;
+  }
+/*
  * The metadata associated with an API response. Always present and minimally contains the self-link for the API request that produced this response.  Also contains pagination data for paginated requests. 
  */
 
@@ -44,13 +55,13 @@ message ApiResponseMetadata {
    * 
    */
 
-  repeated common.v1.config.Flag flags = 1001;
-    /*
+  optional common.v1.config.FlagArrayWrapper flags = 1001;
+  /*
    * 
    */
 
-  repeated common.v1.response.ApiLink links = 1002;
-    /*
+  optional common.v1.response.ApiLinkArrayWrapper links = 1002;
+  /*
    * 
    */
 
@@ -59,13 +70,13 @@ message ApiResponseMetadata {
    * 
    */
 
-  repeated common.v1.config.Message messages = 1004;
-    /*
+  optional common.v1.config.MessageArrayWrapper messages = 1004;
+  /*
    * An array of entity-specific metadata 
    */
 
-  repeated common.v1.config.KVPair extra_info = 1005;
-  }
+  optional common.v1.config.KVPairArrayWrapper extra_info = 1005;
+}
 /*
  * 
  */
@@ -85,5 +96,5 @@ message ExternalizableAbstractModel {
    * A HATEOAS style link for the response.  Each link contains a user friendly name identifying the link and an address for retrieving the particular resource. 
    */
 
-  repeated common.v1.response.ApiLink links = 1003;
-  }
+  optional common.v1.response.ApiLinkArrayWrapper links = 1003;
+}

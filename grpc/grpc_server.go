@@ -23,6 +23,7 @@ import (
 	log "k8s.io/klog/v2"
 
 	"github.com/nutanix-core/content-management-marina/grpc/services"
+	"github.com/nutanix-core/content-management-marina/protos/apis/cms/v4/config"
 	"github.com/nutanix-core/content-management-marina/protos/apis/cms/v4/content"
 	marinaIfc "github.com/nutanix-core/content-management-marina/protos/marina"
 )
@@ -81,8 +82,12 @@ func NewServer(port uint64) (server Server) {
 // registered with the server before it is started.
 func (server *ServerImpl) registerServices(s *grpc.Server) {
 	log.Info("Registering services...")
+	warehouseServer := &services.WarehouseServer{}
 	marinaIfc.RegisterMarinaServer(server.gserver, &services.MarinaServer{})
-	content.RegisterWarehouseServiceServer(server.gserver, &services.WarehouseServer{})
+	content.RegisterWarehouseServiceServer(server.gserver, warehouseServer)
+	content.RegisterWarehouseItemsServiceServer(server.gserver, warehouseServer)
+	config.RegisterSecurityPolicyServiceServer(server.gserver, &services.SecurityPolicyServer{})
+	config.RegisterScannerToolsServiceServer(server.gserver, &services.ScannerConfigurationServer{})
 }
 
 // Start listening and serve. Errors are fatal (todo).

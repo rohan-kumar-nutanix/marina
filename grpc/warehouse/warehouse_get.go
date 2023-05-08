@@ -13,12 +13,14 @@ import (
 
 	"github.com/nutanix-core/acs-aos-go/nutanix/util-go/tracer"
 	"github.com/nutanix-core/acs-aos-go/nutanix/util-go/uuid4"
+	"google.golang.org/protobuf/proto"
 	log "k8s.io/klog/v2"
 
 	"github.com/nutanix-core/content-management-marina/errors"
 	"github.com/nutanix-core/content-management-marina/interface/external"
 	internal "github.com/nutanix-core/content-management-marina/interface/local"
 	contentPB "github.com/nutanix-core/content-management-marina/protos/apis/cms/v4/content"
+	apiResponse "github.com/nutanix-core/content-management-marina/protos/apis/common/v1/response"
 	utils "github.com/nutanix-core/content-management-marina/util"
 )
 
@@ -52,6 +54,12 @@ func WarehouseGet(ctx context.Context, arg *contentPB.GetWarehouseArg) (*content
 		return nil, err
 	}
 
+	metadata, err := getWarehouseGetMetadata(ctx, *arg.ExtId)
+	if err != nil {
+		log.Errorf("error occurred in generating Warehouse Response Metadata %s", err)
+	}
+
+	log.Infof("Setting Warehouse Metadata %v", metadata)
 	ret := &contentPB.GetWarehouseRet{
 		Content: &contentPB.GetWarehouseResponse{
 			Data: &contentPB.GetWarehouseResponse_WarehouseData{
@@ -59,6 +67,7 @@ func WarehouseGet(ctx context.Context, arg *contentPB.GetWarehouseArg) (*content
 					Value: warehouse,
 				},
 			},
+			Metadata: metadata,
 		},
 	}
 	return ret, nil
@@ -71,6 +80,10 @@ func WarehouseList(ctx context.Context, arg *contentPB.ListWarehousesArg) (*cont
 		return nil, err
 	}
 
+	metadata, err := getWarehouseListMetadata(ctx, int32(len(warehouses)))
+	if err != nil {
+		log.Errorf("error occurred in generating Warehouse Response Metadata %s", err)
+	}
 	ret := &contentPB.ListWarehousesRet{
 		Content: &contentPB.ListWarehousesResponse{
 			Data: &contentPB.ListWarehousesResponse_WarehouseArrayData{
@@ -78,6 +91,7 @@ func WarehouseList(ctx context.Context, arg *contentPB.ListWarehousesArg) (*cont
 					Value: warehouses,
 				},
 			},
+			Metadata: metadata,
 		},
 	}
 	return ret, nil
@@ -101,4 +115,64 @@ func WarehouseListWithGrpcStatus(ctx context.Context, arg *contentPB.ListWarehou
 		return ret, internal.Interfaces().ErrorIfc().BuildGrpcError(errors.ErrInternal)
 	}
 	return ret, nil
+}
+
+// Get metadata corresponding to the task get response.
+func getWarehouseGetMetadata(ctx context.Context,
+	warehouseUUID string) (*apiResponse.ApiResponseMetadata, error) {
+	metadata := new(apiResponse.ApiResponseMetadata)
+	// metadata.Links = &apiResponse.ApiLinkArrayWrapper{}
+	metadata.Links = new(apiResponse.ApiLinkArrayWrapper)
+	metadata.Links.Value = make([]*apiResponse.ApiLink, 0, 1)
+
+	// Populate the self link.
+	selfLink := &apiResponse.ApiLink{}
+	href, err := utils.GetLink(ctx, "warehouses", warehouseUUID)
+	if err != nil {
+		log.Errorf("Error occurred in getting links %v", err)
+		// return nil, err
+	}
+	log.Infof("href generated %v", href)
+	selfLink.Href = proto.String(href)
+	selfLink.Rel = proto.String(utils.SELF_RELATION)
+
+	metadata.Links.Value = append(metadata.Links.Value, selfLink)
+
+	metadata1 := &apiResponse.ApiResponseMetadata{
+		Flags:                 utils.GetMetadataFlagWrapper(),
+		Links:                 metadata.Links,
+		TotalAvailableResults: proto.Int32(1),
+	}
+	log.Infof("Warehouse Metadata1 :%v", metadata1)
+	return metadata1, nil
+}
+
+func getWarehouseListMetadata(ctx context.Context,
+	count int32) (*apiResponse.ApiResponseMetadata, error) {
+	metadata := new(apiResponse.ApiResponseMetadata)
+	// metadata.Links = &apiResponse.ApiLinkArrayWrapper{}
+	metadata.Links = new(apiResponse.ApiLinkArrayWrapper)
+	metadata.Links.Value = make([]*apiResponse.ApiLink, 0, 1)
+
+	// Populate the self link.
+	selfLink := &apiResponse.ApiLink{}
+	href, _ := utils.GetLink(ctx, "warehouses", "")
+	// if err != nil {
+	// 	log.Errorf("Error occurred in getting links %v", err)
+	// 	return nil, err
+	// }
+	log.Infof("href generated %v", href)
+	selfLink.Href = proto.String(href)
+	selfLink.Rel = proto.String(utils.SELF_RELATION)
+	// metadata.Links = append(metadata.Links, selfLink)
+
+	metadata.Links.Value = append(metadata.Links.Value, selfLink)
+
+	metadata1 := &apiResponse.ApiResponseMetadata{
+		Flags:                 utils.GetMetadataFlagWrapper(),
+		Links:                 metadata.Links,
+		TotalAvailableResults: proto.Int32(count),
+	}
+	log.Infof("Warehouse Metadata1 :%v", metadata1)
+	return metadata1, nil
 }
