@@ -27,7 +27,8 @@ func init() {
 func marinaClient(port uint) (*grpc.ClientConn, marina.MarinaClient) {
 	// address := fmt.Sprintf("127.0.0.1:%d", port)
 	// address := fmt.Sprintf("10.37.161.66:%d", port)
-	pcIp := "localhost" // "10.96.16.100" // "0.0.0.0" //"10.33.33.78"
+	// pcIp := "localhost" // "10.96.16.100" // "0.0.0.0" //"10.33.33.78"
+	pcIp := "10.37.178.217"
 	port = 9200
 	address := fmt.Sprintf("%s:%d", pcIp, port)
 	fmt.Println("Connecting to GRPC server at ", address)

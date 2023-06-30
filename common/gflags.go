@@ -31,14 +31,19 @@ var (
 	// IAM Client related flags.
 
 	MarinaServiceCertPath = flag.String("marina_cert_path",
-		"/home/certs/CatalogService/CatalogService.crt",
+		// "/home/certs/CatalogService/CatalogService.crt",
+		"/Users/rohan.kumar/marina-code/content-management-marina/certs/CatalogService/CatalogService.crt",
 		"Marina service cert absolute path on CVM.")
 	MarinaServiceKeyPath = flag.String("marina_key_path",
-		"/home/certs/CatalogService/CatalogService.key",
+		"/Users/rohan.kumar/marina-code/content-management-marina/certs/CatalogService/CatalogService.key",
+		// "/home/certs/CatalogService/CatalogService.key",
 		"Marina service private key absolute path on CVM.")
 	MarinaServiceCaChainPath = flag.String("ca_chain_path",
-		"/home/certs/ca.pem", "The root CA absolute path on container.")
+		// "/home/certs/ca.pem",
+		"/Users/rohan.kumar/marina-code/content-management-marina/certs/ca.pem",
+		"The root CA absolute path on container.")
 	MarinaServiceIcaPath = flag.String("ica_path",
-		"/home/certs/ica.crt",
+		// "/home/certs/ica.crt",
+		"/Users/rohan.kumar/marina-code/content-management-marina/certs/ica.crt",
 		"Path to intermediate CA cert for mutual TLS based authn with IAM")
 )

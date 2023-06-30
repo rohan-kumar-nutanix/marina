@@ -8,6 +8,7 @@
 package storageadapters
 
 import (
+	"bytes"
 	"context"
 	"sync"
 
@@ -62,8 +63,8 @@ type Config struct {
 
 func getS3ClientFromConfig() *s3.Client {
 	localS3Config := Config{
-		AccessKey: "",
-		SecretKey: "",
+		AccessKey: "tW_KDPCzz12MZiokdYRULLXlAaVh9ZuL",
+		SecretKey: "OUe2waPYFv2QrP9b2tbVSgc04WkwMrIp",
 		Bucket:    "",
 		EndPoint:  "http://10.45.48.219",
 		Region:    "us-east-1",
@@ -149,3 +150,67 @@ func (impl *AwsS3Impl) DeleteWarehouseBucket(ctx context.Context, bucketName str
 	log.Infof("Bucket got Deleted successfully bucket %s", output.ResultMetadata)
 	return nil
 }
+
+func (impl *AwsS3Impl) UploadFileToBucket(ctx context.Context, bucketName string, pathToFile string, data []byte) error {
+
+	// input := &s3.DeleteBucketInput{
+	// 	Bucket: aws.String(bucketName),
+	// }
+	// output, err := impl.DeleteBucket(ctx, input)
+	// if err != nil {
+	// 	log.Errorf("Error Occurred while Deleting the bucket %s", err)
+	// 	return err
+	// }
+	// log.Infof("Bucket got Deleted successfully bucket %s", output.ResultMetadata)
+	// return nil
+	objectKey := pathToFile
+	s3Client := getS3ClientFromConfig()
+	// Upload the file to S3
+	output, err := s3Client.PutObject(context.TODO(), &s3.PutObjectInput{
+		Bucket: aws.String(bucketName),
+		Key:    aws.String(objectKey),
+		Body:   bytes.NewReader(data),
+	})
+	if err != nil {
+		log.Errorf("Error Occurred while uploading file to the bucket %s", err)
+		return err
+	}
+
+	log.Infof("File uploaded to bucket successfully %s", output.ResultMetadata)
+	return nil
+}
+
+func (impl *AwsS3Impl) DeleteFileFromBucket(ctx context.Context, bucketName string, pathToFile string) error {
+	objectKey := pathToFile
+	s3Client := getS3ClientFromConfig()
+	// Upload the file to S3
+	output, err := s3Client.DeleteObject(context.TODO(), &s3.DeleteObjectInput{
+		Bucket: aws.String(bucketName),
+		Key:    aws.String(objectKey),
+	})
+	if err != nil {
+		log.Errorf("Error Occurred while deleting file from the bucket %s", err)
+		return err
+	}
+
+	log.Infof("File successfully deleted from the bucket %s", output.ResultMetadata)
+	return nil
+}
+
+// func (impl *AwsS3Impl) UpdateFileInBucket(ctx context.Context, bucketName string, pathToFile string, data []byte) error {
+// 	objectKey := pathToFile
+// 	s3Client := getS3ClientFromConfig()
+// 	// Upload the file to S3
+// 	output, err := s3Client.PutObject(context.TODO(), &s3.PutObjectInput{
+// 		Bucket: aws.String(bucketName),
+// 		Key:    aws.String(objectKey),
+// 		Body:   bytes.NewReader(data),
+// 	})
+// 	if err != nil {
+// 		log.Errorf("Error Occurred while uploading file to the bucket %s", err)
+// 		return err
+// 	}
+
+// 	log.Infof("File uploaded to bucket successfully %s", output.ResultMetadata)
+// 	return nil
+// }

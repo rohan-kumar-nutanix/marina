@@ -46,7 +46,7 @@ func (task *MarinaWarehouseItemDeleteTask) StartHook() error {
 		return marinaError.ErrMarinaInternal.SetCauseAndLog(
 			fmt.Errorf("failed to create WarehouseItem UUID: %s", err))
 	}
-	warehouseUuid, _ := uuid4.StringToUuid4(*arg.ExtId)
+	warehouseUuid, _ := uuid4.StringToUuid4(*arg.WarehouseExtId)
 	task.SetWarehouseUuid(warehouseUuid)
 	task.SetWarehouseItemUuid(warehouseItemUuid)
 

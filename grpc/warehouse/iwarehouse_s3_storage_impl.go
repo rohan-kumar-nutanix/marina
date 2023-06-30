@@ -44,7 +44,7 @@ func (storageImpl WarehouseS3StorageImpl) CreateWarehouseBucket(ctx context.Cont
 }
 
 func (storageImpl WarehouseS3StorageImpl) DeleteWarehouseBucket(ctx context.Context, warehouseUuid string) error {
-	
+
 	if len(warehouseUuid) == 0 {
 		log.Errorf("Warehouse UUID is empty")
 		return nil
@@ -52,6 +52,39 @@ func (storageImpl WarehouseS3StorageImpl) DeleteWarehouseBucket(ctx context.Cont
 	err := storageImpl.AwsS3Impl.DeleteWarehouseBucket(ctx, warehouseUuid)
 	if err != nil {
 		log.Errorf("Error Occurred while Deleting the Warehouse Bucket %s", err)
+
+	}
+	return err
+}
+
+func (storageImpl WarehouseS3StorageImpl) UploadFileToWarehouseBucket(ctx context.Context, warehouseUuid string, pathToFile string, data []byte) error {
+	log.Infof("Uploading file to Warehouse Bucket %s", warehouseUuid)
+
+	err := storageImpl.AwsS3Impl.UploadFileToBucket(ctx, warehouseUuid, pathToFile, data)
+	if err != nil {
+		log.Errorf("Error Occurred while uploading file to Warehouse Bucket %s", err)
+
+	}
+	return err
+}
+
+func (storageImpl WarehouseS3StorageImpl) DeleteFileFromWarehouseBucket(ctx context.Context, warehouseUuid string, pathToFile string) error {
+	log.Infof("Deleting file from Warehouse Bucket %s", warehouseUuid)
+
+	err := storageImpl.AwsS3Impl.DeleteFileFromBucket(ctx, warehouseUuid, pathToFile)
+	if err != nil {
+		log.Errorf("Error Occurred while deleting file from Warehouse Bucket %s", err)
+
+	}
+	return err
+}
+
+func (storageImpl WarehouseS3StorageImpl) UpdateFileInWarehouseBucket(ctx context.Context, warehouseUuid string, pathToFile string, data []byte) error {
+	log.Infof("Updating file in Warehouse Bucket %s", warehouseUuid)
+
+	err := storageImpl.AwsS3Impl.UploadFileToBucket(ctx, warehouseUuid, pathToFile, data)
+	if err != nil {
+		log.Errorf("Error Occurred while updating file in Warehouse Bucket %s", err)
 
 	}
 	return err

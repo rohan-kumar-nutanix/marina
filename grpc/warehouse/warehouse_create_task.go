@@ -84,15 +84,22 @@ func (task *MarinaWarehouseCreateTask) Run() error {
 		arg.Body.Base.ExtId = proto.String(task.GetWarehouseUuid().String())
 	}
 
-	err := task.CreateWarehouse(ctx, task.ExternalInterfaces().CPDBIfc(), task.InternalInterfaces().ProtoIfc(),
+	// Create Warehouse Storage bucket
+	err := task.CreateWarehouseBucket(context.TODO(), task.GetWarehouseUuid().String())
+	if err != nil {
+		return err
+	}
+
+	err = task.CreateWarehouse(ctx, task.ExternalInterfaces().CPDBIfc(), task.InternalInterfaces().ProtoIfc(),
 		task.GetWarehouseUuid(), arg.Body)
 	if err != nil {
 		return err
 	}
 
-	// Create Warehouse Storage bucket
-	task.CreateWarehouseBucket(context.TODO(), task.GetWarehouseUuid().String())
+	// // Create Warehouse Storage bucket
+	// task.CreateWarehouseBucket(context.TODO(), task.GetWarehouseUuid().String())
 	ret := &warehousePB.CreateWarehouseRet{}
+	// fmt.Printf("The ret value is: %+v", task.InternalInterfaces().ProtoIfc())
 	retBytes, err := task.InternalInterfaces().ProtoIfc().Marshal(ret)
 	if err != nil {
 		errMsg := fmt.Sprintf("Failed to serialize the return object: %v", err)

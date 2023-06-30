@@ -25,12 +25,15 @@ func init() {
 	flag.Set("logtostderr", "true")
 }
 
-var pcip = "10.97.0.110" // "localhost" // "10.97.16.174"
+// var pcip = "10.97.188.105" // "localhost" // "10.97.16.174"
+var pcip = "localhost"
 
 func warehouseClient(port uint) (*grpc.ClientConn, warehouse.WarehouseServiceClient) {
 	// address := fmt.Sprintf("127.0.0.1:%d", port)
 	// address := fmt.Sprintf("10.37.161.66:%d", port)
-	pcIp := "localhost" // pcip // //"10.96.16.100" // "0.0.0.0" //"10.33.33.78"
+	// pcIp := "localhost" // pcip // //"10.96.16.100" // "0.0.0.0" //"10.33.33.78"
+	// pcIp := "10.97.188.105"
+	pcIp := "localhost"
 	port = 9200
 	address := fmt.Sprintf("%s:%d", pcIp, port)
 	fmt.Println("Connecting to GRPC server at ", address)
@@ -49,7 +52,8 @@ func warehouseClient(port uint) (*grpc.ClientConn, warehouse.WarehouseServiceCli
 func warehouseItemClient(port uint) (*grpc.ClientConn, warehouse.WarehouseItemsServiceClient) {
 	// address := fmt.Sprintf("127.0.0.1:%d", port)
 	// address := fmt.Sprintf("10.37.161.66:%d", port)
-	pcIp := "localhost" // "10.96.16.100" // "0.0.0.0" //"10.33.33.78"
+	// pcIp := "10.97.188.105" // "10.96.16.100" // "0.0.0.0" //"10.33.33.78"
+	pcIp := "localhost"
 	// port = 9200
 	address := fmt.Sprintf("%s:%d", pcIp, port)
 	fmt.Println("Connecting to GRPC server at ", address)
@@ -208,7 +212,7 @@ func testCreateWarehouseItem(ctx context.Context, client warehouse.WarehouseItem
 	}*/
 
 	arg := &warehouse.AddItemToWarehouseArg{
-		ExtId: proto.String("4e98f7ea-3816-49c7-46f7-46d2e7e6a0ae"),
+		ExtId: proto.String("74eb3f49-03f5-476f-4b1f-9abbc566de8d"),
 		Body: &warehouse.WarehouseItem{
 			Name:            proto.String("Ngnix-Docker-Image"),
 			Description:     proto.String("Latest Nginx Docker"),
@@ -235,8 +239,8 @@ func testCreateWarehouseItem(ctx context.Context, client warehouse.WarehouseItem
 
 func testDeleteWarehouseItemById(ctx context.Context, client warehouse.WarehouseItemsServiceClient) {
 	arg := &warehouse.DeleteWarehouseItemArg{
-		ExtId:          proto.String("a475d4b8-f048-4f42-4021-02e4aa30f2ca"),
-		WarehouseExtId: proto.String("8203fe3f-20ab-402a-7311-dc6d0e550e42"),
+		ExtId:          proto.String("279b3ac4-a0de-4637-4ee2-7b9cca1d3f3f"),
+		WarehouseExtId: proto.String("74eb3f49-03f5-476f-4b1f-9abbc566de8d"),
 	}
 	response, err := client.DeleteWarehouseItem(ctx, arg)
 	if err != nil {
@@ -355,13 +359,15 @@ func testCreateWarehouse(ctx context.Context, client warehouse.WarehouseServiceC
 
 	fmt.Println("***********Response received from server*******")
 	fmt.Println("-----------------------------------------------")
-	fmt.Println("Warehouse Response ", response)
+	fmt.Printf("Warehouse Response %s", response)
+	// taskUUID = response.GetContent().GetTaskReferenceData().GetValue().GetExtId()
+	// client.GetTaskReferenceData()
 
 }
 
 func testUpdateWarehouse(ctx context.Context, client warehouse.WarehouseServiceClient) {
 	arg := &warehouse.UpdateWarehouseMetadataArg{
-		ExtId: proto.String("4e98f7ea-3816-49c7-46f7-46d2e7e6a0ae"),
+		ExtId: proto.String("74eb3f49-03f5-476f-4b1f-9abbc566de8d"),
 		Body: &warehouse.Warehouse{
 			Name:        proto.String("Mast & Harbor"),
 			Description: proto.String("Flipkart"),

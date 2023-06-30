@@ -69,6 +69,14 @@ func (warehouseDBImpl *WarehouseDBImpl) CreateWarehouse(ctx context.Context, cpd
 		errMsg := fmt.Sprintf("Error while creating the IDF entry for Warehouse %s: %v", warehouseUuid.String(), err)
 		return marinaError.ErrInternalError().SetCauseAndLog(errors.New(errMsg))
 	}
+
+	//Add warehouse metadata to bucket
+	storageImpl := newWarehouseS3StorageImpl()
+	err = storageImpl.UploadFileToWarehouseBucket(ctx, warehouseUuid.String(), "metadata/warehouse", buffer.Bytes())
+	if err != nil {
+		errMsg := fmt.Sprintf("Error while uploading the IDF entry to warehouse bucket %s: %v", warehouseUuid.String(), err)
+		return marinaError.ErrInternalError().SetCauseAndLog(errors.New(errMsg))
+	}
 	return nil
 }
 
@@ -153,6 +161,14 @@ func (warehouseDBImpl *WarehouseDBImpl) UpdateWarehouse(ctx context.Context, cpd
 		errMsg := fmt.Sprintf("Error while creating the IDF entry for Warehouse %s: %v", warehouseUuid.String(), err)
 		return marinaError.ErrInternalError().SetCauseAndLog(errors.New(errMsg))
 	}
+
+	//Update warehouse Item metadata in bucket
+	storageImpl := newWarehouseS3StorageImpl()
+	err = storageImpl.UpdateFileInWarehouseBucket(ctx, warehouseUuid.String(), "metadata/warehouse", buffer.Bytes())
+	if err != nil {
+		errMsg := fmt.Sprintf("Error while updating the IDF entry in warehouse bucket %s: %v", warehouseUuid.String(), err)
+		return marinaError.ErrInternalError().SetCauseAndLog(errors.New(errMsg))
+	}
 	return nil
 }
 
@@ -217,6 +233,14 @@ func (warehouseDBImpl *WarehouseDBImpl) CreateWarehouseItem(ctx context.Context,
 		errMsg := fmt.Sprintf("Error while creating the IDF entry for WarehouseItem %s: %v", warehouseItemUuid.String(), err)
 		return marinaError.ErrInternalError().SetCauseAndLog(errors.New(errMsg))
 	}
+
+	//Create warehouse Item metadata in bucket
+	storageImpl := newWarehouseS3StorageImpl()
+	err = storageImpl.UploadFileToWarehouseBucket(ctx, warehouseUuid.String(), "metadata/"+warehouseItemUuid.String(), buffer.Bytes())
+	if err != nil {
+		errMsg := fmt.Sprintf("Error while uploading the IDF entry to warehouse bucket %s: %v", warehouseUuid.String(), err)
+		return marinaError.ErrInternalError().SetCauseAndLog(errors.New(errMsg))
+	}
 	return nil
 
 }
@@ -276,7 +300,14 @@ func (warehouseDBImpl *WarehouseDBImpl) DeleteWarehouseItem(ctx context.Context,
 		errMsg := fmt.Sprintf("Failed to delete the WarehouseItem: %v", err)
 		return marinaError.ErrInternalError().SetCauseAndLog(errors.New(errMsg))
 	}
-	log.Infof("WarehouseItem UUID : %s is deleted", warehouseUuid)
+	log.Infof("WarehouseItem UUID : %s is deleted", warehouseItemUuid)
+	//Delete warehouse item metadata from bucket
+	storageImpl := newWarehouseS3StorageImpl()
+	err = storageImpl.DeleteFileFromWarehouseBucket(ctx, warehouseUuid, "metadata/"+warehouseItemUuid)
+	if err != nil {
+		errMsg := fmt.Sprintf("Error while deleting the IDF entry from warehouse bucket %s: %v", warehouseUuid, err)
+		return marinaError.ErrInternalError().SetCauseAndLog(errors.New(errMsg))
+	}
 	return nil
 }
 
@@ -323,6 +354,14 @@ func (warehouseDBImpl *WarehouseDBImpl) UpdateWarehouseItem(ctx context.Context,
 		entity, false, entity.GetCasValue()+1)
 	if err != nil {
 		errMsg := fmt.Sprintf("Error while updating the IDF entry for WarehouseItem %s: %v", warehouseUuid.String(), err)
+		return marinaError.ErrInternalError().SetCauseAndLog(errors.New(errMsg))
+	}
+
+	//Update warehouse Item metadata in bucket
+	storageImpl := newWarehouseS3StorageImpl()
+	err = storageImpl.UpdateFileInWarehouseBucket(ctx, warehouseUuid.String(), "metadata/"+warehouseItemUuid.String(), buffer.Bytes())
+	if err != nil {
+		errMsg := fmt.Sprintf("Error while updating the IDF entry in warehouse bucket %s: %v", warehouseUuid.String(), err)
 		return marinaError.ErrInternalError().SetCauseAndLog(errors.New(errMsg))
 	}
 	return nil
