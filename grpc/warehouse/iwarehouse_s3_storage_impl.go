@@ -70,8 +70,17 @@ func (storageImpl WarehouseS3StorageImpl) UploadFileToWarehouseBucket(ctx contex
 
 func (storageImpl WarehouseS3StorageImpl) DeleteFileFromWarehouseBucket(ctx context.Context, warehouseUuid string, pathToFile string) error {
 	log.Infof("Deleting file from Warehouse Bucket %s", warehouseUuid)
-
 	err := storageImpl.AwsS3Impl.DeleteFileFromBucket(ctx, warehouseUuid, pathToFile)
+	if err != nil {
+		log.Errorf("Error Occurred while deleting file from Warehouse Bucket %s", err)
+
+	}
+	return err
+}
+
+func (storageImpl WarehouseS3StorageImpl) DeleteAllFilesFromWarehouseBucket(ctx context.Context, warehouseUuid string) error {
+	log.Infof("Deleting all files from Warehouse Bucket %s", warehouseUuid)
+	err := storageImpl.AwsS3Impl.DeleteAllFileFromBucket(ctx, warehouseUuid)
 	if err != nil {
 		log.Errorf("Error Occurred while deleting file from Warehouse Bucket %s", err)
 

@@ -87,7 +87,7 @@ func testGetWarehouse(ctx context.Context, client warehouse.WarehouseServiceClie
 }
 
 func testDeleteWarehouse(ctx context.Context, client warehouse.WarehouseServiceClient) {
-	arg := &warehouse.DeleteWarehouseArg{ExtId: proto.String("50cd22a1-2e73-48d2-666f-078f7c1afeb4")}
+	arg := &warehouse.DeleteWarehouseArg{ExtId: proto.String("7db350a6-3e18-4723-5a0f-a5c076bc17b2")}
 	response, err := client.DeleteWarehouse(ctx, arg)
 	if err != nil {
 		fmt.Println("Marina request error:", err)
@@ -212,7 +212,7 @@ func testCreateWarehouseItem(ctx context.Context, client warehouse.WarehouseItem
 	}*/
 
 	arg := &warehouse.AddItemToWarehouseArg{
-		ExtId: proto.String("74eb3f49-03f5-476f-4b1f-9abbc566de8d"),
+		ExtId: proto.String("7db350a6-3e18-4723-5a0f-a5c076bc17b2"),
 		Body: &warehouse.WarehouseItem{
 			Name:            proto.String("Ngnix-Docker-Image"),
 			Description:     proto.String("Latest Nginx Docker"),
@@ -239,8 +239,8 @@ func testCreateWarehouseItem(ctx context.Context, client warehouse.WarehouseItem
 
 func testDeleteWarehouseItemById(ctx context.Context, client warehouse.WarehouseItemsServiceClient) {
 	arg := &warehouse.DeleteWarehouseItemArg{
-		ExtId:          proto.String("279b3ac4-a0de-4637-4ee2-7b9cca1d3f3f"),
-		WarehouseExtId: proto.String("74eb3f49-03f5-476f-4b1f-9abbc566de8d"),
+		ExtId:          proto.String("00f02076-ff62-4a43-5565-7dda0bcaf771"),
+		WarehouseExtId: proto.String("7db350a6-3e18-4723-5a0f-a5c076bc17b2"),
 	}
 	response, err := client.DeleteWarehouseItem(ctx, arg)
 	if err != nil {
@@ -280,8 +280,8 @@ func testDeleteAllWarehouseItems(ctx context.Context, client warehouse.Warehouse
 func testUpdateWarehouseItemById(ctx context.Context, client warehouse.WarehouseItemsServiceClient) {
 
 	arg := &warehouse.UpdateWarehouseItemMetadataArg{
-		ExtId:          proto.String("74865c8a-c99c-4ffb-588d-1843c2f5dbbe"),
-		WarehouseExtId: proto.String("4e98f7ea-3816-49c7-46f7-46d2e7e6a0ae"),
+		ExtId:          proto.String("93f47699-0a93-4e44-636a-0e77c4fb603b"),
+		WarehouseExtId: proto.String("9405e481-f27c-4332-55eb-dc15979079fe"),
 		Body: &warehouse.WarehouseItem{
 			Name:        proto.String("Ocean Container1"),
 			Description: proto.String("Updated Container desc"),
@@ -367,7 +367,7 @@ func testCreateWarehouse(ctx context.Context, client warehouse.WarehouseServiceC
 
 func testUpdateWarehouse(ctx context.Context, client warehouse.WarehouseServiceClient) {
 	arg := &warehouse.UpdateWarehouseMetadataArg{
-		ExtId: proto.String("74eb3f49-03f5-476f-4b1f-9abbc566de8d"),
+		ExtId: proto.String("7db350a6-3e18-4723-5a0f-a5c076bc17b2"),
 		Body: &warehouse.Warehouse{
 			Name:        proto.String("Mast & Harbor"),
 			Description: proto.String("Flipkart"),
@@ -422,8 +422,8 @@ func main() {
 	// testListWarehouse(ctx, whclient)
 
 	/*           WarehouseDelete                     */
-	// fmt.Println("Deleting Marina Warehouse.")
-	// testDeleteWarehouse(ctx, whclient)
+	fmt.Println("Deleting Marina Warehouse.")
+	testDeleteWarehouse(ctx, whclient)
 
 	/*           WarehouseUpdate                     */
 	// fmt.Println("Updating Marina Warehouse.")

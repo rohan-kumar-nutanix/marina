@@ -152,17 +152,6 @@ func (impl *AwsS3Impl) DeleteWarehouseBucket(ctx context.Context, bucketName str
 }
 
 func (impl *AwsS3Impl) UploadFileToBucket(ctx context.Context, bucketName string, pathToFile string, data []byte) error {
-
-	// input := &s3.DeleteBucketInput{
-	// 	Bucket: aws.String(bucketName),
-	// }
-	// output, err := impl.DeleteBucket(ctx, input)
-	// if err != nil {
-	// 	log.Errorf("Error Occurred while Deleting the bucket %s", err)
-	// 	return err
-	// }
-	// log.Infof("Bucket got Deleted successfully bucket %s", output.ResultMetadata)
-	// return nil
 	objectKey := pathToFile
 	s3Client := getS3ClientFromConfig()
 	// Upload the file to S3
@@ -183,7 +172,7 @@ func (impl *AwsS3Impl) UploadFileToBucket(ctx context.Context, bucketName string
 func (impl *AwsS3Impl) DeleteFileFromBucket(ctx context.Context, bucketName string, pathToFile string) error {
 	objectKey := pathToFile
 	s3Client := getS3ClientFromConfig()
-	// Upload the file to S3
+	// Delete the file from S3
 	output, err := s3Client.DeleteObject(context.TODO(), &s3.DeleteObjectInput{
 		Bucket: aws.String(bucketName),
 		Key:    aws.String(objectKey),
@@ -197,20 +186,42 @@ func (impl *AwsS3Impl) DeleteFileFromBucket(ctx context.Context, bucketName stri
 	return nil
 }
 
-// func (impl *AwsS3Impl) UpdateFileInBucket(ctx context.Context, bucketName string, pathToFile string, data []byte) error {
-// 	objectKey := pathToFile
-// 	s3Client := getS3ClientFromConfig()
-// 	// Upload the file to S3
-// 	output, err := s3Client.PutObject(context.TODO(), &s3.PutObjectInput{
-// 		Bucket: aws.String(bucketName),
-// 		Key:    aws.String(objectKey),
-// 		Body:   bytes.NewReader(data),
-// 	})
-// 	if err != nil {
-// 		log.Errorf("Error Occurred while uploading file to the bucket %s", err)
-// 		return err
-// 	}
+func (impl *AwsS3Impl) DeleteAllFileFromBucket(ctx context.Context, bucketName string) error {
+	s3Client := getS3ClientFromConfig()
+	// List all objects in the bucket
+	listInput := &s3.ListObjectsV2Input{
+		Bucket: aws.String(bucketName),
+	}
 
-// 	log.Infof("File uploaded to bucket successfully %s", output.ResultMetadata)
-// 	return nil
-// }
+	for {
+		listOutput, err := s3Client.ListObjectsV2(context.TODO(), listInput)
+		if err != nil {
+			log.Errorf("Error Occurred while listing files from the bucket %s", err)
+			return err
+		}
+
+		// Delete each object
+		for _, obj := range listOutput.Contents {
+			_, err := s3Client.DeleteObject(context.TODO(), &s3.DeleteObjectInput{
+				Bucket: aws.String(bucketName),
+				Key:    obj.Key,
+			})
+			if err != nil {
+				log.Errorf("Error Occurred while deleting file from the bucket %s", err)
+				return err
+			}
+			log.Infof("Deleted object:", *obj.Key)
+		}
+
+		// Check if there are more objects to retrieve
+		if !listOutput.IsTruncated {
+			break
+		}
+
+		// Set the continuation token to fetch the next page of objects
+		listInput.ContinuationToken = listOutput.NextContinuationToken
+	}
+
+	log.Info("All objects deleted successfully.")
+	return nil
+}

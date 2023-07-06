@@ -70,7 +70,7 @@ func (warehouseDBImpl *WarehouseDBImpl) CreateWarehouse(ctx context.Context, cpd
 		return marinaError.ErrInternalError().SetCauseAndLog(errors.New(errMsg))
 	}
 
-	//Add warehouse metadata to bucket
+	//Add warehouse metadata to bucket (Push with CAS value in file name)
 	storageImpl := newWarehouseS3StorageImpl()
 	err = storageImpl.UploadFileToWarehouseBucket(ctx, warehouseUuid.String(), "metadata/warehouse", buffer.Bytes())
 	if err != nil {
@@ -114,6 +114,14 @@ func (warehouseDBImpl *WarehouseDBImpl) DeleteWarehouse(ctx context.Context, idf
 		errMsg := fmt.Sprintf("Failed to delete the Warehouse: %v", err)
 		return marinaError.ErrInternalError().SetCauseAndLog(errors.New(errMsg))
 	}
+
+	// Delete warehouse metadata from bucket
+	// storageImpl := newWarehouseS3StorageImpl()
+	// err = storageImpl.DeleteAllFilesFromWarehouseBucket(ctx, warehouseUuid)
+	// if err != nil {
+	// 	errMsg := fmt.Sprintf("Error while deleting the files from warehouse bucket %s: %v", warehouseUuid, err)
+	// 	return marinaError.ErrInternalError().SetCauseAndLog(errors.New(errMsg))
+	// }
 	return nil
 }
 
@@ -302,12 +310,12 @@ func (warehouseDBImpl *WarehouseDBImpl) DeleteWarehouseItem(ctx context.Context,
 	}
 	log.Infof("WarehouseItem UUID : %s is deleted", warehouseItemUuid)
 	//Delete warehouse item metadata from bucket
-	storageImpl := newWarehouseS3StorageImpl()
-	err = storageImpl.DeleteFileFromWarehouseBucket(ctx, warehouseUuid, "metadata/"+warehouseItemUuid)
-	if err != nil {
-		errMsg := fmt.Sprintf("Error while deleting the IDF entry from warehouse bucket %s: %v", warehouseUuid, err)
-		return marinaError.ErrInternalError().SetCauseAndLog(errors.New(errMsg))
-	}
+	// storageImpl := newWarehouseS3StorageImpl()
+	// err = storageImpl.DeleteFileFromWarehouseBucket(ctx, warehouseUuid, "metadata/"+warehouseItemUuid)
+	// if err != nil {
+	// 	errMsg := fmt.Sprintf("Error while deleting the IDF entry from warehouse bucket %s: %v", warehouseUuid, err)
+	// 	return marinaError.ErrInternalError().SetCauseAndLog(errors.New(errMsg))
+	// }
 	return nil
 }
 

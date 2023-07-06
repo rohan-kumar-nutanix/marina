@@ -46,5 +46,6 @@ type IWarehouseStorage interface {
 	DeleteWarehouseBucket(ctx context.Context, warehouseUuid string) error
 	UploadFileToWarehouseBucket(ctx context.Context, warehouseUuid string, pathToFile string, data []byte) error
 	DeleteFileFromWarehouseBucket(ctx context.Context, warehouseUuid string, pathToFile string) error
+	DeleteAllFilesFromWarehouseBucket(ctx context.Context, warehouseUuid string) error
 	UpdateFileInWarehouseBucket(ctx context.Context, warehouseUuid string, pathToFile string, data []byte) error
 }
