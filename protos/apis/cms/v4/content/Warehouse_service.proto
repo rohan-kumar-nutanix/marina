@@ -86,7 +86,19 @@ service WarehouseService {
       PUT: "/cms/v4/content/warehouses/{extId}"
     };
   }
+  /*
+   * uri: /cms/v4/content/warehouses/{extId}
+   * http method: PUT
+   * Update Warehouse Metadata.
+   * Update Warehouse Metadata.
+   */
+   rpc syncWarehouseMetadata(SyncWarehouseMetadataArg) returns (SyncWarehouseMetadataRet) {
+    option (ntnx_api_http) = {
+      PUT: "/cms/v4/content/warehouses/{extId}/sync"
+    };
+  }
 }
+
 
 /*
  * message containing all attributes expected in the createWarehouse request
@@ -239,6 +251,30 @@ message UpdateWarehouseMetadataRet {
    * field containing expected response content
    */
   optional cms.v4.content.UpdateWarehouseResponse content = 999;
+  /*
+   * map containing headers expected in response
+   */
+  map<string, string> reserved = 1000;
+}
+
+/*
+ * message containing all attributes expected in the SyncWarehouseMetadata request
+ */
+message SyncWarehouseMetadataArg {
+  /*
+   * Globally unique identifier of a Warehouse. It should be of type UUID.
+   */
+  optional string ext_id = 2001;
+}
+
+/*
+ * message containing all attributes expected in the syncWarehouseMetadata response
+ */
+ message SyncWarehouseMetadataRet {
+  /*
+   * field containing expected response content
+   */
+  optional cms.v4.content.SyncWarehouseResponse content = 999;
   /*
    * map containing headers expected in response
    */

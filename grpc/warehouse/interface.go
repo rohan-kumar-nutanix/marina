@@ -27,6 +27,7 @@ type IWarehouseDB interface {
 		cpdbIfc cpdb.CPDBClientInterface, warehouseUuid string) error
 	UpdateWarehouse(ctx context.Context, cpdbIfc cpdb.CPDBClientInterface,
 		protoIfc utils.ProtoUtilInterface, warehouseUuid *uuid4.Uuid, warehousePB *content.Warehouse) error
+	SyncWarehouse(ctx context.Context, cpdbIfc cpdb.CPDBClientInterface, warehouseUuid string) error
 	ListWarehouses(ctx context.Context, cpdbIfc cpdb.CPDBClientInterface) ([]*content.Warehouse, error)
 
 	// WarehouseItem Methods
@@ -48,4 +49,6 @@ type IWarehouseStorage interface {
 	DeleteFileFromWarehouseBucket(ctx context.Context, warehouseUuid string, pathToFile string) error
 	DeleteAllFilesFromWarehouseBucket(ctx context.Context, warehouseUuid string) error
 	UpdateFileInWarehouseBucket(ctx context.Context, warehouseUuid string, pathToFile string, data []byte) error
+	ListAllFilesInWarehouseBucket(ctx context.Context, warehouseUuid string, key string) ([]string, error)
+	GetFileFromWarehouseBucket(ctx context.Context, warehouseUuid string, pathToFile string) ([]byte, error)
 }

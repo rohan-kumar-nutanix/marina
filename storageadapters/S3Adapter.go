@@ -10,6 +10,7 @@ package storageadapters
 import (
 	"bytes"
 	"context"
+	"io/ioutil"
 	"sync"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -224,4 +225,49 @@ func (impl *AwsS3Impl) DeleteAllFileFromBucket(ctx context.Context, bucketName s
 
 	log.Info("All objects deleted successfully.")
 	return nil
+}
+
+func (impl *AwsS3Impl) ListFilesInBucket(ctx context.Context, bucketName string, key string) ([]string, error) {
+	objectKey := key
+	var fileList []string
+	s3Client := getS3ClientFromConfig()
+	// Delete the file from S3
+	output, err := s3Client.ListObjectsV2(context.TODO(), &s3.ListObjectsV2Input{
+		Bucket: aws.String(bucketName),
+		Prefix: aws.String(objectKey),
+	})
+	if err != nil {
+		log.Errorf("Error Occurred while listing files from the bucket %s", err)
+		return nil, err
+	}
+
+	log.Infof("Files successfully listed from the bucket %s", output.ResultMetadata)
+	for _, item := range output.Contents {
+		fileList = append(fileList, *item.Key)
+	}
+	return fileList, nil
+}
+
+func (impl *AwsS3Impl) GetFileInBucket(ctx context.Context, bucketName string, pathToFile string) ([]byte, error) {
+	objectKey := pathToFile
+	s3Client := getS3ClientFromConfig()
+	// Delete the file from S3
+	output, err := s3Client.GetObject(context.TODO(), &s3.GetObjectInput{
+		Bucket: aws.String(bucketName),
+		Key:    aws.String(objectKey),
+	})
+	if err != nil {
+		log.Errorf("Error Occurred while getting file from the bucket %s", err)
+		return nil, err
+	}
+
+	log.Infof("Files successfully downloaded from the bucket %s", output.ResultMetadata)
+	body, err := ioutil.ReadAll(output.Body)
+	defer output.Body.Close()
+
+	if err != nil {
+		log.Errorf("Error Occurred while parsing file contents %s", err)
+		return nil, err
+	}
+	return body, nil
 }

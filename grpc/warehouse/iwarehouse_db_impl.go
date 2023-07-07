@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"sync"
 
 	log "k8s.io/klog/v2"
@@ -116,12 +117,12 @@ func (warehouseDBImpl *WarehouseDBImpl) DeleteWarehouse(ctx context.Context, idf
 	}
 
 	// Delete warehouse metadata from bucket
-	// storageImpl := newWarehouseS3StorageImpl()
-	// err = storageImpl.DeleteAllFilesFromWarehouseBucket(ctx, warehouseUuid)
-	// if err != nil {
-	// 	errMsg := fmt.Sprintf("Error while deleting the files from warehouse bucket %s: %v", warehouseUuid, err)
-	// 	return marinaError.ErrInternalError().SetCauseAndLog(errors.New(errMsg))
-	// }
+	storageImpl := newWarehouseS3StorageImpl()
+	err = storageImpl.DeleteAllFilesFromWarehouseBucket(ctx, warehouseUuid)
+	if err != nil {
+		errMsg := fmt.Sprintf("Error while deleting the files from warehouse bucket %s: %v", warehouseUuid, err)
+		return marinaError.ErrInternalError().SetCauseAndLog(errors.New(errMsg))
+	}
 	return nil
 }
 
@@ -176,6 +177,48 @@ func (warehouseDBImpl *WarehouseDBImpl) UpdateWarehouse(ctx context.Context, cpd
 	if err != nil {
 		errMsg := fmt.Sprintf("Error while updating the IDF entry in warehouse bucket %s: %v", warehouseUuid.String(), err)
 		return marinaError.ErrInternalError().SetCauseAndLog(errors.New(errMsg))
+	}
+	return nil
+}
+
+func (warehouseDBImpl *WarehouseDBImpl) SyncWarehouse(ctx context.Context, cpdbIfc cpdb.CPDBClientInterface,
+	warehouseUuid string) error {
+	fmt.Printf("Warehouse DB Impl Object: %+v\n", warehouseDBImpl)
+	storageImpl := newWarehouseS3StorageImpl()
+	fileList, err := storageImpl.ListAllFilesInWarehouseBucket(ctx, warehouseUuid, "metadata/")
+	if err != nil {
+		errMsg := fmt.Sprintf("Error while fetching the list of files from warehouse bucket %s: %v", warehouseUuid, err)
+		return marinaError.ErrInternalError().SetCauseAndLog(errors.New(errMsg))
+	}
+	for _, fileName := range fileList {
+		body, err := storageImpl.GetFileFromWarehouseBucket(ctx, warehouseUuid, fileName)
+		if err != nil {
+			errMsg := fmt.Sprintf("Error while fetching the file from warehouse bucket %s: %v", warehouseUuid, err)
+			return marinaError.ErrInternalError().SetCauseAndLog(errors.New(errMsg))
+		}
+		attrParams := make(cpdb.AttributeParams)
+		attrParams[insights_interface.COMPRESSED_PROTOBUF_ATTR] = body
+		var item_type string
+		var uuid string
+		if fileName == "metadata/warehouse" {
+			item_type = db.Warehouse.ToString()
+			uuid = warehouseUuid
+		} else {
+			item_type = db.WarehouseItem.ToString()
+			uuid = strings.Split(fileName, "/")[1]
+			attrParams["warehouse_uuid"] = warehouseUuid
+		}
+		attrVals, err := cpdbIfc.BuildAttributeDataArgs(&attrParams)
+		if err != nil {
+			errMsg := fmt.Sprintf("Error encountered while generating IDF attributes: %v", err)
+			return marinaError.ErrInternalError().SetCauseAndLog(errors.New(errMsg))
+		}
+		_, err = cpdbIfc.UpdateEntity(item_type, uuid, attrVals, nil, false, 0)
+		if err != nil {
+			errMsg := fmt.Sprintf("Error while creating the IDF entry for Warehouse %v", err)
+			return marinaError.ErrInternalError().SetCauseAndLog(errors.New(errMsg))
+		}
+		log.Infof("Uploaded file: to idf%s\n", fileName)
 	}
 	return nil
 }
@@ -309,13 +352,13 @@ func (warehouseDBImpl *WarehouseDBImpl) DeleteWarehouseItem(ctx context.Context,
 		return marinaError.ErrInternalError().SetCauseAndLog(errors.New(errMsg))
 	}
 	log.Infof("WarehouseItem UUID : %s is deleted", warehouseItemUuid)
-	//Delete warehouse item metadata from bucket
-	// storageImpl := newWarehouseS3StorageImpl()
-	// err = storageImpl.DeleteFileFromWarehouseBucket(ctx, warehouseUuid, "metadata/"+warehouseItemUuid)
-	// if err != nil {
-	// 	errMsg := fmt.Sprintf("Error while deleting the IDF entry from warehouse bucket %s: %v", warehouseUuid, err)
-	// 	return marinaError.ErrInternalError().SetCauseAndLog(errors.New(errMsg))
-	// }
+	// Delete warehouse item metadata from bucket
+	storageImpl := newWarehouseS3StorageImpl()
+	err = storageImpl.DeleteFileFromWarehouseBucket(ctx, warehouseUuid, "metadata/"+warehouseItemUuid)
+	if err != nil {
+		errMsg := fmt.Sprintf("Error while deleting the IDF entry from warehouse bucket %s: %v", warehouseUuid, err)
+		return marinaError.ErrInternalError().SetCauseAndLog(errors.New(errMsg))
+	}
 	return nil
 }
 

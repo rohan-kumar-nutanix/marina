@@ -137,6 +137,30 @@ func (s *WarehouseServer) UpdateWarehouseMetadata(c context.Context,
 	return ret, nil
 }
 
+// SyncWarehouseMetadata gRPC handler
+func (s *WarehouseServer) SyncWarehouseMetadata(c context.Context,
+	arg *contentPB.SyncWarehouseMetadataArg) (*contentPB.SyncWarehouseMetadataRet, error) {
+	taskUuid, err := s.asyncHandlerWithGrpcStatus(c, arg, SyncWarehouse)
+	if err != nil {
+		ret := &contentPB.SyncWarehouseMetadataRet{
+			Content: &contentPB.SyncWarehouseResponse{
+				Data: &contentPB.SyncWarehouseResponse_ErrorResponseData{
+					ErrorResponseData: util.SetErrorResponse(nil),
+				},
+			},
+		}
+		return ret, err
+	}
+	ret := &contentPB.SyncWarehouseMetadataRet{
+		Content: &contentPB.SyncWarehouseResponse{
+			Data: &contentPB.SyncWarehouseResponse_TaskReferenceData{
+				TaskReferenceData: setTaskData(taskUuid),
+			},
+		},
+	}
+	return ret, nil
+}
+
 // AddItemToWarehouse Handler, to add WarehouseItem to the Warehouse
 func (s *WarehouseServer) AddItemToWarehouse(c context.Context,
 	arg *contentPB.AddItemToWarehouseArg) (*contentPB.AddItemToWarehouseRet, error) {

@@ -402,6 +402,27 @@ message UpdateWarehouseResponse {
 
   optional common.v1.response.ApiResponseMetadata metadata = 1001;
 }
+
+message SyncWarehouseResponse {
+  /*
+   * REST response for all response codes in API path /cms/v4.0.a1/content/warehouses/{extId} Put operation
+   */
+  oneof data {
+    /*
+     * 
+     */
+    cms.v4.content.TaskReferenceWrapper task_reference_data = 2001;
+    /*
+     * 
+     */
+    cms.v4.content.ErrorResponseWrapper error_response_data = 400;
+  }
+    /*
+   * 
+   */
+
+  optional common.v1.response.ApiResponseMetadata metadata = 1001;
+}
 /*
  * 
  */

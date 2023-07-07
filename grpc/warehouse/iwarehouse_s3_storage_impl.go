@@ -98,3 +98,25 @@ func (storageImpl WarehouseS3StorageImpl) UpdateFileInWarehouseBucket(ctx contex
 	}
 	return err
 }
+
+func (storageImpl WarehouseS3StorageImpl) ListAllFilesInWarehouseBucket(ctx context.Context, warehouseUuid string, key string) ([]string, error) {
+	log.Infof("Updating file in Warehouse Bucket %s", warehouseUuid)
+
+	files, err := storageImpl.AwsS3Impl.ListFilesInBucket(ctx, warehouseUuid, key)
+	if err != nil {
+		log.Errorf("Error Occurred while listing files in Warehouse Bucket %s", err)
+		return nil, err
+	}
+	return files, nil
+}
+
+func (storageImpl WarehouseS3StorageImpl) GetFileFromWarehouseBucket(ctx context.Context, warehouseUuid string, pathToFile string) ([]byte, error) {
+	log.Infof("Updating file in Warehouse Bucket %s", warehouseUuid)
+
+	body, err := storageImpl.AwsS3Impl.GetFileInBucket(ctx, warehouseUuid, pathToFile)
+	if err != nil {
+		log.Errorf("Error Occurred while getting file from Warehouse Bucket %s", err)
+
+	}
+	return body, nil
+}

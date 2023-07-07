@@ -28,6 +28,7 @@ const (
 	CreateWarehouse                = "CreateWarehouse"
 	DeleteWarehouse                = "DeleteWarehouse"
 	UpdateWarehouse                = "UpdateWarehouseMetadata"
+	SyncWarehouse                  = "SyncWarehouseMetadata"
 	AddItemToWarehouse             = "AddItemToWarehouse"
 	DeleteWarehouseItem            = "DeleteWarehouseItem"
 	UpdateWarehouseItemMetadata    = "UpdateWarehouseItemMetadata"
@@ -59,6 +60,9 @@ func GetErgonFullTaskByProto(taskProto *ergon.Task) ergonTask.FullTask {
 			warehouse.NewMarinaBaseWarehouseTask(base.NewMarinaBaseTask(taskProto)))
 	case DeleteWarehouse:
 		return warehouse.NewMarinaWarehouseDeleteTask(
+			warehouse.NewMarinaBaseWarehouseTask(base.NewMarinaBaseTask(taskProto)))
+	case SyncWarehouse:
+		return warehouse.NewMarinaWarehouseSyncTask(
 			warehouse.NewMarinaBaseWarehouseTask(base.NewMarinaBaseTask(taskProto)))
 	case UpdateWarehouse:
 		return warehouse.NewMarinaWarehouseUpdateTask(
