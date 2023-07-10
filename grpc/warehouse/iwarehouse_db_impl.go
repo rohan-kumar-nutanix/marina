@@ -182,44 +182,42 @@ func (warehouseDBImpl *WarehouseDBImpl) UpdateWarehouse(ctx context.Context, cpd
 }
 
 func (warehouseDBImpl *WarehouseDBImpl) SyncWarehouse(ctx context.Context, cpdbIfc cpdb.CPDBClientInterface,
-	warehouseUuid string) error {
-	fmt.Printf("Warehouse DB Impl Object: %+v\n", warehouseDBImpl)
-	storageImpl := newWarehouseS3StorageImpl()
-	fileList, err := storageImpl.ListAllFilesInWarehouseBucket(ctx, warehouseUuid, "metadata/")
+	warehouseUuid string, fileName string, body []byte) error {
+	attrParams := make(cpdb.AttributeParams)
+	attrParams[insights_interface.COMPRESSED_PROTOBUF_ATTR] = body
+	var item_type string
+	var uuid string
+	var casVal uint64
+	if fileName == "metadata/warehouse" {
+		item_type = db.Warehouse.ToString()
+		uuid = warehouseUuid
+	} else {
+		item_type = db.WarehouseItem.ToString()
+		uuid = strings.Split(fileName, "/")[1]
+		attrParams["warehouse_uuid"] = warehouseUuid
+	}
+	entity, err := cpdbIfc.GetEntity(item_type, warehouseUuid, true)
+	if err == insights_interface.ErrNotFound || entity == nil {
+		// log.Errorf("Warehouse %s not found", warehouseUuid)
+		// return marinaError.ErrNotFound
+		casVal = 0
+	} else if err != nil {
+		errMsg := fmt.Sprintf("Error encountered while getting Warehouse %s: %v", warehouseUuid, err)
+		return marinaError.ErrInternalError().SetCauseAndLog(errors.New(errMsg))
+	} else {
+		casVal = entity.GetCasValue() + 1
+	}
+	attrVals, err := cpdbIfc.BuildAttributeDataArgs(&attrParams)
 	if err != nil {
-		errMsg := fmt.Sprintf("Error while fetching the list of files from warehouse bucket %s: %v", warehouseUuid, err)
+		errMsg := fmt.Sprintf("Error encountered while generating IDF attributes: %v", err)
 		return marinaError.ErrInternalError().SetCauseAndLog(errors.New(errMsg))
 	}
-	for _, fileName := range fileList {
-		body, err := storageImpl.GetFileFromWarehouseBucket(ctx, warehouseUuid, fileName)
-		if err != nil {
-			errMsg := fmt.Sprintf("Error while fetching the file from warehouse bucket %s: %v", warehouseUuid, err)
-			return marinaError.ErrInternalError().SetCauseAndLog(errors.New(errMsg))
-		}
-		attrParams := make(cpdb.AttributeParams)
-		attrParams[insights_interface.COMPRESSED_PROTOBUF_ATTR] = body
-		var item_type string
-		var uuid string
-		if fileName == "metadata/warehouse" {
-			item_type = db.Warehouse.ToString()
-			uuid = warehouseUuid
-		} else {
-			item_type = db.WarehouseItem.ToString()
-			uuid = strings.Split(fileName, "/")[1]
-			attrParams["warehouse_uuid"] = warehouseUuid
-		}
-		attrVals, err := cpdbIfc.BuildAttributeDataArgs(&attrParams)
-		if err != nil {
-			errMsg := fmt.Sprintf("Error encountered while generating IDF attributes: %v", err)
-			return marinaError.ErrInternalError().SetCauseAndLog(errors.New(errMsg))
-		}
-		_, err = cpdbIfc.UpdateEntity(item_type, uuid, attrVals, nil, false, 0)
-		if err != nil {
-			errMsg := fmt.Sprintf("Error while creating the IDF entry for Warehouse %v", err)
-			return marinaError.ErrInternalError().SetCauseAndLog(errors.New(errMsg))
-		}
-		log.Infof("Uploaded file: to idf%s\n", fileName)
+	_, err = cpdbIfc.UpdateEntity(item_type, uuid, attrVals, nil, false, casVal)
+	if err != nil {
+		errMsg := fmt.Sprintf("Error while creating the IDF entry for Warehouse %v", err)
+		return marinaError.ErrInternalError().SetCauseAndLog(errors.New(errMsg))
 	}
+	log.Infof("Uploaded file: to idf%s\n", fileName)
 	return nil
 }
 

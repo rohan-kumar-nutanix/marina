@@ -11,7 +11,9 @@ import (
 	"bytes"
 	"context"
 	"io/ioutil"
+	"sort"
 	"sync"
+	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	s3config "github.com/aws/aws-sdk-go-v2/config"
@@ -227,9 +229,10 @@ func (impl *AwsS3Impl) DeleteAllFileFromBucket(ctx context.Context, bucketName s
 	return nil
 }
 
-func (impl *AwsS3Impl) ListFilesInBucket(ctx context.Context, bucketName string, key string) ([]string, error) {
+func (impl *AwsS3Impl) ListFilesInBucket(ctx context.Context, bucketName string, key string) ([]string, []time.Time, error) {
 	objectKey := key
 	var fileList []string
+	var fileModifiedTime []time.Time
 	s3Client := getS3ClientFromConfig()
 	// Delete the file from S3
 	output, err := s3Client.ListObjectsV2(context.TODO(), &s3.ListObjectsV2Input{
@@ -238,14 +241,20 @@ func (impl *AwsS3Impl) ListFilesInBucket(ctx context.Context, bucketName string,
 	})
 	if err != nil {
 		log.Errorf("Error Occurred while listing files from the bucket %s", err)
-		return nil, err
+		return nil, nil, err
 	}
 
 	log.Infof("Files successfully listed from the bucket %s", output.ResultMetadata)
+	// Sort the objects by last modified time
+	sort.Slice(output.Contents, func(i, j int) bool {
+		return output.Contents[i].LastModified.Before(*output.Contents[j].LastModified)
+	})
+
 	for _, item := range output.Contents {
 		fileList = append(fileList, *item.Key)
+		fileModifiedTime = append(fileModifiedTime, *item.LastModified)
 	}
-	return fileList, nil
+	return fileList, fileModifiedTime, nil
 }
 
 func (impl *AwsS3Impl) GetFileInBucket(ctx context.Context, bucketName string, pathToFile string) ([]byte, error) {

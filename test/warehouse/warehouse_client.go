@@ -26,14 +26,14 @@ func init() {
 }
 
 // var pcip = "10.97.188.105" // "localhost" // "10.97.16.174"
-var pcip = "10.37.180.42"
+var pcip = "localhost"
 
 func warehouseClient(port uint) (*grpc.ClientConn, warehouse.WarehouseServiceClient) {
 	// address := fmt.Sprintf("127.0.0.1:%d", port)
 	// address := fmt.Sprintf("10.37.161.66:%d", port)
 	// pcIp := "localhost" // pcip // //"10.96.16.100" // "0.0.0.0" //"10.33.33.78"
 	// pcIp := "10.97.188.105"
-	pcIp := "10.37.180.42"
+	pcIp := "localhost"
 	port = 9200
 	address := fmt.Sprintf("%s:%d", pcIp, port)
 	fmt.Println("Connecting to GRPC server at ", address)
@@ -53,7 +53,7 @@ func warehouseItemClient(port uint) (*grpc.ClientConn, warehouse.WarehouseItemsS
 	// address := fmt.Sprintf("127.0.0.1:%d", port)
 	// address := fmt.Sprintf("10.37.161.66:%d", port)
 	// pcIp := "10.97.188.105" // "10.96.16.100" // "0.0.0.0" //"10.33.33.78"
-	pcIp := "10.37.180.42"
+	pcIp := "localhost"
 	// port = 9200
 	address := fmt.Sprintf("%s:%d", pcIp, port)
 	fmt.Println("Connecting to GRPC server at ", address)
@@ -109,10 +109,10 @@ func deleteAllWarehouses(ctx context.Context, client warehouse.WarehouseServiceC
 	resp := ret.Content.GetWarehouseArrayData().GetValue()
 
 	for _, w := range resp {
-		fmt.Println("Deleting Warehouse with UUID %s", w.Name)
+		fmt.Printf("Deleting Warehouse with UUID %s", *w.Name)
 		// arg := &warehouse.DeleteWarehouseArg{ExtId: proto.String("5e81dd9e-fe69-4323-58e4-455dc9f8d240")}
 		if w.GetBase() != nil && w.GetBase().ExtId != nil {
-			fmt.Println("Warehouse Ext ID : %s", *w.Base.ExtId)
+			fmt.Printf("Warehouse Ext ID : %s", *w.Base.ExtId)
 			arg := &warehouse.DeleteWarehouseArg{ExtId: proto.String(*w.Base.ExtId)}
 			response, err := client.DeleteWarehouse(ctx, arg)
 			if err != nil {

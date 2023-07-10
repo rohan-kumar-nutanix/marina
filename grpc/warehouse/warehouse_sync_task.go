@@ -11,6 +11,7 @@ package warehouse
 import (
 	"errors"
 	"fmt"
+	"time"
 
 	"google.golang.org/protobuf/proto"
 	log "k8s.io/klog/v2"
@@ -50,12 +51,17 @@ func (task *MarinaWarehouseSyncTask) StartHook() error {
 	log.Infof("Warehouse UUID to be synced %s", warehouseUuid.String())
 
 	wal := task.Wal()
+	t := time.Date(1900, 56, 76, 43, 99, 101, 3444, time.UTC)
+	encoding, _ := t.MarshalBinary()
+	wal.SyncWal = &marinaPB.SyncWal{
+		FileCompleted: encoding,
+	}
 	wal.WarehouseWal = &marinaPB.WarehouseWal{
 		WarehouseUuid: task.GetWarehouseUuid().RawBytes(),
 	}
 	if err := task.SetWal(wal); err != nil {
 		return marinaError.ErrMarinaInternal.SetCauseAndLog(
-			fmt.Errorf("failed to set Warehouse WAL: %s", err))
+			fmt.Errorf("failed to set Sync WAL: %s", err))
 	}
 	return nil
 }
@@ -64,10 +70,44 @@ func (task *MarinaWarehouseSyncTask) Run() error {
 	ctx := task.TaskContext()
 	task.SetWarehouseUuid(uuid4.ToUuid4(task.Wal().GetWarehouseWal().GetWarehouseUuid()))
 	log.Infof("Running a Warehouse Sync request UUID : %s", task.GetWarehouseUuid())
-	err := task.SyncWarehouse(ctx,
-		task.ExternalInterfaces().CPDBIfc(), task.WarehouseUuid.String())
+	storageImpl := newWarehouseS3StorageImpl()
+	fileList, fileModifiedTime, err := storageImpl.ListAllFilesInWarehouseBucket(ctx, task.WarehouseUuid.String(), "metadata/")
 	if err != nil {
 		return err
+	}
+	var file_completed time.Time
+	err = file_completed.UnmarshalBinary(task.Wal().GetSyncWal().GetFileCompleted())
+	if err != nil {
+		return marinaError.ErrMarinaInternal.SetCauseAndLog(
+			fmt.Errorf("failed to unamrshal time bytes: %s", err))
+	}
+	for i, fileName := range fileList {
+		if !fileModifiedTime[i].After(file_completed) {
+			continue
+		}
+		body, err := storageImpl.GetFileFromWarehouseBucket(ctx, task.WarehouseUuid.String(), fileName)
+		if err != nil {
+			return err
+		}
+		err = task.SyncWarehouse(ctx,
+			task.ExternalInterfaces().CPDBIfc(), task.WarehouseUuid.String(), fileName, body)
+		if err != nil {
+			return err
+		}
+		wal := task.Wal()
+		fileModifiedTimeBytes, err := fileModifiedTime[i].MarshalBinary()
+		if err != nil {
+			return marinaError.ErrMarinaInternal.SetCauseAndLog(
+				fmt.Errorf("Could not marshal time to bytes: %s", err))
+		}
+		wal.SyncWal = &marinaPB.SyncWal{
+			FileCompleted: fileModifiedTimeBytes,
+		}
+		if err := task.SetWal(wal); err != nil {
+			return marinaError.ErrMarinaInternal.SetCauseAndLog(
+				fmt.Errorf("failed to set Sync WAL: %s", err))
+		}
+		task.Save(task)
 	}
 
 	ret := &warehousePB.SyncWarehouseMetadataRet{}

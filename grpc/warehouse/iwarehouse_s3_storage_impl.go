@@ -10,6 +10,7 @@ package warehouse
 import (
 	"context"
 	"sync"
+	"time"
 
 	log "k8s.io/klog/v2"
 
@@ -99,15 +100,15 @@ func (storageImpl WarehouseS3StorageImpl) UpdateFileInWarehouseBucket(ctx contex
 	return err
 }
 
-func (storageImpl WarehouseS3StorageImpl) ListAllFilesInWarehouseBucket(ctx context.Context, warehouseUuid string, key string) ([]string, error) {
+func (storageImpl WarehouseS3StorageImpl) ListAllFilesInWarehouseBucket(ctx context.Context, warehouseUuid string, key string) ([]string, []time.Time, error) {
 	log.Infof("Updating file in Warehouse Bucket %s", warehouseUuid)
 
-	files, err := storageImpl.AwsS3Impl.ListFilesInBucket(ctx, warehouseUuid, key)
+	files, filesModifiedTime, err := storageImpl.AwsS3Impl.ListFilesInBucket(ctx, warehouseUuid, key)
 	if err != nil {
 		log.Errorf("Error Occurred while listing files in Warehouse Bucket %s", err)
-		return nil, err
+		return nil, nil, err
 	}
-	return files, nil
+	return files, filesModifiedTime, nil
 }
 
 func (storageImpl WarehouseS3StorageImpl) GetFileFromWarehouseBucket(ctx context.Context, warehouseUuid string, pathToFile string) ([]byte, error) {
