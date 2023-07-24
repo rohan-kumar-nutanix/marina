@@ -26,15 +26,15 @@ func init() {
 }
 
 // var pcip = "10.97.188.105" // "localhost" // "10.97.16.174"
-var pcip = "localhost"
+var pcip = "10.37.176.24"
 
 func warehouseClient(port uint) (*grpc.ClientConn, warehouse.WarehouseServiceClient) {
 	// address := fmt.Sprintf("127.0.0.1:%d", port)
 	// address := fmt.Sprintf("10.37.161.66:%d", port)
 	// pcIp := "localhost" // pcip // //"10.96.16.100" // "0.0.0.0" //"10.33.33.78"
 	// pcIp := "10.97.188.105"
-	pcIp := "localhost"
-	port = 9200
+	pcIp := "10.37.176.24"
+	// port = 9203
 	address := fmt.Sprintf("%s:%d", pcIp, port)
 	fmt.Println("Connecting to GRPC server at ", address)
 	conn, err := grpc.Dial(address, grpc.WithInsecure(), grpc.WithBlock())
@@ -53,7 +53,7 @@ func warehouseItemClient(port uint) (*grpc.ClientConn, warehouse.WarehouseItemsS
 	// address := fmt.Sprintf("127.0.0.1:%d", port)
 	// address := fmt.Sprintf("10.37.161.66:%d", port)
 	// pcIp := "10.97.188.105" // "10.96.16.100" // "0.0.0.0" //"10.33.33.78"
-	pcIp := "localhost"
+	pcIp := "10.37.176.24"
 	// port = 9200
 	address := fmt.Sprintf("%s:%d", pcIp, port)
 	fmt.Println("Connecting to GRPC server at ", address)
@@ -391,7 +391,7 @@ func testUpdateWarehouse(ctx context.Context, client warehouse.WarehouseServiceC
 
 func testSyncWarehouse(ctx context.Context, client warehouse.WarehouseServiceClient) {
 	arg := &warehouse.SyncWarehouseMetadataArg{
-		ExtId: proto.String("ec1125d9-0ec5-4e03-4535-fc67a1b7cda9"),
+		ExtId: proto.String("a90ee2f2-26b7-4cc9-4806-0f8edc74c08c"),
 	}
 
 	glog.Infof("Warehouse Arg %v", arg)
@@ -416,7 +416,7 @@ func timeTrack(start time.Time, name string) {
 func main() {
 	// TODO: Consider moving these to init().
 	var grpcServerPort uint
-	grpcServerPort = 9200 // 32391 //9200 //30188 //9200
+	grpcServerPort = 9203 // 32391 //9200 //30188 //9200
 	// glog.Infof("gRPC server port to connect: %v", grpcServerPort)
 	// fmt.Println("gRPC server port to connect: ", grpcServerPort)
 	conn, whclient := warehouseClient(grpcServerPort)
